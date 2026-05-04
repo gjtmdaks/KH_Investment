@@ -77,4 +77,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/java,react,redis,windows
 
 ### properties ###
-.properties
+**.properties
+/.metadata/
