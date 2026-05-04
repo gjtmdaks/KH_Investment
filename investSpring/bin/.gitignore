@@ -32,7 +32,6 @@ build/
 
 ### properties ###
 .properties
-/.metadata/
 
 ### VS Code ###
 .vscode/
