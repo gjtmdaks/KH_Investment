@@ -5,6 +5,10 @@ import Header from "./components/header/Header";
 import Sideber from "./components/sidebar/Sidebar";
 import Footer from "./components/footer/Footer";
 
+export const metadata: Metadata = {
+  title: "khinvest",
+  description: "khinvest",
+};
 
 export default function RootLayout({
   children,
@@ -13,9 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <Header />
-      <Sideber />
-      <Footer />
+      <body>
+        <Header />
+        <Sideber />
+        <Footer />
+      </body>
     </html>
   );
 }
