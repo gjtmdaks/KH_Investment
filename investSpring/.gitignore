@@ -31,8 +31,9 @@ build/
 !**/src/test/**/build/
 
 ### properties ###
-.properties
 /.metadata/
+.properties
+./src/main/resources/application.properties
 
 ### VS Code ###
 .vscode/
