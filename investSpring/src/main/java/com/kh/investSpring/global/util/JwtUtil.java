@@ -1,31 +1,48 @@
 // global/util/JwtUtil.java
 package com.kh.investSpring.global.util;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-
-import javax.crypto.SecretKey;
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+
+@Component
 public class JwtUtil {
 
-    private static final String SECRET = "my-secret-key-my-secret-key-my-secret-key"; // 32자 이상
-    private static final long EXPIRATION = 1000 * 60 * 60; // 1시간
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private static final SecretKey KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
+    @Value("${jwt.refresh-secret}")
+    private String refreshSecret;
 
-    public static String createToken(Long userNo) {
+    private SecretKey key;
+    private SecretKey refreshKey;
+
+    @PostConstruct
+    public void init() {
+        key = Keys.hmacShaKeyFor(secret.getBytes());
+        refreshKey = Keys.hmacShaKeyFor(refreshSecret.getBytes());
+    }
+    
+    public String createToken(Long userNo) {
         return Jwts.builder()
                 .setSubject(String.valueOf(userNo))
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(KEY)
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .signWith(key)
                 .compact();
     }
 
-    public static Long getUserNo(String token) {
+    public Long getUserNo(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(KEY)
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

@@ -15,6 +15,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<?> handleException(Exception e) {
+    	e.printStackTrace();
         return ApiResponse.fail("서버 내부 오류");
     }
 }
