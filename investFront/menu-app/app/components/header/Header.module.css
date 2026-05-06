@@ -1,22 +1,18 @@
+
 .header {
   width: 100%;
-  height: 80px;
+  height: 40px;
   background-color: #ffffff;
-  border-bottom: 1px solid #eeeeee;
-  display: flex;
-  align-items: center;
-  position: sticky;
-  top: 0;
+  border-bottom: 1px solid #f1f3f5;
   z-index: 100;
 }
 
-.container {
+.inner {
   width: 100%;
-  max-width: 1400px; /* 전체 너비 조절 */
-  margin: 0 auto;
-  padding: 0 40px;
+  height: 100%;
+  padding: 0 24px;
+
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -24,70 +20,82 @@
 .logoArea {
   display: flex;
   align-items: center;
-  gap: 15px;
-}
+  gap: 12px;
 
-.logoIcon {
-  width: 60px;
-  height: 35px;
-  background-color: #6378ff; /* 이미지의 파란색 아이콘 */
-  border-radius: 15px;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-}
-
-/* 네비게이션 영역 */
-.nav {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.navList {
-  list-style: none;
-  display: flex;
-  gap: 40px;
-  margin: 0;
-  padding: 0;
-}
-
-.navList li a {
   text-decoration: none;
-  color: #333;
-  font-size: 18px;
-  font-weight: 500;
-  transition: color 0.2s;
+  color: #191f28;
+  flex-shrink: 0;
 }
 
-.navList li a:hover {
-  color: #6378ff;
+/* 이미지 넣을 자리 */
+.logoImage {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f7cff, #6b8cff);
 }
 
-/* 로그인 버튼 영역 */
-.loginBtn {
-  background-color: #6378ff;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+/* KH 증권 텍스트 */
+.logoText {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* 가운데 메뉴 */
+.nav {
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
+  gap: 36px;
+
+  margin-left: 72px;
 }
 
-.loginBtn:hover {
-  background-color: #4b5ecc;
+.navItem {
+  text-decoration: none;
+  color: #191f28;
+
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+
+  transition: color 0.15s ease;
 }
 
-.userIcon {
-  font-size: 12px;
+.navItem:hover {
+  color: #3182f6;
+}
+
+/* 오른쪽 영역 */
+.rightArea {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.loginButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 32px;
+  padding: 0 16px;
+
+  border-radius: 999px;
+  background-color: #4f7cff;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.loginButton:hover {
+  background-color: #3468ff;
+}
+
+.loginButton:active {
+  transform: scale(0.97);
 }

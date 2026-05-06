@@ -1,4 +1,4 @@
-// 메인 페이지
+// app
 export default function Home() {
   return null;
 }
