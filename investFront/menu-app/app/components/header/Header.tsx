@@ -2,7 +2,9 @@ import Link from "next/link";
 import styles from "./Header.module.css";
 import Image from "next/image";
 
-export default function Header() {
+export default function Header({ data }: any) {
+  const isLogin = !!data?.header;
+
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -35,9 +37,13 @@ export default function Header() {
 
         {/* 로그인 버튼 */}
         <div className={styles.rightArea}>
-          <Link href="/signIn" className={styles.loginButton}>
-            로그인
-          </Link>
+          {isLogin ? (
+            <span>{data.header.userName}님</span>
+          ) : (
+            <Link href="/signIn" className={styles.loginButton}>
+              로그인
+            </Link>
+          )}
         </div>
       </div>
     </header>

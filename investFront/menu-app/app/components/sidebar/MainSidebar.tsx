@@ -16,9 +16,11 @@ const menus: {
   { id: "liveTime", label: "실시간", icon: "🔥" },
 ];
 
-export default function MainSidebar() {
+export default function MainSidebar({ data }: any) {
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
+
+  const isLogin = !!data?.sidebar;
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.close}`}>
@@ -36,9 +38,11 @@ export default function MainSidebar() {
             </button>
           </div>
 
-          {activeMenu === "myInvestment" && <MyInvestmentPanel />}
-          {activeMenu === "interest" && <InterestPanel />}
-          {activeMenu === "recent" && <RecentPanel />}
+          {activeMenu === "myInvestment" && (
+            <MyInvestmentPanel data={data} isLogin={isLogin} />
+          )}
+          {activeMenu === "interest" && <InterestPanel data={data} />}
+          {activeMenu === "recent" && <RecentPanel data={data} />}
           {activeMenu === "liveTime" && <LiveTimePanel />}
         </section>
       )}
@@ -88,9 +92,26 @@ function getPanelTitle(activeMenu: SidebarMenu) {
   }
 }
 
-function InterestPanel() {
+function InterestPanel({ data }: any) {
+  const list = data?.sidebar?.watchlist || [];
+
   return (
     <div className={styles.panelContent}>
+      <h3>관심 종목</h3>
+
+      {list.length === 0 ? (
+        <div>데이터 없음</div>
+        ) : (
+          list.map((s: any) => (
+          <StockItem
+            key={s.stockCode}
+            name={s.stockName}
+            price={`${s.price}`}
+            rate={`${s.changeRate}%`}
+          />
+        ))
+      )}
+
       <div className={styles.newsBox}>
         <p className={styles.newsCategory}>토스증권 AI</p>
         <p className={styles.newsTitle}>
@@ -113,18 +134,59 @@ function InterestPanel() {
   );
 }
 
-function MyInvestmentPanel() {
+function MyInvestmentPanel({ data, isLogin }: any) {
+  if (!isLogin) {
+    return (
+      <div className={styles.emptyBox}>
+        <div className={styles.emptyIcon}>📊</div>
+        <p>로그인이 필요해요</p>
+      </div>
+    );
+  }
+
+  const account = data.sidebar?.account;
+  const holdings = data.sidebar?.holdings || [];
+
   return (
-    <div className={styles.emptyBox}>
-      <div className={styles.emptyIcon}>📊</div>
-      <p>로그인이 필요해요</p>
+    <div className={styles.panelContent}>
+      <div>잔액: {account?.balance ?? 0}</div>
+
+      <h4>보유 주식</h4>
+
+      {holdings.length === 0 ? (
+        <div>보유 주식 없음</div>
+      ) : (
+        holdings.map((h: any) => (
+          <StockItem
+            key={h.stockCode}
+            name={h.stockName}
+            price={`${h.currentPrice}`}
+            rate={`${h.quantity}주`}
+          />
+        ))
+      )}
     </div>
   );
 }
 
-function RecentPanel() {
+function RecentPanel({ data }: any) {
+  const list = data?.sidebar?.recentView || [];
+
   return (
     <div className={styles.panelContent}>
+      {list.length === 0 ? (
+        <div>최근 본 종목 없음</div>
+      ) : (
+        list.map((s: any) => (
+          <StockItem
+            key={s.stockCode}
+            name={s.stockName}
+            price="-"
+            rate="-"
+          />
+        ))
+      )}
+
       <StockItem name="삼성전자" price="260,000원" rate="+27,500원 (11.82%)" />
       <StockItem name="카카오" price="58,200원" rate="-500원 (-0.85%)" />
     </div>
