@@ -1,0 +1,15 @@
+/* 로고 영역 */
+.logoArea {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+/* 이미지 넣을 자리 */
+.logoImage {
+  display: block;
+  width: 132px;
+  height: auto;
+  object-fit: contain;
+}

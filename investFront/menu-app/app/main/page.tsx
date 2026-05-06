@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function MainPage() {
-  return null;
+  redirect("/main/stock");
 }
