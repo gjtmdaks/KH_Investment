@@ -1,5 +1,5 @@
 package com.kh.investSpring.domain.trade.service;
 
-public class TradeServiceImpl {
+public class TradeServiceImpl implements TradeService {
 
 }

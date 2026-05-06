@@ -1,5 +1,5 @@
 package com.kh.investSpring.domain.news.service;
 
-public class NewsServiceImpl {
+public class NewsServiceImpl implements NewsService {
 
 }

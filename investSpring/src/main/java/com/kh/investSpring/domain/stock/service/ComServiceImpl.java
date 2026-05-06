@@ -1,5 +1,5 @@
 package com.kh.investSpring.domain.stock.service;
 
-public class ComServiceImpl {
+public class ComServiceImpl implements ComService {
 
 }

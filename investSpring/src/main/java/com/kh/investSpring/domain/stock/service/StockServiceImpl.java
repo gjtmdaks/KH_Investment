@@ -1,5 +1,59 @@
 package com.kh.investSpring.domain.stock.service;
 
-public class StockServiceImpl {
+import java.util.List;
 
+import org.springframework.stereotype.Service;
+
+import com.kh.investSpring.domain.board.dao.BoardDao;
+import com.kh.investSpring.domain.board.dto.CommunityDto;
+import com.kh.investSpring.domain.stock.dao.StockDao;
+import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.TopStockDto;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class StockServiceImpl implements StockService {
+
+    private final StockDao stockDao;
+    private final BoardDao boardDao;
+
+    @Override
+    public List<StockDto> getStockList() {
+        return stockDao.getStockList();
+    }
+
+    @Override
+    public TopStockDto getTopVolumeStock() {
+
+        // 1️⃣ 거래대금 1위
+        String stockCode = stockDao.getTopVolumeStockCode();
+
+        // 2️⃣ 기본 정보
+        var info = stockDao.getStockInfo(stockCode);
+
+        // 3️⃣ 차트 데이터
+        List<Long> chart = stockDao.getMiniChart(stockCode);
+
+        // 4️⃣ 커뮤니티
+        var community = boardDao.getTopPostsByStock(stockCode);
+
+        return TopStockDto.builder()
+                .stockCode(info.getStockCode())
+                .stockName(info.getStockName())
+                .price(info.getPrice())
+                .changeRate(info.getChangeRate())
+                .miniChart(chart)
+                .community(
+                        community.stream()
+                                .map(c -> CommunityDto.builder()
+                                        .boardNo(c.getBoardNo())
+                                        .content(c.getContent())
+                                        .likeCount(c.getLikeCount())
+                                        .build()
+                                ).toList()
+                )
+                .build();
+    }
 }

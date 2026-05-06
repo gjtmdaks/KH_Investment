@@ -1,5 +1,5 @@
 package com.kh.investSpring.domain.order.service;
 
-public class OrderServiceImpl {
+public class OrderServiceImpl implements OrderService {
 
 }
