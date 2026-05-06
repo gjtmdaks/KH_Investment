@@ -20,19 +20,16 @@
 .logoArea {
   display: flex;
   align-items: center;
-  gap: 12px;
-
   text-decoration: none;
-  color: #191f28;
   flex-shrink: 0;
 }
 
 /* 이미지 넣을 자리 */
 .logoImage {
-  width: 52px;
-  height: 28px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #4f7cff, #6b8cff);
+  display: block;
+  width: 132px;
+  height: auto;
+  object-fit: contain;
 }
 
 /* KH 증권 텍스트 */

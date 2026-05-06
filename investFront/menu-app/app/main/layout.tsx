@@ -11,11 +11,10 @@ export default function MainLayout({
     <div className={styles.pageLayout}>
       <div className={styles.leftArea}>
         <Header />
-
         <main className={styles.content}>{children}</main>
       </div>
-
       <MainSidebar />
+      
     </div>
   );
 }
