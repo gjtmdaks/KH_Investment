@@ -1,4 +1,4 @@
-package com.kh.investSpring.recentview.service;
+package com.kh.investSpring.domain.recentview.service;
 
 public class RecentviewServiceImpl implements RecentviewService{
 

@@ -1,4 +1,4 @@
-package com.kh.investSpring.recentview.dao;
+package com.kh.investSpring.domain.recentview.dao;
 
 public class RecentviewDaoImpl implements RecentviewDao{
 
