@@ -1,6 +1,6 @@
 import styles from "./stockDetails.module.css";
 
-export default function stockDetails(){
+export default function stockCode(){
     return (
     <div>
       <h2>주식 디테일</h2>
