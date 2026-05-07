@@ -1,12 +1,12 @@
-package com.kh.investSpring.api.kis;
+package com.kh.investSpring.api.kis.service;
 
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import com.kh.investSpring.api.config.KisConfig.KisProperties;
-import com.kh.investSpring.api.dto.response.KisStockPriceResponse;
+import com.kh.investSpring.api.kis.config.KisProperties;
+import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
 
 @Service
 public class KisStockService {
@@ -28,7 +28,7 @@ public class KisStockService {
     public KisStockPriceResponse getStockPrice(String stockCode) {
         String accessToken = kisTokenService.getAccessToken();
 
-        String url = kisProperties.baseUrl()
+        String url = kisProperties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-price"
                 + "?FID_COND_MRKT_DIV_CODE=J"
                 + "&FID_INPUT_ISCD=" + stockCode;
@@ -37,8 +37,8 @@ public class KisStockService {
                 .uri(url)
                 .header("content-type", "application/json; charset=utf-8")
                 .header("authorization", "Bearer " + accessToken)
-                .header("appkey", kisProperties.appKey())
-                .header("appsecret", kisProperties.appSecret())
+                .header("appkey", kisProperties.getAppKey())
+                .header("appsecret", kisProperties.getAppSecret())
                 .header("tr_id", "FHKST01010100")
                 .retrieve()
                 .body(KisInquirePriceResponse.class);

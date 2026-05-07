@@ -1,4 +1,4 @@
-package com.kh.investSpring.api.dto.response;
+package com.kh.investSpring.api.kis.dto;
 
 public record KisStockPriceResponse(
 		String stockCode,
