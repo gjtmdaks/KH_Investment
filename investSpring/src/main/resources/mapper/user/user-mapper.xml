@@ -2,6 +2,43 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="user">
-	
-	
+	<select id="selectByUserId" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM USER_LOCAL
+        WHERE USER_ID = #{userId}
+    </select>
+    
+	<insert id="insertUser" parameterType="com.kh.investSpring.domain.user.vo.User">
+        <selectKey keyProperty="userNo" resultType="int" order="BEFORE">
+            SELECT SEQ_USERS_NO.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO USERS (
+            USER_NO,
+            USER_NAME,
+            PROVIDER,
+            CREATED_AT,
+            STATUS,
+            AUTH
+        ) VALUES (
+            #{userNo},
+            #{userName},
+            'LOCAL',
+            SYSDATE,
+            'ACTIVE',
+            2
+        )
+    </insert>
+
+    <insert id="insertLocalUser" parameterType="com.kh.investSpring.domain.user.vo.LocalUser">
+        INSERT INTO USER_LOCAL (
+            USER_NO,
+            USER_ID,
+            PASSWORD
+        ) VALUES (
+            #{userNo},
+            #{userId},
+            #{password}
+        )
+    </insert>
 </mapper>
