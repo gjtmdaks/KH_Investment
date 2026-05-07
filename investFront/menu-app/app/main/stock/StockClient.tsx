@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-const apiBase = rawBase.trim() || "http://localhost:8081";
+const apiBase = rawBase.trim() || "http://localhost:8081/final";
 
 export default function StockClient({ initialData }: any) {
   const [data, setData] = useState(initialData);

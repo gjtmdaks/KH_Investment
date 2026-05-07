@@ -1,4 +1,4 @@
-package com.kh.investSpring.api.kis;
+package com.kh.investSpring.api.kis.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -7,7 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import com.kh.investSpring.api.config.KisConfig.KisProperties;
+import com.kh.investSpring.api.kis.config.KisProperties;
 
 @Service
 public class KisTokenService {
@@ -46,12 +46,12 @@ public class KisTokenService {
     private void issueAccessToken() {
         Map<String, String> requestBody = Map.of(
                 "grant_type", "client_credentials",
-                "appkey", kisProperties.appKey(),
-                "appsecret", kisProperties.appSecret()
+                "appkey", kisProperties.getAppKey(),
+                "appsecret", kisProperties.getAppSecret()
         );
 
         KisTokenResponse response = restClient.post()
-                .uri(kisProperties.baseUrl() + "/oauth2/tokenP")
+                .uri(kisProperties.getBaseUrl() + "/oauth2/tokenP")
                 .header("content-type", "application/json; charset=utf-8")
                 .body(requestBody)
                 .retrieve()
