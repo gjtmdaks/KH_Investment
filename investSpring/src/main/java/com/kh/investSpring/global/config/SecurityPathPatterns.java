@@ -14,6 +14,7 @@ public final class SecurityPathPatterns {
 	public static final String[] AUTH_WHITELIST = {
 			"/oauth2/**",
 			"/login/oauth2/**",
+			"/api/stocks/**",
 			"/users/login",
 	};
 
@@ -23,6 +24,7 @@ public final class SecurityPathPatterns {
 	public static final String[] PUBLIC_WHITELIST = {
 			"/",
 			"/api/public/**",
+			"/api/main",
 			"/error",
 	};
 }
