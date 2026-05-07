@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kh.investSpring.domain.news.dao.NewsDao">
+
+	<resultMap id="NewsInfoEntityMap" type="com.kh.investSpring.domain.news.dto.NewsInfoEntity">
+		<id property="newsInfoId" column="NEWS_INFO_ID" />
+		<result property="articleLink" column="ARTICLE_LINK" />
+		<result property="newsTitle" column="NEWS_TITLE" />
+		<result property="newsDescription" column="NEWS_DESCRIPTION" />
+		<result property="publisher" column="PUBLISHER" />
+		<result property="publishedAt" column="PUBLISHED_AT" />
+		<result property="updatedAt" column="UPDATED_AT" />
+	</resultMap>
+
+	<insert id="upsertNewsInfo" parameterType="com.kh.investSpring.domain.news.dto.NewsInfoEntity">
+		MERGE INTO NEWS_INFO t
+		USING (
+			SELECT
+				#{articleLink, jdbcType=VARCHAR} AS ARTICLE_LINK,
+				#{newsTitle, jdbcType=VARCHAR} AS NEWS_TITLE,
+				#{newsDescription, jdbcType=VARCHAR} AS NEWS_DESCRIPTION,
+				#{publisher, jdbcType=VARCHAR} AS PUBLISHER,
+				#{publishedAt, jdbcType=TIMESTAMP} AS PUBLISHED_AT
+			FROM DUAL
+		) s
+		ON (t.ARTICLE_LINK = s.ARTICLE_LINK)
+		WHEN MATCHED THEN UPDATE SET
+			t.NEWS_TITLE = s.NEWS_TITLE,
+			t.NEWS_DESCRIPTION = s.NEWS_DESCRIPTION,
+			t.PUBLISHER = s.PUBLISHER,
+			t.PUBLISHED_AT = s.PUBLISHED_AT,
+			t.UPDATED_AT = SYSDATE
+		WHEN NOT MATCHED THEN INSERT (NEWS_INFO_ID, ARTICLE_LINK, NEWS_TITLE, NEWS_DESCRIPTION, PUBLISHER, PUBLISHED_AT, UPDATED_AT)
+			VALUES (SEQ_NEWS_INFO.NEXTVAL, s.ARTICLE_LINK, s.NEWS_TITLE, s.NEWS_DESCRIPTION, s.PUBLISHER, s.PUBLISHED_AT, SYSDATE)
+	</insert>
+
+	<select id="selectNewsInfoIdByLink" resultType="long">
+		SELECT NEWS_INFO_ID
+		FROM NEWS_INFO
+		WHERE ARTICLE_LINK = #{articleLink, jdbcType=VARCHAR}
+	</select>
+
+	<insert id="mergeNewsInfoStock">
+		MERGE INTO NEWS_INFO_STOCK t
+		USING (
+			SELECT #{newsInfoId} AS NEWS_INFO_ID, #{stockCode, jdbcType=VARCHAR} AS STOCK_CODE
+			FROM DUAL
+		) s
+		ON (t.NEWS_INFO_ID = s.NEWS_INFO_ID AND t.STOCK_CODE = s.STOCK_CODE)
+		WHEN NOT MATCHED THEN INSERT (NEWS_INFO_ID, STOCK_CODE)
+			VALUES (s.NEWS_INFO_ID, s.STOCK_CODE)
+	</insert>
+
+	<select id="selectRecentNewsInfo" resultMap="NewsInfoEntityMap">
+		SELECT NEWS_INFO_ID, ARTICLE_LINK, NEWS_TITLE, NEWS_DESCRIPTION, PUBLISHER, PUBLISHED_AT, UPDATED_AT
+		FROM NEWS_INFO
+		ORDER BY PUBLISHED_AT DESC
+		FETCH FIRST #{limit} ROWS ONLY
+	</select>
+
+	<select id="selectNewsInfoByStockCode" resultMap="NewsInfoEntityMap">
+		SELECT ni.NEWS_INFO_ID, ni.ARTICLE_LINK, ni.NEWS_TITLE, ni.NEWS_DESCRIPTION, ni.PUBLISHER, ni.PUBLISHED_AT, ni.UPDATED_AT
+		FROM NEWS_INFO ni
+		INNER JOIN NEWS_INFO_STOCK nis ON ni.NEWS_INFO_ID = nis.NEWS_INFO_ID
+		WHERE nis.STOCK_CODE = #{stockCode, jdbcType=VARCHAR}
+		ORDER BY ni.PUBLISHED_AT DESC
+		FETCH FIRST #{limit} ROWS ONLY
+	</select>
+
+</mapper>
