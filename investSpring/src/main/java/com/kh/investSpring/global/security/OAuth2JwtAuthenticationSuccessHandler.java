@@ -1,39 +1,43 @@
 package com.kh.investSpring.global.security;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kh.investSpring.domain.auth.dto.LoginResponse;
 import com.kh.investSpring.domain.auth.service.AuthUserService;
-import com.kh.investSpring.global.common.ApiResponse;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
 import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 
 /**
- * OAuth2 Authorization Code Grant 성공 시 서비스용 JWT(Access)를 발급하고,
- * Refresh는 HttpOnly 쿠키로 내려준 뒤 JSON 본문으로 Access Token을 반환합니다.
+ * OAuth2 Authorization Code Grant 성공 시 JWT(Access)를 발급,
+ * Refresh -> HttpOnly 쿠키로 내려준 뒤 프론트엔드 콜백 URL로 JWT를 쿼리 파라미터로 담아 리다이렉트.
  */
-@Component("oauth2LoginSuccessHandler")
-@RequiredArgsConstructor
-public class OAuth2JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+public class OAuth2JwtAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final AuthUserService authUserService;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RefreshTokenCookieWriter refreshTokenCookieWriter;
-	private final ObjectMapper objectMapper;
+	private final String oauth2FrontendCallbackUri;
+
+	public OAuth2JwtAuthenticationSuccessHandler(
+			AuthUserService authUserService,
+			JwtTokenProvider jwtTokenProvider,
+			RefreshTokenCookieWriter refreshTokenCookieWriter,
+			String oauth2FrontendCallbackUri) {
+		this.authUserService = authUserService;
+		this.jwtTokenProvider = jwtTokenProvider;
+		this.refreshTokenCookieWriter = refreshTokenCookieWriter;
+		this.oauth2FrontendCallbackUri = oauth2FrontendCallbackUri;
+		setAlwaysUseDefaultTargetUrl(true);
+	}
 
 	@Override
 	public void onAuthenticationSuccess(
@@ -60,12 +64,14 @@ public class OAuth2JwtAuthenticationSuccessHandler implements AuthenticationSucc
 		String refreshToken = jwtTokenProvider.createRefreshToken(userNo);
 		refreshTokenCookieWriter.addCookie(response, refreshToken);
 
-		ApiResponse<LoginResponse> body = ApiResponse.success(new LoginResponse(accessToken), "카카오 로그인 성공");
+		String redirectUrl = UriComponentsBuilder.fromUriString(oauth2FrontendCallbackUri)
+				.queryParam("accessToken", accessToken)
+				.build()
+				.encode()
+				.toUriString();
 
-		response.setStatus(HttpServletResponse.SC_OK);
-		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		response.getWriter().write(objectMapper.writeValueAsString(body));
+		setDefaultTargetUrl(redirectUrl);
+		super.onAuthenticationSuccess(request, response, authentication);
 	}
 
 	private static String resolveNickname(Map<String, Object> attributes) {
