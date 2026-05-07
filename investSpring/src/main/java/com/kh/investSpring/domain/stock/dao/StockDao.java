@@ -8,7 +8,6 @@ import org.apache.ibatis.annotations.Param;
 import com.kh.investSpring.domain.stock.dto.StockDto;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 
-@Mapper
 public interface StockDao {
 
     // ✅ 메인 리스트
@@ -22,4 +21,6 @@ public interface StockDao {
 
     // ✅ 미니 차트
     List<Long> getMiniChart(@Param("stockCode") String stockCode);
+    
+    List<String> findAllStockCodes();
 }

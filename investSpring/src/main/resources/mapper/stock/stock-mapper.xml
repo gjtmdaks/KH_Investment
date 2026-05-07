@@ -2,6 +2,111 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="stock">
-	
-	
+
+    <!-- =========================
+         메인 종목 리스트
+    ========================== -->
+    <select id="getStockList" resultType="StockDto">
+        SELECT
+            s.stock_code,
+            s.stock_name,
+            NVL(t.current_price, 0) AS price,
+            NVL(t.change_rate, 0) AS changeRate,
+            NVL(t.volume, 0) AS volume
+        FROM stocks s
+
+        LEFT JOIN (
+            SELECT
+                stock_code,
+                current_price,
+                change_rate,
+                volume,
+                ROW_NUMBER() OVER (
+                    PARTITION BY stock_code
+                    ORDER BY trade_time DESC
+                ) rn
+            FROM stock_realtime_tick
+        ) t
+        ON s.stock_code = t.stock_code
+        AND t.rn = 1
+
+        WHERE s.status = 'ACTIVE'
+
+        ORDER BY volume DESC NULLS LAST
+    </select>
+
+    <!-- =========================
+         거래량 1위 종목 코드
+    ========================== -->
+    <select id="getTopVolumeStockCode" resultType="string">
+        SELECT stock_code
+        FROM (
+            SELECT
+                stock_code,
+                volume,
+                ROW_NUMBER() OVER (
+                    ORDER BY volume DESC
+                ) rn
+            FROM stock_realtime_tick
+        )
+        WHERE rn = 1
+    </select>
+
+    <!-- =========================
+         종목 상세 정보
+    ========================== -->
+    <select id="getStockInfo"
+            parameterType="string"
+            resultType="StockInfoDto">
+        SELECT
+            s.stock_code,
+            s.stock_name,
+            NVL(t.current_price, 0) AS price,
+            NVL(t.change_rate, 0) AS changeRate
+        FROM stocks s
+
+        LEFT JOIN (
+            SELECT
+                stock_code,
+                current_price,
+                change_rate,
+                ROW_NUMBER() OVER (
+                    PARTITION BY stock_code
+                    ORDER BY trade_time DESC
+                ) rn
+            FROM stock_realtime_tick
+        ) t
+        ON s.stock_code = t.stock_code
+        AND t.rn = 1
+        WHERE s.stock_code = #{stockCode}
+    </select>
+
+    <!-- =========================
+         미니 차트
+    ========================== -->
+    <select id="getMiniChart"
+            parameterType="string"
+            resultType="long">
+        SELECT current_price
+        FROM (
+            SELECT current_price
+            FROM stock_realtime_tick
+            WHERE stock_code = #{stockCode}
+            ORDER BY trade_time DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+
+    <!-- =========================
+         전체 종목 코드 조회
+    ========================== -->
+    <select id="findAllStockCodes" resultType="string">
+        SELECT stock_code
+        FROM stocks
+        WHERE status = 'ACTIVE'
+        	AND market_type IN ('KOSPI', 'KOSDAQ')
+			AND ROWNUM <![CDATA[ <= ]]> 25
+        ORDER BY stock_code
+    </select>
+
 </mapper>

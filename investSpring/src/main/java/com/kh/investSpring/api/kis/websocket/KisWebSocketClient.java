@@ -3,6 +3,7 @@ package com.kh.investSpring.api.kis.websocket;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -16,6 +17,7 @@ import com.kh.investSpring.api.kis.dto.KisRealtimeRequest;
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 import com.kh.investSpring.api.kis.service.KisApprovalService;
 import com.kh.investSpring.api.kis.service.RealtimeQueueService;
+import com.kh.investSpring.domain.stock.dao.StockDao;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class KisWebSocketClient {
     private final KisProperties properties;
     private final RealtimeQueueService queueService;
     private final ObjectMapper objectMapper;
+    private final StockDao stockDao;
 
     @PostConstruct
     public void connect() {
@@ -42,11 +45,12 @@ public class KisWebSocketClient {
                     new StandardWebSocketClient();
 
             client.doHandshake(
-                    new KisSocketHandler(
-                            approvalKey,
-                            queueService,
-                            objectMapper
-                    ),
+            		new KisSocketHandler(
+            			    approvalKey,
+            			    queueService,
+            			    objectMapper,
+            			    stockDao
+            			),
                     properties.getWebsocketUrl() + "/tryitout/H0STCNT0"
             );
 
@@ -61,6 +65,7 @@ public class KisWebSocketClient {
         private final String approvalKey;
         private final RealtimeQueueService queueService;
         private final ObjectMapper objectMapper;
+        private final StockDao stockDao;
 
         @Override
         public void afterConnectionEstablished(
@@ -69,8 +74,20 @@ public class KisWebSocketClient {
 
             log.info("KIS websocket 연결 성공");
 
-            subscribe(session, "005930");
-            subscribe(session, "000660");
+            List<String> stockCodes = stockDao.findAllStockCodes();
+
+            log.info("구독 대상 종목 수={}", stockCodes.size());
+
+            for (String stockCode : stockCodes) {
+                try {
+
+                    subscribe(session, stockCode);
+                    Thread.sleep(50);
+
+                } catch (Exception e) {
+                    log.error("구독 실패 stockCode={}", stockCode, e);
+                }
+            }
         }
 
         @Override
