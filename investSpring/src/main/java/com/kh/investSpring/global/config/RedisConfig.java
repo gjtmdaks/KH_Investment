@@ -9,11 +9,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // 나중에 지우기
 
 @Configuration
 public class RedisConfig {
 
 	@Bean
+	@ConditionalOnProperty(//나중에 지우기
+		    name = "app.redis.enabled",
+		    havingValue = "true",
+		    matchIfMissing = false
+		)
 	public RedissonClient redissonClient(
 			@Value("${invest.redis.address:redis://127.0.0.1:6379}") String address) {
 		Config config = new Config();
