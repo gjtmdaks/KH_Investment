@@ -20,12 +20,14 @@ export default async function MainLayout({
 
   return (
     <div className={styles.pageLayout}>
-      <div className={styles.leftArea}>
-        <Header data={data} />
-        <main className={styles.content}>{children}</main>
-      </div>
+      <Header data={data} />
 
-      <MainSidebar data={data} />
+      <div className={styles.scrollRegion}>
+        <div className={styles.bodyRow}>
+          <main className={styles.content}>{children}</main>
+          <MainSidebar data={data} />
+        </div>
+      </div>
     </div>
   );
 }
