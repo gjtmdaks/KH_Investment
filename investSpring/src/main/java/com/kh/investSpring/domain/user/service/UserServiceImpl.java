@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.user.service;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
@@ -7,6 +8,7 @@ import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import lombok.RequiredArgsConstructor;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 	@Override
