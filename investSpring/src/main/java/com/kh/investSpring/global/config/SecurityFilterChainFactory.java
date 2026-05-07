@@ -56,7 +56,8 @@ public class SecurityFilterChainFactory {
 		http
 				.csrf(csrf -> {
 					csrf.csrfTokenRepository(csrfRepo)
-							.ignoringRequestMatchers("/oauth2/**", "/login/oauth2/**");
+							.ignoringRequestMatchers("/oauth2/**", "/login/oauth2/**", "/users/signup",
+						            "/users/signin");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
 					}

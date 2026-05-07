@@ -16,6 +16,7 @@ public final class SecurityPathPatterns {
 			"/login/oauth2/**",
 			"/api/stocks/**",
 			"/users/login",
+			"/users/signup"
 	};
 
 	/**

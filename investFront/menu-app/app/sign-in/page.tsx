@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 
 import Image from "next/image";
@@ -66,7 +65,6 @@ export default function SignInPage() {
         <p className={styles.description}>
           계정으로 로그인하거나 카카오로 시작할 수 있습니다.
         </p>
-
         <form className={styles.form} onSubmit={handleCredentialLogin}>
           {error ? <p className={styles.error}>{error}</p> : null}
           <div>
