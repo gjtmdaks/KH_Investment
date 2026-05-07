@@ -2,14 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+const apiBase = rawBase.trim() || "http://localhost:8081";
+
 export default function StockClient({ initialData }: any) {
   const [data, setData] = useState(initialData);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/main`)
-        .then(res => res.json())
-        .then(setData);
+      const url = `${apiBase}/api/main`;
+      fetch(url, { credentials: "include" })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(setData)
+        .catch(() => {});
     }, 1000); // 1초
 
     return () => clearInterval(interval);
