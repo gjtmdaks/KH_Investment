@@ -18,8 +18,8 @@ type AuthErrorBody = {
 function redirectToLogin() {
   if (typeof window === "undefined") return;
   const path = window.location.pathname + window.location.search;
-  if (path.startsWith("/login")) return;
-  window.location.assign("/login");
+    if (path.startsWith("/sign-in")) return;
+  window.location.assign("/sign-in");
 }
 
 apiClient.interceptors.request.use((config) => {

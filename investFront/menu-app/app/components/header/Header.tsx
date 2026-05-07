@@ -40,7 +40,7 @@ export default function Header({ data }: any) {
           {isLogin ? (
             <span>{data.header.userName}님</span>
           ) : (
-            <Link href="/signIn" className={styles.loginButton}>
+            <Link href="/sign-in" className={styles.loginButton}>
               로그인
             </Link>
           )}
