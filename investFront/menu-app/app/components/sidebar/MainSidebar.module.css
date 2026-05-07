@@ -1,6 +1,12 @@
 .sidebar {
-  height: 100vh;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
   flex-shrink: 0;
+
+  height: calc(100vh - var(--main-header-height, 40px));
+  height: calc(100dvh - var(--main-header-height, 40px));
+  min-height: 0;
 
   display: flex;
 
@@ -22,7 +28,7 @@
 .panel {
   flex: 1;
   min-width: 0;
-  height: 100vh;
+  min-height: 0;
   padding: 20px 18px;
   overflow-y: auto;
   border-right: 1px solid #272932;
@@ -64,7 +70,8 @@
 
 .iconNav {
   width: 72px;
-  height: 100vh;
+  align-self: stretch;
+  min-height: 0;
   padding: 12px 8px;
 
   display: flex;
@@ -234,6 +241,7 @@
 
 .emptyBox {
   height: calc(100vh - 100px);
+  height: calc(100dvh - 100px);
 
   display: flex;
   flex-direction: column;
