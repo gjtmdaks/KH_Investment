@@ -8,8 +8,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,10 +23,12 @@ import com.kh.investSpring.api.naver.NaverNewsApiClient;
 import com.kh.investSpring.api.naver.dto.NaverNewsItemDto;
 import com.kh.investSpring.domain.news.dao.NewsDao;
 import com.kh.investSpring.domain.news.dto.NewsInfoEntity;
+import com.kh.investSpring.domain.news.dto.NewsRelatedStockRow;
 import com.kh.investSpring.domain.news.dto.NewsResponse;
-import com.kh.investSpring.domain.news.util.ArticleOpenGraphFetcher;
-import com.kh.investSpring.domain.news.util.ArticleOpenGraphFetcher.OgPayload;
+import com.kh.investSpring.domain.news.dto.RelatedStock;
+import com.kh.investSpring.domain.news.service.NewsKeywordLabelService.RelatedStockMatch;
 import com.kh.investSpring.domain.news.util.FinanceNewsTopicFilter;
+import com.kh.investSpring.domain.news.util.NewsContentMergeUtil;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 import com.kh.investSpring.global.util.HtmlStripUtil;
@@ -36,10 +41,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NewsServiceImpl implements NewsService {
 
-	private static final String CACHE_MARKET = "invest:news:market:v4";
-	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v4:";
-	private static final String CACHE_MARKET_OLD = "invest:news:market:v3";
-	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v3:";
+	private static final String CACHE_MARKET = "invest:news:market:v5";
+	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v5:";
+	private static final String CACHE_MARKET_OLD = "invest:news:market:v4";
+	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v4:";
+
+	/** 뉴스 1건당 관련 종목 칩 최대 노출 개수 */
+	private static final int RELATED_STOCKS_MAX = 5;
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
 			"EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -50,7 +58,10 @@ public class NewsServiceImpl implements NewsService {
 	private final ObjectMapper objectMapper;
 	private final NaverNewsApiClient naverNewsApiClient;
 	private final NewsKeywordLabelService newsKeywordLabelService;
-	private final ArticleOpenGraphFetcher articleOpenGraphFetcher;
+	private final NewsOgEnrichmentService newsOgEnrichmentService;
+
+	/** 시장 뉴스 캐시 미스 시 중복 ingest(워밍·첫 요청 동시) 방지 */
+	private final Object marketNewsFetchLock = new Object();
 
 	@Override
 	public List<NewsResponse> getMarketNews(int size) {
@@ -61,20 +72,27 @@ public class NewsServiceImpl implements NewsService {
 			return cached;
 		}
 
-		int fetchSize = Math.min(100, Math.max(n * 4, 40));
-		List<NaverNewsItemDto> items = naverNewsApiClient.searchNews(FinanceNewsTopicFilter.MARKET_SEARCH_QUERY, fetchSize)
-				.stream()
-				.filter(FinanceNewsTopicFilter::passesNaverItem)
-				.toList();
-		if (!items.isEmpty()) {
-			List<NewsResponse> fresh = ingestMarketItems(items, n);
-			cacheList(CACHE_MARKET, fresh, Duration.ofMinutes(5));
-			return fresh;
-		}
+		synchronized (marketNewsFetchLock) {
+			cached = readListFromRedis(CACHE_MARKET, n);
+			if (!cached.isEmpty()) {
+				return cached;
+			}
 
-		List<NewsResponse> fallback = mapEntities(newsDao.selectRecentNewsInfo(n));
-		cacheList(CACHE_MARKET, fallback, Duration.ofMinutes(5));
-		return fallback;
+			int fetchSize = Math.min(100, Math.max(n * 4, 40));
+			List<NaverNewsItemDto> items = naverNewsApiClient.searchNews(FinanceNewsTopicFilter.MARKET_SEARCH_QUERY, fetchSize)
+					.stream()
+					.filter(FinanceNewsTopicFilter::passesNaverItem)
+					.toList();
+			if (!items.isEmpty()) {
+				List<NewsResponse> fresh = ingestMarketItems(items, n);
+				cacheList(CACHE_MARKET, fresh, Duration.ofMinutes(5));
+				return fresh;
+			}
+
+			List<NewsResponse> fallback = mapEntities(newsDao.selectRecentNewsInfo(n));
+			cacheList(CACHE_MARKET, fallback, Duration.ofMinutes(5));
+			return fallback;
+		}
 	}
 
 	@Override
@@ -85,7 +103,7 @@ public class NewsServiceImpl implements NewsService {
 			return getMarketNews(n);
 		}
 		// 캐시된 전체 리스트를 재사용하고 서버에서 필터링(캐시 키 폭발 방지)
-		List<NewsResponse> base = getMarketNews(Math.min(100, Math.max(n * 4, 40)));
+		List<NewsResponse> base = getMarketNews(Math.min(50, Math.max(n * 4, 40)));
 		List<NewsResponse> out = new ArrayList<>();
 		for (NewsResponse r : base) {
 			if (r == null) continue;
@@ -142,7 +160,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return out;
+		return enrichRelatedStockRates(out);
 	}
 
 	private List<NewsResponse> ingestStockItems(List<NaverNewsItemDto> items, String stockCode, int limit) {
@@ -156,7 +174,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return out;
+		return enrichRelatedStockRates(out);
 	}
 
 	private NewsResponse persistOne(NaverNewsItemDto item, String stockCodeOrNull) {
@@ -164,16 +182,15 @@ public class NewsServiceImpl implements NewsService {
 		if (articleLink.isEmpty()) {
 			return null;
 		}
-		String title = truncate(HtmlStripUtil.stripHtml(item.title()), 500);
-		String description = truncate(HtmlStripUtil.stripHtml(item.description()), 4000);
-		OgPayload og = articleOpenGraphFetcher.fetch(articleLink);
-		title = mergeTitle(title, og.title());
-		description = mergeDescription(description, og.description());
+		String naverTitle = NewsContentMergeUtil.truncate(HtmlStripUtil.stripHtml(item.title()), 500);
+		String naverDescription = NewsContentMergeUtil.truncate(HtmlStripUtil.stripHtml(item.description()), 4000);
+		String title = naverTitle;
+		String description = naverDescription;
 		String publisher = publisherFromUrl(articleLink);
 		Date publishedAt = parseNaverPubDate(item.pubDate());
 
 		NewsInfoEntity entity = new NewsInfoEntity();
-		entity.setArticleLink(truncate(articleLink, 2000));
+		entity.setArticleLink(NewsContentMergeUtil.truncate(articleLink, 2000));
 		entity.setNewsTitle(title);
 		entity.setNewsDescription(description);
 		entity.setPublisher(publisher);
@@ -190,16 +207,24 @@ public class NewsServiceImpl implements NewsService {
 		}
 		entity.setPublishedAt(publishedAt);
 
+		// 다중 종목 매칭(최대 5개): mergeNewsInfoStock 일괄 저장 + 응답에 알고리즘 순서 보존
+		List<RelatedStockMatch> matches =
+				newsKeywordLabelService.detectRelatedStocks(title, description, RELATED_STOCKS_MAX);
+		List<RelatedStock> algorithmOrderedStocks = toAlgorithmOrderedRelatedStocks(matches);
+		if (log.isDebugEnabled()) {
+			log.debug("관련 종목 매칭 size={} title={}", algorithmOrderedStocks.size(), title);
+		}
+
 		try {
 			newsDao.upsertNewsInfo(entity);
 		} catch (Exception e) {
 			log.warn("NEWS_INFO MERGE 실패 link={}: {}", articleLink, e.getMessage());
-			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt);
+			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt, algorithmOrderedStocks);
 		}
 
 		Long id = newsDao.selectNewsInfoIdByLink(entity.getArticleLink());
 		if (id == null) {
-			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt);
+			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt, algorithmOrderedStocks);
 		}
 
 		if (stockCodeOrNull != null && !stockCodeOrNull.isBlank()) {
@@ -210,6 +235,18 @@ public class NewsServiceImpl implements NewsService {
 			}
 		}
 
+		// 알고리즘이 매칭한 관련 종목들도 NEWS_INFO_STOCK에 모두 적재(중복은 PK 제약으로 자동 무시)
+		for (RelatedStock rs : algorithmOrderedStocks) {
+			if (rs.stockCode() == null || rs.stockCode().isBlank()) continue;
+			try {
+				newsDao.mergeNewsInfoStock(id, rs.stockCode());
+			} catch (Exception e) {
+				log.debug("NEWS_INFO_STOCK MERGE 실패(관련 종목) newsInfoId={} stock={}: {}", id, rs.stockCode(), e.getMessage());
+			}
+		}
+
+		newsOgEnrichmentService.enrichAfterPersist(id, naverTitle, naverDescription, entity.getArticleLink());
+
 		return new NewsResponse(
 				id,
 				title,
@@ -218,7 +255,8 @@ public class NewsServiceImpl implements NewsService {
 				entity.getPrimaryLabel(),
 				entity.getKeywordKind(),
 				entity.getArticleLink(),
-				toInstant(publishedAt));
+				toInstant(publishedAt),
+				algorithmOrderedStocks);
 	}
 
 	private static NewsResponse buildResponseWithoutId(
@@ -228,8 +266,33 @@ public class NewsServiceImpl implements NewsService {
 			String primaryLabel,
 			String keywordKind,
 			String articleLink,
-			Date publishedAt) {
-		return new NewsResponse(null, title, description, publisher, primaryLabel, keywordKind, articleLink, toInstant(publishedAt));
+			Date publishedAt,
+			List<RelatedStock> relatedStocks) {
+		return new NewsResponse(null, title, description, publisher, primaryLabel, keywordKind, articleLink, toInstant(publishedAt),
+				relatedStocks == null ? List.of() : relatedStocks);
+	}
+
+	/**
+	 * 알고리즘 매칭 결과를 응답 DTO 순서대로 변환합니다.
+	 *
+	 * <p>STOCKS 테이블 사전이 비어 있거나 부분 적재된 환경에서도 칩이 사라지지 않도록,
+	 * {@code stockCode}가 null/blank인(정적 KEYWORDS 단독 매칭) 항목도 칩에는 노출합니다.
+	 * 단, 이런 항목은 NEWS_INFO_STOCK 매핑·등락률 보강 대상에서 자연스럽게 제외됩니다.</p>
+	 *
+	 * <p>등락률은 1차로 null, 이후 {@link #enrichRelatedStockRates(List)}에서 채워집니다.</p>
+	 */
+	private static List<RelatedStock> toAlgorithmOrderedRelatedStocks(List<RelatedStockMatch> matches) {
+		if (matches == null || matches.isEmpty()) {
+			return List.of();
+		}
+		List<RelatedStock> out = new ArrayList<>(matches.size());
+		for (RelatedStockMatch m : matches) {
+			if (m == null) continue;
+			if (m.stockName() == null || m.stockName().isBlank()) continue;
+			String code = (m.stockCode() == null || m.stockCode().isBlank()) ? null : m.stockCode();
+			out.add(new RelatedStock(code, m.stockName(), null));
+		}
+		return out;
 	}
 
 	private static Instant toInstant(Date date) {
@@ -258,9 +321,144 @@ public class NewsServiceImpl implements NewsService {
 					e.getPrimaryLabel(),
 					e.getKeywordKind(),
 					e.getArticleLink(),
-					toInstant(e.getPublishedAt())));
+					toInstant(e.getPublishedAt()),
+					List.of()));
 		}
-		return list;
+		// DB fallback 경로: NEWS_INFO_STOCK 매핑을 일괄 조회해 관련 종목을 채웁니다.
+		return attachRelatedStocksFromDb(list);
+	}
+
+	/**
+	 * ingest 직후 알고리즘 매칭으로 채워진 {@code relatedStocks}의 등락률(null)을 STOCK_REALTIME_TICK 최신값으로 보강합니다.
+	 * <p>알고리즘 정렬 순서는 그대로 유지하며, 등락률만 매핑합니다.</p>
+	 */
+	private List<NewsResponse> enrichRelatedStockRates(List<NewsResponse> ingested) {
+		if (ingested == null || ingested.isEmpty()) {
+			return ingested == null ? List.of() : ingested;
+		}
+		List<Long> ids = new ArrayList<>();
+		for (NewsResponse r : ingested) {
+			if (r != null && r.newsInfoId() != null) {
+				ids.add(r.newsInfoId());
+			}
+		}
+		if (ids.isEmpty()) {
+			return ingested;
+		}
+		Map<Long, Map<String, Double>> ratesByNewsId = loadChangeRateMap(ids);
+		if (ratesByNewsId.isEmpty()) {
+			return ingested;
+		}
+		List<NewsResponse> out = new ArrayList<>(ingested.size());
+		for (NewsResponse r : ingested) {
+			if (r == null || r.newsInfoId() == null || r.relatedStocks() == null || r.relatedStocks().isEmpty()) {
+				out.add(r);
+				continue;
+			}
+			Map<String, Double> rateMap = ratesByNewsId.getOrDefault(r.newsInfoId(), Map.of());
+			List<RelatedStock> reordered = new ArrayList<>(r.relatedStocks().size());
+			for (RelatedStock rs : r.relatedStocks()) {
+				Double rate = (rs.stockCode() == null) ? null : rateMap.get(rs.stockCode());
+				reordered.add(new RelatedStock(rs.stockCode(), rs.stockName(), rate));
+			}
+			out.add(new NewsResponse(
+					r.newsInfoId(),
+					r.title(),
+					r.description(),
+					r.publisher(),
+					r.primaryLabel(),
+					r.keywordKind(),
+					r.articleLink(),
+					r.publishedAt(),
+					reordered));
+		}
+		return out;
+	}
+
+	/**
+	 * DB fallback 경로 전용: NEWS_INFO_STOCK에 적재된 매핑 그대로(종목코드 정렬)를 응답에 부착합니다.
+	 * <p>매칭 순위 정보가 없으므로 STOCK_CODE 정렬을 기본 노출 순서로 사용합니다.</p>
+	 */
+	private List<NewsResponse> attachRelatedStocksFromDb(List<NewsResponse> rows) {
+		if (rows == null || rows.isEmpty()) {
+			return rows == null ? List.of() : rows;
+		}
+		List<Long> ids = new ArrayList<>();
+		for (NewsResponse r : rows) {
+			if (r != null && r.newsInfoId() != null) {
+				ids.add(r.newsInfoId());
+			}
+		}
+		if (ids.isEmpty()) {
+			return rows;
+		}
+		Map<Long, List<RelatedStock>> grouped = groupRelatedStocks(ids);
+		if (grouped.isEmpty()) {
+			return rows;
+		}
+		List<NewsResponse> out = new ArrayList<>(rows.size());
+		for (NewsResponse r : rows) {
+			if (r == null || r.newsInfoId() == null) {
+				out.add(r);
+				continue;
+			}
+			List<RelatedStock> stocks = grouped.getOrDefault(r.newsInfoId(), List.of());
+			if (stocks.size() > RELATED_STOCKS_MAX) {
+				stocks = new ArrayList<>(stocks.subList(0, RELATED_STOCKS_MAX));
+			}
+			out.add(new NewsResponse(
+					r.newsInfoId(),
+					r.title(),
+					r.description(),
+					r.publisher(),
+					r.primaryLabel(),
+					r.keywordKind(),
+					r.articleLink(),
+					r.publishedAt(),
+					stocks));
+		}
+		return out;
+	}
+
+	private Map<Long, Map<String, Double>> loadChangeRateMap(List<Long> ids) {
+		List<NewsRelatedStockRow> rows = safeSelectRelatedStocks(ids);
+		if (rows.isEmpty()) {
+			return Map.of();
+		}
+		Map<Long, Map<String, Double>> out = new HashMap<>();
+		for (NewsRelatedStockRow row : rows) {
+			if (row == null || row.getNewsInfoId() == null || row.getStockCode() == null) continue;
+			out.computeIfAbsent(row.getNewsInfoId(), k -> new HashMap<>())
+					.put(row.getStockCode(), row.getChangeRate());
+		}
+		return out;
+	}
+
+	private Map<Long, List<RelatedStock>> groupRelatedStocks(List<Long> ids) {
+		List<NewsRelatedStockRow> rows = safeSelectRelatedStocks(ids);
+		if (rows.isEmpty()) {
+			return Map.of();
+		}
+		Map<Long, List<RelatedStock>> out = new LinkedHashMap<>();
+		for (NewsRelatedStockRow row : rows) {
+			if (row == null || row.getNewsInfoId() == null || row.getStockCode() == null) continue;
+			out.computeIfAbsent(row.getNewsInfoId(), k -> new ArrayList<>())
+					.add(new RelatedStock(row.getStockCode(), row.getStockName(), row.getChangeRate()));
+		}
+		return out;
+	}
+
+	private List<NewsRelatedStockRow> safeSelectRelatedStocks(List<Long> ids) {
+		if (ids == null || ids.isEmpty()) {
+			return List.of();
+		}
+		try {
+			List<NewsRelatedStockRow> rows = newsDao.selectRelatedStocksByNewsIds(ids);
+			return rows == null ? List.of() : rows;
+		} catch (Exception e) {
+			log.warn("NEWS_INFO_STOCK 일괄 조회 실패 size={}: {}", ids.size(), e.getMessage());
+			return List.of();
+		}
 	}
 
 	private String resolveStockSearchKeyword(String stockCode) {
@@ -336,7 +534,7 @@ public class NewsServiceImpl implements NewsService {
 		if (size < 1) {
 			return 1;
 		}
-		return Math.min(size, 100);
+		return Math.min(size, 50);
 	}
 
 	/** 네이버 기사 원문 URL 우선(originallink), 없으면 link */
@@ -354,7 +552,7 @@ public class NewsServiceImpl implements NewsService {
 		try {
 			String host = URI.create(url).getHost();
 			if (host != null && !host.isBlank()) {
-				return truncate(host, 100);
+				return NewsContentMergeUtil.truncate(host, 100);
 			}
 		} catch (Exception ignored) {
 			// fall through
@@ -372,56 +570,5 @@ public class NewsServiceImpl implements NewsService {
 		} catch (Exception e) {
 			return Date.from(Instant.now());
 		}
-	}
-
-	private static String truncate(String s, int maxLen) {
-		if (s == null) {
-			return "";
-		}
-		if (s.length() <= maxLen) {
-			return s;
-		}
-		return s.substring(0, maxLen);
-	}
-
-	/**
-	 * 네이버 검색 제목이 말줄임이면 원문 OG 제목을 쓰고, 아니면 더 긴 쪽을 사용합니다.
-	 */
-	private static String mergeTitle(String naverTitle, String ogTitle) {
-		String n = naverTitle == null ? "" : naverTitle;
-		if (ogTitle == null || ogTitle.isBlank()) {
-			return truncate(n, 500);
-		}
-		String o = ogTitle.trim();
-		if (o.length() < 4 && n.length() > o.length()) {
-			return truncate(n, 500);
-		}
-		if (looksTruncated(n)) {
-			return truncate(o, 500);
-		}
-		if (o.length() > n.length()) {
-			return truncate(o, 500);
-		}
-		return truncate(n, 500);
-	}
-
-	private static String mergeDescription(String naverDesc, String ogDesc) {
-		String n = naverDesc == null ? "" : naverDesc;
-		if (ogDesc == null || ogDesc.isBlank()) {
-			return truncate(n, 4000);
-		}
-		String o = ogDesc.trim();
-		if (o.length() > n.length()) {
-			return truncate(o, 4000);
-		}
-		return truncate(n, 4000);
-	}
-
-	private static boolean looksTruncated(String t) {
-		if (t == null || t.isBlank()) {
-			return false;
-		}
-		String s = t.trim();
-		return s.endsWith("...") || s.endsWith("…") || s.endsWith("..");
 	}
 }
