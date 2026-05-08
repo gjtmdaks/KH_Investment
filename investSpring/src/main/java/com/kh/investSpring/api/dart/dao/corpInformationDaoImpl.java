@@ -7,6 +7,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.kh.investSpring.api.dart.dto.DartCorpCodeDto;
+import com.kh.investSpring.api.dart.dto.MinorityShareholderDto;
 import com.kh.investSpring.api.dart.dto.StockTotalQuantityDto;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,11 @@ public class corpInformationDaoImpl implements corpInformationDao {
 	@Override
 	public void updateStockTotals(StockTotalQuantityDto dto) {
 		session.update("api.updateStockTotals", dto);
+	}
+
+	@Override
+	public void updateMinorityShareholder(MinorityShareholderDto dto) {
+		session.update("api.updateMinorityShareholder", dto);
 	}
 
 }
