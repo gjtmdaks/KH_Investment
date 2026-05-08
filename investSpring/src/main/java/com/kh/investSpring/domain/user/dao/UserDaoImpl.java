@@ -23,6 +23,11 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
+	public User selectUserByUserNo(long userNo) {
+		return session.selectOne("user.selectUserByUserNo", userNo);
+	}
+
+	@Override
 	public int insertUser(User user) {
 		// TODO Auto-generated method stub
 		return session.insert("user.insertUser", user);

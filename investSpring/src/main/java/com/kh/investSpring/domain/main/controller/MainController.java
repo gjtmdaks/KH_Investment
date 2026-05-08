@@ -29,9 +29,13 @@ public class MainController {
             return mainService.getMain(null);
         }
 
-        Long userNo = jwtUtil.getUserNo(token);
-
-        return mainService.getMain(userNo);
+        // 무효·만료 JWT는 게스트처럼 응답 (프런트 localStorage 등에 남은 토큰 대응)
+        try {
+            Long userNo = jwtUtil.getUserNo(token);
+            return mainService.getMain(userNo);
+        } catch (Exception e) {
+            return mainService.getMain(null);
+        }
     }
 
     private String extractToken(HttpServletRequest request) {

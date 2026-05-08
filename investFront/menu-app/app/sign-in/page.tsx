@@ -107,9 +107,9 @@ export default function SignInPage() {
           또는
         </div>
 
-        <Link href={kakaoOAuthStartUrl} className={styles.kakaoLink}>
+        <a href={kakaoOAuthStartUrl} className={styles.kakaoLink}>
           카카오로 로그인 하기
-        </Link>
+        </a>
       </section>
     </main>
   );

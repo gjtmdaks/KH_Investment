@@ -71,6 +71,61 @@
   align-items: center;
 }
 
+.loggedInWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.welcome {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.sep {
+  font-size: 13px;
+  font-weight: 400;
+  color: #d1d6db;
+  user-select: none;
+}
+
+.logoutButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 32px;
+  padding: 0 14px;
+
+  border: 1px solid #e5e8eb;
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: #4e5968;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.logoutButton:hover {
+  background-color: #f9fafb;
+  border-color: #d1d6db;
+  color: #191f28;
+}
+
+.logoutButton:active {
+  transform: scale(0.97);
+}
+
 .loginButton {
   display: flex;
   align-items: center;

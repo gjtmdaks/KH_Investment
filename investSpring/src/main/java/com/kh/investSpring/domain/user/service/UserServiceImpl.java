@@ -22,7 +22,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Header getHeader(Long userNo) {
-        return null;
+        if (userNo == null) {
+            return null;
+        }
+        User user = userDao.selectUserByUserNo(userNo);
+        if (user == null) {
+            return null;
+        }
+        String name = user.getUserName();
+        if (name == null || name.isBlank()) {
+            name = "회원";
+        }
+        return Header.builder().userNo(userNo).userName(name).build();
     }
 
     @Override
