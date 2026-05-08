@@ -9,6 +9,8 @@ public record NewsResponse(
 		String title,
 		String description,
 		String publisher,
+		String primaryLabel,
+		String keywordKind,
 		String articleLink,
 		@JsonFormat(shape = JsonFormat.Shape.STRING)
 		Instant publishedAt) {

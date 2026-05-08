@@ -9,13 +9,32 @@ export type NewsItem = {
   title: string;
   description: string;
   publisher: string;
+  primaryLabel?: string | null;
+  keywordKind?: "STOCK" | "SECTOR" | "MACRO" | "ISSUE" | null;
   articleLink: string;
   publishedAt: string;
 };
 
 const PAGE_SIZE = 5;
+const FETCH_SIZE = 100;
+
+// 상위 카테고리(고정). 버튼은 항상 노출하고, 데이터는 카테고리 매핑 후 필터링합니다.
+const MAIN_CATEGORIES: Array<"" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가"> = [
+  "",
+  "반도체",
+  "증시",
+  "경제",
+  "금리",
+  "환율",
+  "유가",
+];
 
 type PaginationEntry = number | "ellipsis";
+
+function getApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")?.trim();
+  return raw || "http://localhost:8081";
+}
 
 function formatRelativeTimeKo(iso: string): string {
   if (!iso) return "";
@@ -81,11 +100,56 @@ type Props = {
   items: NewsItem[];
 };
 
+function toTopCategory(item: NewsItem): "" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가" {
+  const label = item.primaryLabel?.trim() || "";
+  const kind = item.keywordKind || null;
+  if (!label) return "";
+
+  const l = label.toLowerCase();
+
+  const oil = ["유가", "원유", "wti", "브렌트", "brent"];
+  if (oil.some((k) => l.includes(k.toLowerCase()))) return "유가";
+
+  const fx = ["환율", "달러", "원/달러", "엔화", "위안"];
+  if (fx.some((k) => l.includes(k.toLowerCase()))) return "환율";
+
+  const rate = ["금리", "기준금리", "fomc", "연준", "fed", "국채", "채권", "국고채"];
+  if (rate.some((k) => l.includes(k.toLowerCase()))) return "금리";
+
+  const market = ["증시", "코스피", "코스닥", "나스닥", "s&p", "다우"];
+  if (market.some((k) => l.includes(k.toLowerCase()))) return "증시";
+
+  const semi = ["반도체", "sk하이닉스", "삼성전자", "하이닉스"];
+  if (semi.some((k) => l.includes(k.toLowerCase()))) return "반도체";
+
+  if (kind === "MACRO" || l.includes("경제")) return "경제";
+  if (kind === "STOCK" || kind === "SECTOR") return "증시";
+  return "경제";
+}
+
 export default function NewsFeedClient({ ok, items }: Props) {
   const [page, setPage] = useState(1);
   const listTopRef = useRef<HTMLDivElement>(null);
+  const [selectedCategory, setSelectedCategory] = useState<
+    "" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가"
+  >("");
+  const [loadOk, setLoadOk] = useState(ok);
+  const [dataAll, setDataAll] = useState<NewsItem[]>(items);
 
-  const total = items.length;
+  // server component에서 내려준 초기 데이터/상태가 바뀌면 동기화
+  useEffect(() => {
+    setLoadOk(ok);
+    setDataAll(items);
+    setPage(1);
+    setSelectedCategory("");
+  }, [ok, items]);
+
+  const data = useMemo(() => {
+    if (!selectedCategory) return dataAll;
+    return dataAll.filter((it) => toTopCategory(it) === selectedCategory);
+  }, [dataAll, selectedCategory]);
+
+  const total = data.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   useEffect(() => {
@@ -96,8 +160,8 @@ export default function NewsFeedClient({ ok, items }: Props) {
 
   const shown = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return items.slice(start, start + PAGE_SIZE);
-  }, [items, page]);
+    return data.slice(start, start + PAGE_SIZE);
+  }, [data, page]);
 
   const paginationEntries = useMemo(
     () => getPaginationEntries(page, totalPages),
@@ -110,60 +174,90 @@ export default function NewsFeedClient({ ok, items }: Props) {
     listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  if (!ok) {
-    return (
-      <div className={styles.error}>
-        뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </div>
-    );
-  }
-
-  if (total === 0) {
-    return (
-      <div className={styles.empty}>
-        표시할 뉴스가 없습니다. API 키·네트워크 또는 잠시 후 다시 확인해
-        주세요.
-      </div>
-    );
-  }
+  const onSelectCategory = (cat: "" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가") => {
+    setSelectedCategory(cat);
+    setPage(1);
+  };
 
   return (
     <>
       <div ref={listTopRef} className={styles.listAnchor} aria-hidden />
-      <div className={styles.list} role="list">
-        {shown.map((item, idx) => {
-          const globalIdx = (page - 1) * PAGE_SIZE + idx;
-          return (
-            <Link
-              key={`${item.articleLink || "n"}-${globalIdx}`}
-              href={item.articleLink || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.card}
-              role="listitem"
-            >
-              <div className={styles.thumb} aria-hidden>
-                {thumbLetter(item.title)}
-              </div>
-              <div className={styles.body}>
-                <h3 className={styles.title}>{item.title}</h3>
-                {item.description ? (
-                  <p className={styles.desc}>{item.description}</p>
-                ) : null}
-                <div className={styles.meta}>
-                  <span className={styles.publisher}>
-                    {shortenHost(item.publisher)}
-                  </span>
-                  <span className={styles.dot}>·</span>
-                  <span className={styles.time}>
-                    {formatRelativeTimeKo(item.publishedAt)}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+
+      <div className={styles.tagBar} aria-label="주요 키워드">
+        {MAIN_CATEGORIES.map((cat) => (
+          <button
+            key={cat || "ALL"}
+            type="button"
+            className={selectedCategory === cat ? styles.tagBtnActive : styles.tagBtn}
+            onClick={() => onSelectCategory(cat)}
+          >
+            {cat || "전체"}
+          </button>
+        ))}
       </div>
+
+      {!loadOk ? (
+        <div className={styles.error}>
+          뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </div>
+      ) : total === 0 ? (
+        <div className={styles.empty}>
+          아직 표시할 최신 뉴스가 없습니다. 상단의 “전체”로 돌아가거나 잠시 후 다시 확인해 주세요.
+        </div>
+      ) : (
+        <div className={styles.list} role="list">
+          {shown.map((item, idx) => {
+            const globalIdx = (page - 1) * PAGE_SIZE + idx;
+            const label = item.primaryLabel?.trim() || "";
+            const kind = item.keywordKind || null;
+            const badgeClass =
+              kind === "STOCK"
+                ? styles.badgeStock
+                : kind === "SECTOR"
+                  ? styles.badgeSector
+                  : kind === "MACRO"
+                    ? styles.badgeMacro
+                    : kind === "ISSUE"
+                      ? styles.badgeIssue
+                      : styles.badgeNeutral;
+            return (
+              <Link
+                key={`${item.articleLink || "n"}-${globalIdx}`}
+                href={item.articleLink || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.card}
+                role="listitem"
+              >
+                <div className={styles.thumb} aria-hidden>
+                  {label ? (
+                    <span className={`${styles.thumbBadge} ${badgeClass}`}>
+                      {label}
+                    </span>
+                  ) : (
+                    thumbLetter(item.title)
+                  )}
+                </div>
+                <div className={styles.body}>
+                  <h3 className={styles.title}>{item.title}</h3>
+                  {item.description ? (
+                    <p className={styles.desc}>{item.description}</p>
+                  ) : null}
+                  <div className={styles.meta}>
+                    <span className={styles.publisher}>
+                      {shortenHost(item.publisher)}
+                    </span>
+                    <span className={styles.dot}>·</span>
+                    <span className={styles.time}>
+                      {formatRelativeTimeKo(item.publishedAt)}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {totalPages > 1 ? (
         <nav

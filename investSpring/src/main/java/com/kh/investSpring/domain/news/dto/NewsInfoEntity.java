@@ -14,6 +14,11 @@ public class NewsInfoEntity {
 	private String newsTitle;
 	private String newsDescription;
 	private String publisher;
+	private String primaryLabel;
+	/**
+	 * STOCK | SECTOR | MACRO | ISSUE
+	 */
+	private String keywordKind;
 	private Date publishedAt;
 	private Date updatedAt;
 }

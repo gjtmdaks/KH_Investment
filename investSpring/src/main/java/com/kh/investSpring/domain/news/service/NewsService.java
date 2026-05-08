@@ -8,5 +8,7 @@ public interface NewsService {
 
 	List<NewsResponse> getMarketNews(int size);
 
+	List<NewsResponse> getMarketNewsByTag(String tag, int size);
+
 	List<NewsResponse> getStockNews(String stockCode, int size);
 }
