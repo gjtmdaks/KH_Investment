@@ -25,8 +25,12 @@ public class KisTickScheduler {
      */
     @Scheduled(fixedRate = 1000)
     public void saveTickData() {
+    	
+    	log.info("스케줄 실행");
 
         List<StockRealtimeTickDto> batch = queueService.pollBatch(1000);
+        
+        log.info("queue size={}", batch.size());
 
         if (batch.isEmpty()) return;
         

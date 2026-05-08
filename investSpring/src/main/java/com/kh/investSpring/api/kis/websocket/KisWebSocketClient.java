@@ -5,7 +5,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -19,7 +22,6 @@ import com.kh.investSpring.api.kis.service.KisApprovalService;
 import com.kh.investSpring.api.kis.service.RealtimeQueueService;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,24 +36,26 @@ public class KisWebSocketClient {
     private final ObjectMapper objectMapper;
     private final StockDao stockDao;
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void connect() {
 
         try {
 
-            String approvalKey = approvalService.getApprovalKey();
+            String approvalKey =
+                    approvalService.getApprovalKey();
 
             StandardWebSocketClient client =
                     new StandardWebSocketClient();
 
             client.doHandshake(
-            		new KisSocketHandler(
-            			    approvalKey,
-            			    queueService,
-            			    objectMapper,
-            			    stockDao
-            			),
-                    properties.getWebsocketUrl() + "/tryitout/H0STCNT0"
+                    new KisSocketHandler(
+                            approvalKey,
+                            queueService,
+                            objectMapper,
+                            stockDao
+                    ),
+                    properties.getWebsocketUrl()
+                            + "/tryitout/H0STCNT0"
             );
 
         } catch (Exception e) {
@@ -102,6 +106,24 @@ public class KisWebSocketClient {
 
                 log.info(payload);
 
+                // pingpong 처리
+                if (payload.contains("\"tr_id\":\"PINGPONG\"")) {
+
+                    session.sendMessage(new PongMessage());
+                    log.info("PINGPONG 응답 전송");
+                    return;
+                }
+
+                if (payload.contains("SUBSCRIBE SUCCESS")) {
+                    log.info("구독 성공 응답={}", payload);
+                    return;
+                }
+
+                if (payload.contains("MAX SUBSCRIBE OVER")) {
+                    log.error("실시간 구독 제한 초과={}", payload);
+                    return;
+                }
+
                 parseRealtime(payload);
 
             } catch (Exception e) {
@@ -134,48 +156,39 @@ public class KisWebSocketClient {
              * [5] 등락률
              * [12] 거래량
              */
+            if (data.length < 13) {
+                return;
+            }
 
             String stockCode = data[0];
             log.info("실시간 종목코드={}", stockCode);
-
+            
             String time = data[1];
-
-            long currentPrice =
-                    Long.parseLong(data[2]);
-
-            double changeRate =
-                    Double.parseDouble(data[5]);
-
-            long volume =
-                    Long.parseLong(data[12]);
+            long currentPrice = Long.parseLong(data[2]);
+            double changeRate = Double.parseDouble(data[5]);
+            long volume = Long.parseLong(data[12]);
 
             LocalDate today = LocalDate.now();
+            LocalTime localTime = LocalTime.parse(
+				                        time,
+				                        java.time.format.DateTimeFormatter.ofPattern("HHmmss")
+				                    );
 
-            LocalTime localTime =
-                    LocalTime.parse(
-                            time,
-                            java.time.format.DateTimeFormatter.ofPattern("HHmmss")
-                    );
+            LocalDateTime tradeTime = LocalDateTime.of(today, localTime);
 
-            LocalDateTime tradeTime =
-                    LocalDateTime.of(today, localTime);
-
-            StockRealtimeTickDto dto =
-                    StockRealtimeTickDto.builder()
-                            .stockCode(stockCode)
-                            .currentPrice(currentPrice)
-                            .changeRate(changeRate)
-                            .volume(volume)
-                            .tradeTime(tradeTime)
-                            .build();
-
+            StockRealtimeTickDto dto = StockRealtimeTickDto.builder()
+							                            .stockCode(stockCode)
+							                            .currentPrice(currentPrice)
+							                            .changeRate(changeRate)
+							                            .volume(volume)
+							                            .tradeTime(tradeTime)
+							                            .build();
             queueService.add(dto);
 
-            log.info(
-                "QUEUE 적재 완료 stockCode={}, price={}, volume={}",
-                stockCode,
-                currentPrice,
-                volume
+            log.info("QUEUE 적재 완료 stockCode={}, price={}, volume={}",
+	                stockCode,
+	                currentPrice,
+	                volume
             );
         }
 
