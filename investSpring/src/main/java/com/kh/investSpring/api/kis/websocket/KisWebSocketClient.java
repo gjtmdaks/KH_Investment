@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -134,6 +135,32 @@ public class KisWebSocketClient {
             } catch (Exception e) {
                 log.error("실시간 데이터 파싱 실패", e);
             }
+        }
+        
+        @Override
+        public void afterConnectionClosed(
+                WebSocketSession session,
+                CloseStatus status
+        ) {
+
+            log.warn(
+                "KIS websocket 연결 종료 sessionId={}, status={}",
+                session.getId(),
+                status
+            );
+        }
+
+        @Override
+        public void handleTransportError(
+                WebSocketSession session,
+                Throwable exception
+        ) {
+
+            log.error(
+                "KIS websocket transport error sessionId={}",
+                session.getId(),
+                exception
+            );
         }
 
         private void parseRealtime(String payload) {

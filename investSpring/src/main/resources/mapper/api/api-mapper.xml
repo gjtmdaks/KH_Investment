@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="api">
-    <insert id="batchInsertTick" parameterType="java.util.List">
+
+    <!-- 실시간 체결 데이터 배치 INSERT -->
+    <insert id="batchInsertTick" parameterType="list">
         INSERT INTO STOCK_REALTIME_TICK (
             TICK_ID,
             STOCK_CODE,
@@ -11,16 +15,91 @@
             VOLUME,
             TRADE_TIME
         )
-        SELECT SEQ_STOCK_REALTIME_TICK.NEXTVAL, A.* FROM (
-            <foreach collection="list" item="item" separator="UNION ALL">
-                SELECT 
-                    #{item.stockCode} as STOCK_CODE,
-                    #{item.currentPrice} as CURRENT_PRICE,
-                    #{item.changeRate} as CHANGE_RATE,
-                    #{item.volume} as VOLUME,
-                    #{item.tradeTime} as TRADE_TIME
+        SELECT
+            SEQ_STOCK_REALTIME_TICK.NEXTVAL,
+            A.STOCK_CODE,
+            A.CURRENT_PRICE,
+            A.CHANGE_RATE,
+            A.VOLUME,
+            A.TRADE_TIME
+        FROM (
+            <foreach collection="list"
+                     item="item"
+                     separator="UNION ALL">
+
+                SELECT
+                    #{item.stockCode}    AS STOCK_CODE,
+                    #{item.currentPrice} AS CURRENT_PRICE,
+                    #{item.changeRate}   AS CHANGE_RATE,
+                    #{item.volume}       AS VOLUME,
+                    #{item.tradeTime}    AS TRADE_TIME
                 FROM DUAL
+
             </foreach>
         ) A
     </insert>
+
+
+    <!-- 기업코드 MERGE -->
+	<update id="mergeCorpCodes" parameterType="DartCorpCodeDto">
+	    MERGE INTO CO_INFORMATION c
+	    USING (
+	
+	        SELECT
+	            #{stockCode} AS STOCK_CODE,
+	            #{corpCode}  AS CORP_CODE,
+	            #{corpName}  AS CO_NAME
+	        FROM DUAL
+	
+	        WHERE EXISTS (
+	            SELECT 1
+	            FROM STOCKS s
+	            WHERE s.STOCK_CODE = #{stockCode}
+	        )
+	
+	    ) s
+	
+	    ON (
+	        c.STOCK_CODE = s.STOCK_CODE
+	    )
+	
+	    WHEN MATCHED THEN
+	        UPDATE SET
+	            c.CORP_CODE  = s.CORP_CODE,
+	            c.CO_NAME    = s.CO_NAME,
+	            c.UPDATED_AT = SYSDATE
+	
+	    WHEN NOT MATCHED THEN
+	        INSERT (
+	            CORP_CODE,
+	            STOCK_CODE,
+	            CO_NAME,
+	            UPDATED_AT
+	        )
+	        VALUES (
+	            s.CORP_CODE,
+	            s.STOCK_CODE,
+	            s.CO_NAME,
+	            SYSDATE
+	        )
+	</update>
+	
+	<select id="selectCorpCodes" resultType="map">
+	    SELECT
+	        CORP_CODE,
+	        STOCK_CODE
+	    FROM CO_INFORMATION
+	    WHERE CORP_CODE IS NOT NULL
+	      AND STOCK_CODE IS NOT NULL
+	</select>
+	
+	<update id="updateStockTotals" parameterType="StockTotalQuantityDto">
+	    UPDATE CO_INFORMATION
+	       SET ISSUED_STOCK      = #{issuedStock},
+	           DECLINED_STOCK    = #{declinedStock},
+	           TREASURY_STOCK    = #{treasuryStock},
+	           OUTSTANDING_SHARES = #{outstandingShares}
+	     WHERE STOCK_CODE = #{stockCode}
+	</update>
+
 </mapper>
