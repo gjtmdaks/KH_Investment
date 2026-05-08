@@ -1,19 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import NewsArticleModal from "./NewsArticleModal";
+import { formatRelativeTimeKo, shortenHost, thumbLetter } from "./newsFormat";
 import styles from "./NewsPage.module.css";
+import type { NewsItem } from "./newsTypes";
 
-export type NewsItem = {
-  newsInfoId: number | null;
-  title: string;
-  description: string;
-  publisher: string;
-  primaryLabel?: string | null;
-  keywordKind?: "STOCK" | "SECTOR" | "MACRO" | "ISSUE" | null;
-  articleLink: string;
-  publishedAt: string;
-};
+export type { NewsItem };
 
 const PAGE_SIZE = 5;
 const FETCH_SIZE = 100;
@@ -34,37 +27,6 @@ type PaginationEntry = number | "ellipsis";
 function getApiBase(): string {
   const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")?.trim();
   return raw || "http://localhost:8081";
-}
-
-function formatRelativeTimeKo(iso: string): string {
-  if (!iso) return "";
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  const diff = Date.now() - t;
-  if (diff < 60_000) return "방금 전";
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}분 전`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}시간 전`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}일 전`;
-  return new Date(t).toLocaleDateString("ko-KR", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function thumbLetter(title: string): string {
-  const t = title?.trim();
-  if (!t) return "·";
-  const ch = t[0];
-  if (/[a-zA-Z]/.test(ch)) return ch.toUpperCase();
-  return ch;
-}
-
-function shortenHost(publisher: string): string {
-  if (!publisher || publisher === "-") return "출처 미상";
-  return publisher.replace(/^www\./, "");
 }
 
 /**
@@ -135,6 +97,7 @@ export default function NewsFeedClient({ ok, items }: Props) {
   >("");
   const [loadOk, setLoadOk] = useState(ok);
   const [dataAll, setDataAll] = useState<NewsItem[]>(items);
+  const [selected, setSelected] = useState<NewsItem | null>(null);
 
   // server component에서 내려준 초기 데이터/상태가 바뀌면 동기화
   useEffect(() => {
@@ -142,6 +105,7 @@ export default function NewsFeedClient({ ok, items }: Props) {
     setDataAll(items);
     setPage(1);
     setSelectedCategory("");
+    setSelected(null);
   }, [ok, items]);
 
   const data = useMemo(() => {
@@ -221,13 +185,12 @@ export default function NewsFeedClient({ ok, items }: Props) {
                       ? styles.badgeIssue
                       : styles.badgeNeutral;
             return (
-              <Link
+              <button
                 key={`${item.articleLink || "n"}-${globalIdx}`}
-                href={item.articleLink || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
                 className={styles.card}
                 role="listitem"
+                onClick={() => setSelected(item)}
               >
                 <div className={styles.thumb} aria-hidden>
                   {label ? (
@@ -253,7 +216,7 @@ export default function NewsFeedClient({ ok, items }: Props) {
                     </span>
                   </div>
                 </div>
-              </Link>
+              </button>
             );
           })}
         </div>
@@ -312,6 +275,8 @@ export default function NewsFeedClient({ ok, items }: Props) {
           </button>
         </nav>
       ) : null}
+
+      <NewsArticleModal item={selected} onClose={() => setSelected(null)} />
     </>
   );
 }
