@@ -55,4 +55,15 @@
             #{password}
         )
     </insert>
+    
+    <select id="selectLocalUserByUserId"
+            parameterType="string"
+            resultType="com.kh.investSpring.domain.user.vo.LocalUser">
+        SELECT
+            USER_NO AS userNo,
+            USER_ID AS userId,
+            PASSWORD AS password
+        FROM USER_LOCAL
+        WHERE USER_ID = #{userId}
+    </select>
 </mapper>

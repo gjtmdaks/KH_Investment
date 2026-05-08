@@ -13,4 +13,6 @@ public interface UserDao {
 
 	int insertLocalUser(LocalUser localUser);
 
+	LocalUser selectLocalUserByUserId(String userId);
+
 }

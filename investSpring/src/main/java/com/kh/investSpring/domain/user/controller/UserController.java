@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.user.dto.UserSignInRequest;
+import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.service.UserService;
@@ -34,11 +36,12 @@ public class UserController {
     
     // 로그인 (테스트용)
     @PostMapping("/signin")
-    public ApiResponse<?> login() {
-        Long userNo = 1L; // 테스트
-        String token = jwtUtil.createToken(userNo);
+    public ApiResponse<?> login(
+    		@RequestBody UserSignInRequest request
+    		) {
+    	UserSignInResponse response = us.signIn(request);
 
-        return ApiResponse.success(token, "로그인 성공");
+        return ApiResponse.success(response, "로그인 성공");
     }
 
     // 인증 테스트
@@ -48,4 +51,6 @@ public class UserController {
 
         return ApiResponse.success(userNo, "내 정보");
     }
+    
+    
 }

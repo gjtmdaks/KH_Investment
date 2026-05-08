@@ -10,7 +10,22 @@ import styles from "./signIn.module.css";
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081";
 const kakaoOAuthStartUrl = `${apiBase.replace(/\/$/, "")}/oauth2/authorization/kakao`;
 
-type ApiEnvelope<T> = { success: boolean; data: T; message?: string | null };
+type SignInResponse = {
+  accessToken: string;
+  userNo: number;
+  userId: string;
+  userName: string;
+  email: string;
+  phone: string;
+  provider: string;
+  auth: number;
+};
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T;
+  message?: string | null;
+};
 
 export default function SignInPage() {
   const router = useRouter();
@@ -19,27 +34,45 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  
+
   async function handleCredentialLogin(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const { data } = await apiClient.post<ApiEnvelope<string>>(
-        "/users/signin",
-        { userId, password }
-      );
-      if (!data.success || !data.data) {
-        setError(data.message ?? "로그인에 실패했습니다.");
-        return;
-      }
-      window.localStorage.setItem("accessToken", data.data);
-      router.push("/main");
-    } catch {
-      setError("서버와 통신할 수 없습니다.");
-    } finally {
-      setLoading(false);
-    }
+  e.preventDefault();
+  setError(null);
+
+  if (!userId.trim()) {
+    setError("아이디를 입력해주세요.");
+    return;
   }
+
+  if (!password.trim()) {
+    setError("비밀번호를 입력해주세요.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const { data } = await apiClient.post<ApiEnvelope<SignInResponse>>(
+      "/users/signin",
+      { userId, password }
+    );
+
+    if (!data.success || !data.data?.accessToken) {
+      setError(data.message ?? "로그인에 실패했습니다.");
+      return;
+    }
+
+    window.localStorage.setItem("accessToken", data.data.accessToken);
+    window.localStorage.setItem("user", JSON.stringify(data.data));
+
+    router.push("/main");
+  } catch {
+    setError("서버와 통신할 수 없습니다.");
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <main className={styles.container}>

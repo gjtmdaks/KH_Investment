@@ -39,4 +39,10 @@ public class UserDaoImpl implements UserDao {
 		return session.insert("user.insertLocalUser", localUser);
 	}
 
+	@Override
+	public LocalUser selectLocalUserByUserId(String userId) {
+		// TODO Auto-generated method stub
+		return session.selectOne("user.selectLocalUserByUserId", userId);
+	}
+
 }

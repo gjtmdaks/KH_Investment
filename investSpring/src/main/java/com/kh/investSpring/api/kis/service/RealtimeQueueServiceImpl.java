@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class RealtimeQueueServiceImpl implements RealtimeQueueService {
 
@@ -26,6 +29,7 @@ public class RealtimeQueueServiceImpl implements RealtimeQueueService {
             StockRealtimeTickDto dto = queue.poll();
 
             if (dto == null) {
+            	log.info("큐 생성 실패");
                 break;
             }
 
