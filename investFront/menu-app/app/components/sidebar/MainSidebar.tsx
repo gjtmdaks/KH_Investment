@@ -124,6 +124,8 @@ function getPanelTitle(activeMenu: SidebarMenu) {
       return "최근 본";
     case "liveTime":
       return "실시간";
+    case "admin":
+      return "관리자";
   }
 }
 
