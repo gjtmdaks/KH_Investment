@@ -21,6 +21,8 @@ import com.kh.investSpring.api.naver.dto.NaverNewsItemDto;
 import com.kh.investSpring.domain.news.dao.NewsDao;
 import com.kh.investSpring.domain.news.dto.NewsInfoEntity;
 import com.kh.investSpring.domain.news.dto.NewsResponse;
+import com.kh.investSpring.domain.news.util.ArticleOpenGraphFetcher;
+import com.kh.investSpring.domain.news.util.ArticleOpenGraphFetcher.OgPayload;
 import com.kh.investSpring.domain.news.util.FinanceNewsTopicFilter;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
@@ -34,10 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NewsServiceImpl implements NewsService {
 
-	private static final String CACHE_MARKET = "invest:news:market:v3";
-	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v3:";
-	private static final String CACHE_MARKET_OLD = "invest:news:market:v2";
-	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v2:";
+	private static final String CACHE_MARKET = "invest:news:market:v4";
+	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v4:";
+	private static final String CACHE_MARKET_OLD = "invest:news:market:v3";
+	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v3:";
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
 			"EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -48,6 +50,7 @@ public class NewsServiceImpl implements NewsService {
 	private final ObjectMapper objectMapper;
 	private final NaverNewsApiClient naverNewsApiClient;
 	private final NewsKeywordLabelService newsKeywordLabelService;
+	private final ArticleOpenGraphFetcher articleOpenGraphFetcher;
 
 	@Override
 	public List<NewsResponse> getMarketNews(int size) {
@@ -163,6 +166,9 @@ public class NewsServiceImpl implements NewsService {
 		}
 		String title = truncate(HtmlStripUtil.stripHtml(item.title()), 500);
 		String description = truncate(HtmlStripUtil.stripHtml(item.description()), 4000);
+		OgPayload og = articleOpenGraphFetcher.fetch(articleLink);
+		title = mergeTitle(title, og.title());
+		description = mergeDescription(description, og.description());
 		String publisher = publisherFromUrl(articleLink);
 		Date publishedAt = parseNaverPubDate(item.pubDate());
 
@@ -376,5 +382,46 @@ public class NewsServiceImpl implements NewsService {
 			return s;
 		}
 		return s.substring(0, maxLen);
+	}
+
+	/**
+	 * 네이버 검색 제목이 말줄임이면 원문 OG 제목을 쓰고, 아니면 더 긴 쪽을 사용합니다.
+	 */
+	private static String mergeTitle(String naverTitle, String ogTitle) {
+		String n = naverTitle == null ? "" : naverTitle;
+		if (ogTitle == null || ogTitle.isBlank()) {
+			return truncate(n, 500);
+		}
+		String o = ogTitle.trim();
+		if (o.length() < 4 && n.length() > o.length()) {
+			return truncate(n, 500);
+		}
+		if (looksTruncated(n)) {
+			return truncate(o, 500);
+		}
+		if (o.length() > n.length()) {
+			return truncate(o, 500);
+		}
+		return truncate(n, 500);
+	}
+
+	private static String mergeDescription(String naverDesc, String ogDesc) {
+		String n = naverDesc == null ? "" : naverDesc;
+		if (ogDesc == null || ogDesc.isBlank()) {
+			return truncate(n, 4000);
+		}
+		String o = ogDesc.trim();
+		if (o.length() > n.length()) {
+			return truncate(o, 4000);
+		}
+		return truncate(n, 4000);
+	}
+
+	private static boolean looksTruncated(String t) {
+		if (t == null || t.isBlank()) {
+			return false;
+		}
+		String s = t.trim();
+		return s.endsWith("...") || s.endsWith("…") || s.endsWith("..");
 	}
 }
