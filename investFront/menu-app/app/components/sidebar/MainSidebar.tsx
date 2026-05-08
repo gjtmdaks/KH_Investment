@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import styles from "./MainSidebar.module.css";
 
-type SidebarMenu = "myInvestment" | "interest" | "recent" | "liveTime";
+const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+const apiBase = rawBase.trim() || "http://localhost:8081/final";
+
+type SidebarMenu = "myInvestment" | "interest" | "recent" | "liveTime" | "admin";
 
 const menus: {
   id: SidebarMenu;
@@ -14,12 +17,27 @@ const menus: {
   { id: "interest", label: "관심", icon: "♥" },
   { id: "recent", label: "최근 본", icon: "🕘" },
   { id: "liveTime", label: "실시간", icon: "🔥" },
+  { id: "admin", label: "관리자", icon: "⚙" },
 ];
 
 export default function MainSidebar({ data }: any) {
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
   const [localUser, setLocalUser] = useState<any>(null);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsOpen(window.innerWidth >= 1400);
+    }
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const savedUser = window.localStorage.getItem("user");
@@ -60,6 +78,7 @@ export default function MainSidebar({ data }: any) {
           {activeMenu === "interest" && <InterestPanel data={data} />}
           {activeMenu === "recent" && <RecentPanel data={data} />}
           {activeMenu === "liveTime" && <LiveTimePanel />}
+          {activeMenu === "admin" && <AdminPanel />}
         </section>
       )}
 
@@ -241,6 +260,98 @@ function StockItem({
       </div>
 
       <button className={styles.heartButton}>♥</button>
+    </div>
+  );
+}
+
+function AdminPanel() {
+
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  async function requestCompanySync() {
+
+    try {
+
+      setCompanyLoading(true);
+
+      const response = await fetch(
+        `${apiBase}/admin/api/init`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("회사 정보 동기화 실패");
+      }
+
+      alert("회사 정보 동기화 시작");
+
+    } catch (e) {
+
+      console.error(e);
+
+      alert("회사 정보 동기화 실패");
+    } finally {
+      setCompanyLoading(false);
+    }
+  }
+
+  async function requestHistorySync() {
+
+    try {
+
+      setHistoryLoading(true);
+
+      const response = await fetch(
+        `${apiBase}/admin/api/kis/historysync`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("과거 시세 동기화 실패");
+      }
+
+      alert("과거 시세 동기화 시작");
+
+    } catch (e) {
+
+      console.error(e);
+
+      alert("과거 시세 동기화 실패");
+
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  return (
+    <div className={styles.panelContent}>
+
+      <div className={styles.sectionTitle}>
+        <h3>관리자 기능</h3>
+        <p>초기 적재 및 데이터 동기화</p>
+      </div>
+
+      <button
+        className={styles.addButton}
+        onClick={requestCompanySync}
+        disabled={companyLoading}
+      >
+        회사 정보 동기화
+      </button>
+
+      <button
+        className={styles.addButton}
+        onClick={requestHistorySync}
+        disabled={historyLoading}
+      >
+        과거 시세 동기화
+      </button>
+
     </div>
   );
 }
