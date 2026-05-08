@@ -11,7 +11,7 @@ function getApiBase(): string {
 async function fetchMarketNews(): Promise<{ ok: boolean; items: NewsItem[] }> {
   const base = getApiBase();
   try {
-    const res = await fetch(`${base}/api/public/news/market?size=60`, {
+    const res = await fetch(`${base}/api/public/news/market?size=100`, {
       cache: "no-store",
       credentials: "include",
     });
@@ -35,7 +35,7 @@ export default async function NewsPage() {
     <div className={styles.pageWrap}>
       <h2 className={styles.sectionTitle}>뉴스</h2>
       <p className={styles.subtitle}>
-        증시·경제·기업 소식 위주로 보여 드립니다. 기사를 누르면 원문으로
+        반도체·증시·경제 소식 위주로 보여 드립니다. 기사를 누르면 원문으로
         이동합니다.
       </p>
 

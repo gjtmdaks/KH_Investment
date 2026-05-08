@@ -34,8 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NewsServiceImpl implements NewsService {
 
-	private static final String CACHE_MARKET = "invest:news:market:v2";
-	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v2:";
+	private static final String CACHE_MARKET = "invest:news:market:v3";
+	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v3:";
+	private static final String CACHE_MARKET_OLD = "invest:news:market:v2";
+	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v2:";
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
 			"EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -45,10 +47,12 @@ public class NewsServiceImpl implements NewsService {
 	private final StringRedisTemplate redis;
 	private final ObjectMapper objectMapper;
 	private final NaverNewsApiClient naverNewsApiClient;
+	private final NewsKeywordLabelService newsKeywordLabelService;
 
 	@Override
 	public List<NewsResponse> getMarketNews(int size) {
 		int n = clampDisplay(size);
+		invalidateOldCacheOnce(CACHE_MARKET_OLD);
 		List<NewsResponse> cached = readListFromRedis(CACHE_MARKET, n);
 		if (!cached.isEmpty()) {
 			return cached;
@@ -71,12 +75,36 @@ public class NewsServiceImpl implements NewsService {
 	}
 
 	@Override
+	public List<NewsResponse> getMarketNewsByTag(String tag, int size) {
+		int n = clampDisplay(size);
+		String t = tag == null ? "" : tag.trim();
+		if (t.isEmpty()) {
+			return getMarketNews(n);
+		}
+		// 캐시된 전체 리스트를 재사용하고 서버에서 필터링(캐시 키 폭발 방지)
+		List<NewsResponse> base = getMarketNews(Math.min(100, Math.max(n * 4, 40)));
+		List<NewsResponse> out = new ArrayList<>();
+		for (NewsResponse r : base) {
+			if (r == null) continue;
+			if (r.primaryLabel() != null && r.primaryLabel().trim().equalsIgnoreCase(t)) {
+				out.add(r);
+			}
+			if (out.size() >= n) {
+				break;
+			}
+		}
+		return out;
+	}
+
+	@Override
 	public List<NewsResponse> getStockNews(String stockCode, int size) {
 		int n = clampDisplay(size);
 		String code = stockCode == null ? "" : stockCode.trim();
 		if (code.isEmpty()) {
 			return List.of();
 		}
+		String cacheKeyOld = CACHE_STOCK_PREFIX_OLD + code;
+		invalidateOldCacheOnce(cacheKeyOld);
 		String cacheKey = CACHE_STOCK_PREFIX + code;
 		List<NewsResponse> cached = readListFromRedis(cacheKey, n);
 		if (!cached.isEmpty()) {
@@ -143,18 +171,29 @@ public class NewsServiceImpl implements NewsService {
 		entity.setNewsTitle(title);
 		entity.setNewsDescription(description);
 		entity.setPublisher(publisher);
+		String extraStockKeyword = null;
+		if (stockCodeOrNull != null && !stockCodeOrNull.isBlank()) {
+			// 종목 뉴스의 경우 종목명(가능하면)을 후보로 추가하여 정확도 향상
+			extraStockKeyword = resolveStockSearchKeyword(stockCodeOrNull.trim());
+		}
+		NewsKeywordLabelService.PrimaryKeyword picked =
+				newsKeywordLabelService.detectPrimaryKeyword(title, description, extraStockKeyword);
+		if (picked != null) {
+			entity.setPrimaryLabel(picked.primaryLabel());
+			entity.setKeywordKind(picked.keywordKind());
+		}
 		entity.setPublishedAt(publishedAt);
 
 		try {
 			newsDao.upsertNewsInfo(entity);
 		} catch (Exception e) {
 			log.warn("NEWS_INFO MERGE 실패 link={}: {}", articleLink, e.getMessage());
-			return buildResponseWithoutId(title, description, publisher, entity.getArticleLink(), publishedAt);
+			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt);
 		}
 
 		Long id = newsDao.selectNewsInfoIdByLink(entity.getArticleLink());
 		if (id == null) {
-			return buildResponseWithoutId(title, description, publisher, entity.getArticleLink(), publishedAt);
+			return buildResponseWithoutId(title, description, publisher, entity.getPrimaryLabel(), entity.getKeywordKind(), entity.getArticleLink(), publishedAt);
 		}
 
 		if (stockCodeOrNull != null && !stockCodeOrNull.isBlank()) {
@@ -170,6 +209,8 @@ public class NewsServiceImpl implements NewsService {
 				title,
 				description,
 				publisher,
+				entity.getPrimaryLabel(),
+				entity.getKeywordKind(),
 				entity.getArticleLink(),
 				toInstant(publishedAt));
 	}
@@ -178,9 +219,11 @@ public class NewsServiceImpl implements NewsService {
 			String title,
 			String description,
 			String publisher,
+			String primaryLabel,
+			String keywordKind,
 			String articleLink,
 			Date publishedAt) {
-		return new NewsResponse(null, title, description, publisher, articleLink, toInstant(publishedAt));
+		return new NewsResponse(null, title, description, publisher, primaryLabel, keywordKind, articleLink, toInstant(publishedAt));
 	}
 
 	private static Instant toInstant(Date date) {
@@ -206,6 +249,8 @@ public class NewsServiceImpl implements NewsService {
 					title,
 					desc,
 					HtmlStripUtil.stripHtml(e.getPublisher()),
+					e.getPrimaryLabel(),
+					e.getKeywordKind(),
 					e.getArticleLink(),
 					toInstant(e.getPublishedAt())));
 		}
@@ -242,6 +287,20 @@ public class NewsServiceImpl implements NewsService {
 		} catch (Exception e) {
 			log.debug("Redis 뉴스 캐시 읽기 실패 key={}: {}", key, e.getMessage());
 			return List.of();
+		}
+	}
+
+	private void invalidateOldCacheOnce(String oldKey) {
+		if (oldKey == null || oldKey.isBlank()) {
+			return;
+		}
+		try {
+			Boolean existed = redis.hasKey(oldKey);
+			if (Boolean.TRUE.equals(existed)) {
+				redis.delete(oldKey);
+			}
+		} catch (Exception ignored) {
+			// best-effort
 		}
 	}
 
