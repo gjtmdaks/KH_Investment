@@ -66,4 +66,16 @@
         FROM USER_LOCAL
         WHERE USER_ID = #{userId}
     </select>
+    
+    <update id="updateUserStatusDelete" parameterType="long">
+	    UPDATE USERS
+	    SET
+	        STATUS = 'DELETED',
+	        DELETE_AT = SYSDATE
+	    WHERE USER_NO = #{userNo}
+	      AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'
+	      AND DELETE_AT IS NULL
+	</update>
+	
+	
 </mapper>

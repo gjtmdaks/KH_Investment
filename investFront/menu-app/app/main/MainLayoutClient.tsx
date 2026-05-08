@@ -41,7 +41,8 @@ export default function MainLayoutClient({
     fetchMainJson()
       .then((json) => {
         if (!cancelled) {
-          setData(json);
+          const response = json as { success?: boolean; data?: unknown };
+          setData(response.data ?? json);
         }
       })
       .catch(() => {

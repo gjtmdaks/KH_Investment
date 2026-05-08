@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,26 +11,49 @@ type MainHeaderPayload = {
   userName?: string;
 };
 
+type LocalUser = {
+  userNo?: number;
+  userName?: string;
+};
+
 export default function Header({ data }: { data?: unknown }) {
   const header = (data as { header?: MainHeaderPayload } | null)?.header;
-  const isLogin = !!(header && header.userName != null && header.userName !== "");
+
+  const [localUser, setLocalUser] = useState<LocalUser | null>(null);
+
+  useEffect(() => {
+    const savedUser = window.localStorage.getItem("user");
+
+    if (!savedUser) {
+      setLocalUser(null);
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(savedUser);
+      setLocalUser(parsedUser);
+    } catch {
+      setLocalUser(null);
+    }
+  }, []);
+
+  const dataUserName = header?.userName?.trim() ?? "";
+  const localUserName = localUser?.userName?.trim() ?? "";
+
+  const displayName = dataUserName || localUserName || "회원";
+  const isLogin = !!dataUserName || !!localUserName;
 
   function handleLogout() {
     try {
       window.localStorage.removeItem("accessToken");
       window.localStorage.removeItem("user");
-
       window.sessionStorage.clear();
     } catch {
       /* ignore */
     }
-    window.location.replace("/main/stock");
-  }
 
-  const displayName =
-    header?.userName && header.userName.trim() !== ""
-      ? header.userName.trim()
-      : "회원";
+    window.location.replace("/main");
+  }
 
   return (
     <header className={styles.header}>
@@ -63,14 +87,16 @@ export default function Header({ data }: { data?: unknown }) {
         <div className={styles.rightArea}>
           {isLogin ? (
             <div className={styles.loggedInWrap}>
-              <a href="/main/myPage">
-              <span className={styles.welcome}>
-                {displayName}님, 환영합니다!
-              </span>
-              </a>
+              <Link href="/main/myPage" className={styles.userLink}>
+                <span className={styles.welcome}>
+                  {displayName}님, 환영합니다!
+                </span>
+              </Link>
+
               <span className={styles.sep} aria-hidden>
                 |
               </span>
+
               <button
                 type="button"
                 className={styles.logoutButton}

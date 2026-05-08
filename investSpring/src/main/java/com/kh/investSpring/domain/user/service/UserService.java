@@ -14,4 +14,6 @@ public interface UserService {
 	UserSignUpResponse signUp(UserSignUpRequest request);
 
 	UserSignInResponse signIn(UserSignInRequest request);
+
+	void userDelete(Long userNo);
 }

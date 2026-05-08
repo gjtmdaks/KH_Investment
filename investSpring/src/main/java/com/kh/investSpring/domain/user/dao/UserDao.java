@@ -15,4 +15,8 @@ public interface UserDao {
 
 	LocalUser selectLocalUserByUserId(String userId);
 
+	int updateUserStatusDelete(Long userNo);
+
+	
+
 }
