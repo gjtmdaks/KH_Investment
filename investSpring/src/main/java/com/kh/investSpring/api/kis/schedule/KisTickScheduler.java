@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.api.kis.dao.StockRealtimeDao;
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 import com.kh.investSpring.api.kis.service.RealtimeQueueService;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class KisTickScheduler {
 
+    private final KisProperties kisProperties;
     private final RealtimeQueueService queueService;
     private final StockRealtimeDao stockRealtimeDao;
 
@@ -25,7 +27,11 @@ public class KisTickScheduler {
      */
     @Scheduled(fixedRate = 1000)
     public void saveTickData() {
-    	
+
+        if (!kisProperties.isWebsocketEnabled()) {
+            return;
+        }
+
     	log.info("스케줄 실행");
 
         List<StockRealtimeTickDto> batch = queueService.pollBatch(1000);

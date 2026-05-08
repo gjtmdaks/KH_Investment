@@ -39,6 +39,11 @@ public class KisWebSocketClient {
     @EventListener(ApplicationReadyEvent.class)
     public void connect() {
 
+        if (!properties.isWebsocketEnabled()) {
+            log.info("KIS websocket 비활성화됨(kis.websocket.enabled=false). 실시간 연결을 건너뜁니다.");
+            return;
+        }
+
         try {
 
             String approvalKey =
