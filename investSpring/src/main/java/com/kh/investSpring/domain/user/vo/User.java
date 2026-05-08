@@ -1,5 +1,7 @@
 package com.kh.investSpring.domain.user.vo;
 
+import java.util.Date;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +15,9 @@ public class User {
     private String email;
     private String phone;
     private String provider;
-    private Integer auth;
+    private Date createdAt;
+    private String status;
+    private Date deleteAt;
+    private int auth;
     
 }

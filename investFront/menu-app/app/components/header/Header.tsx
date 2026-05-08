@@ -17,10 +17,13 @@ export default function Header({ data }: { data?: unknown }) {
   function handleLogout() {
     try {
       window.localStorage.removeItem("accessToken");
+      window.localStorage.removeItem("user");
+
+      window.sessionStorage.clear();
     } catch {
       /* ignore */
     }
-    window.location.assign("/main/stock");
+    window.location.replace("/main/stock");
   }
 
   const displayName =
