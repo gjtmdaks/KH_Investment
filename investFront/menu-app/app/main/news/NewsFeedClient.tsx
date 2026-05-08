@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import NewsArticleModal from "./NewsArticleModal";
+import RelatedStockChips from "./RelatedStockChips";
 import { formatRelativeTimeKo, shortenHost, thumbLetter } from "./newsFormat";
 import styles from "./NewsPage.module.css";
 import type { NewsItem } from "./newsTypes";
@@ -9,9 +10,9 @@ import type { NewsItem } from "./newsTypes";
 export type { NewsItem };
 
 const PAGE_SIZE = 5;
-const FETCH_SIZE = 100;
+const FETCH_SIZE = 50;
 
-// 상위 카테고리(고정). 버튼은 항상 노출하고, 데이터는 카테고리 매핑 후 필터링합니다.
+// 상위 카테고리(고정). 버튼은 상시 표기, 데이터는 카테고리 매핑 후 필터링
 const MAIN_CATEGORIES: Array<"" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가"> = [
   "",
   "반도체",
@@ -206,14 +207,25 @@ export default function NewsFeedClient({ ok, items }: Props) {
                   {item.description ? (
                     <p className={styles.desc}>{item.description}</p>
                   ) : null}
-                  <div className={styles.meta}>
-                    <span className={styles.publisher}>
-                      {shortenHost(item.publisher)}
-                    </span>
-                    <span className={styles.dot}>·</span>
-                    <span className={styles.time}>
-                      {formatRelativeTimeKo(item.publishedAt)}
-                    </span>
+                  <div className={styles.metaRow}>
+                    {item.relatedStocks && item.relatedStocks.length > 0 ? (
+                      <div className={styles.metaChips}>
+                        <RelatedStockChips
+                          items={item.relatedStocks}
+                          size="compact"
+                          variant="inline"
+                        />
+                      </div>
+                    ) : null}
+                    <div className={styles.metaInfo}>
+                      <span className={styles.publisher}>
+                        {shortenHost(item.publisher)}
+                      </span>
+                      <span className={styles.dot}>·</span>
+                      <span className={styles.time}>
+                        {formatRelativeTimeKo(item.publishedAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </button>

@@ -30,8 +30,8 @@ export function thumbLetter(title: string): string {
 }
 
 /**
- * 모달 미리보기 등에서 말줄임 표시를 통일합니다.
- * 이미 "..." 또는 "…"로 끝나거나, 완결 문장(., ?, !)으로 끝나면 그대로 둡니다.
+ * 모달 미리보기 등에서 말줄임 표시를 통일
+ * 이미 "..." 또는 "…"로 끝나거나, 완결 문장(., ?, !)으로 끝나면 추가X.
  */
 export function ensurePreviewTrailingEllipsis(text: string): string {
   const t = text.trim();

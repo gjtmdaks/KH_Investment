@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { NewsItem } from "./newsTypes";
 import { ensurePreviewTrailingEllipsis, formatRelativeTimeKo, shortenHost, thumbLetter } from "./newsFormat";
+import RelatedStockChips from "./RelatedStockChips";
 import styles from "./NewsArticleModal.module.css";
 
 type Props = {
@@ -107,6 +108,15 @@ export default function NewsArticleModal({ item, onClose }: Props) {
             </div>
           </div>
         </div>
+
+        {item.relatedStocks && item.relatedStocks.length > 0 ? (
+          <div className={styles.modalChips}>
+            <RelatedStockChips
+              items={item.relatedStocks}
+              size="comfortable"
+            />
+          </div>
+        ) : null}
 
         <div className={styles.scroll}>
           <p className={styles.previewLabel}>미리보기</p>

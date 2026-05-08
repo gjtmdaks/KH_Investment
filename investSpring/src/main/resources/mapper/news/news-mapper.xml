@@ -30,8 +30,8 @@
 		) s
 		ON (t.ARTICLE_LINK = s.ARTICLE_LINK)
 		WHEN MATCHED THEN UPDATE SET
-			t.NEWS_TITLE = s.NEWS_TITLE,
-			t.NEWS_DESCRIPTION = s.NEWS_DESCRIPTION,
+			t.NEWS_TITLE = CASE WHEN LENGTH(RTRIM(s.NEWS_TITLE)) > LENGTH(RTRIM(NVL(t.NEWS_TITLE,''))) THEN s.NEWS_TITLE ELSE t.NEWS_TITLE END,
+			t.NEWS_DESCRIPTION = CASE WHEN LENGTH(RTRIM(s.NEWS_DESCRIPTION)) > LENGTH(RTRIM(NVL(t.NEWS_DESCRIPTION,''))) THEN s.NEWS_DESCRIPTION ELSE t.NEWS_DESCRIPTION END,
 			t.PUBLISHER = s.PUBLISHER,
 			t.PRIMARY_LABEL = NVL(s.PRIMARY_LABEL, t.PRIMARY_LABEL),
 			t.KEYWORD_KIND = NVL(s.KEYWORD_KIND, t.KEYWORD_KIND),
@@ -40,6 +40,14 @@
 		WHEN NOT MATCHED THEN INSERT (NEWS_INFO_ID, ARTICLE_LINK, NEWS_TITLE, NEWS_DESCRIPTION, PUBLISHER, PRIMARY_LABEL, KEYWORD_KIND, PUBLISHED_AT, UPDATED_AT)
 			VALUES (SEQ_NEWS_INFO.NEXTVAL, s.ARTICLE_LINK, s.NEWS_TITLE, s.NEWS_DESCRIPTION, s.PUBLISHER, s.PRIMARY_LABEL, s.KEYWORD_KIND, s.PUBLISHED_AT, SYSDATE)
 	</insert>
+
+	<update id="updateNewsTitleDescription">
+		UPDATE NEWS_INFO SET
+			NEWS_TITLE = #{newsTitle, jdbcType=VARCHAR},
+			NEWS_DESCRIPTION = #{newsDescription, jdbcType=VARCHAR},
+			UPDATED_AT = SYSDATE
+		WHERE NEWS_INFO_ID = #{newsInfoId}
+	</update>
 
 	<select id="selectNewsInfoIdByLink" resultType="long">
 		SELECT NEWS_INFO_ID
@@ -72,6 +80,54 @@
 		WHERE nis.STOCK_CODE = #{stockCode, jdbcType=VARCHAR}
 		ORDER BY ni.PUBLISHED_AT DESC
 		FETCH FIRST #{limit} ROWS ONLY
+	</select>
+
+	<resultMap id="StockDictionaryEntryMap" type="com.kh.investSpring.domain.news.dto.StockDictionaryEntry">
+		<result property="stockCode" column="STOCK_CODE" />
+		<result property="stockName" column="STOCK_NAME" />
+	</resultMap>
+
+	<select id="selectAllActiveStockDictionary" resultMap="StockDictionaryEntryMap">
+		SELECT STOCK_CODE, STOCK_NAME
+		FROM STOCKS
+		WHERE STATUS = 'ACTIVE'
+		  AND MARKET_TYPE IN ('KOSPI', 'KOSDAQ', 'KONEX')
+		ORDER BY STOCK_CODE
+	</select>
+
+	<resultMap id="NewsRelatedStockRowMap" type="com.kh.investSpring.domain.news.dto.NewsRelatedStockRow">
+		<result property="newsInfoId" column="NEWS_INFO_ID" />
+		<result property="stockCode" column="STOCK_CODE" />
+		<result property="stockName" column="STOCK_NAME" />
+		<result property="changeRate" column="CHANGE_RATE" />
+	</resultMap>
+
+	<select id="selectRelatedStocksByNewsIds" resultMap="NewsRelatedStockRowMap">
+		SELECT
+			nis.NEWS_INFO_ID,
+			s.STOCK_CODE,
+			s.STOCK_NAME,
+			t.CHANGE_RATE
+		FROM NEWS_INFO_STOCK nis
+		JOIN STOCKS s
+			ON s.STOCK_CODE = nis.STOCK_CODE
+		LEFT JOIN (
+			SELECT
+				STOCK_CODE,
+				CHANGE_RATE,
+				ROW_NUMBER() OVER (
+					PARTITION BY STOCK_CODE
+					ORDER BY TRADE_TIME DESC
+				) rn
+			FROM STOCK_REALTIME_TICK
+		) t
+			ON t.STOCK_CODE = s.STOCK_CODE
+			AND t.rn = 1
+		WHERE nis.NEWS_INFO_ID IN
+			<foreach collection="ids" item="id" open="(" close=")" separator=",">
+				#{id}
+			</foreach>
+		ORDER BY nis.NEWS_INFO_ID, s.STOCK_CODE
 	</select>
 
 </mapper>

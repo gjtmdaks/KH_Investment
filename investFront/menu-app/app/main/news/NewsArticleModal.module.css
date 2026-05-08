@@ -134,6 +134,14 @@
   color: rgba(245, 245, 247, 0.85);
 }
 
+/*
+ * 모달 헤더 아래, 본문 미리보기 위에 자리 잡는 관련 종목 칩 영역.
+ */
+.modalChips {
+  flex-shrink: 0;
+  padding: 4px 20px 12px;
+}
+
 .scroll {
   flex: 1;
   min-height: 0;
