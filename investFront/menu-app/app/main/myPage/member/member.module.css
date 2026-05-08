@@ -1,0 +1,187 @@
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  margin-bottom: 22px;
+  border: 1px solid #2a2d38;
+  border-radius: 18px;
+  background: #181a22;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.profileIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #4f7cff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.profileText h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.profileText p {
+  margin: 0;
+  color: #aeb3c2;
+  font-size: 14px;
+}
+
+.infoCard {
+  padding: 26px;
+  margin-bottom: 22px;
+  border: 1px solid #2a2d38;
+  border-radius: 18px;
+  background: #181a22;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.textButton {
+  border: none;
+  background: transparent;
+  color: #6f8cff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.textButton:hover {
+  text-decoration: underline;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  padding: 15px 0;
+  border-bottom: 1px solid #252833;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoRow span {
+  color: #9ca3b5;
+  font-size: 14px;
+}
+
+.infoRow strong {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.manageCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 26px;
+  border: 1px solid #2a2d38;
+  border-radius: 18px;
+  background: #181a22;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.manageCard h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.manageCard p {
+  margin: 8px 0 0;
+  color: #9ca3b5;
+  font-size: 14px;
+}
+
+.actionArea {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.primaryButton,
+.dangerButton {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: none;
+  background: #4f7cff;
+  color: #ffffff;
+}
+
+.primaryButton:hover {
+  background: #3f68d8;
+}
+
+.dangerButton {
+  border: 1px solid #ff6b6b;
+  background: transparent;
+  color: #ff6b6b;
+}
+
+.dangerButton:hover {
+  background: rgba(255, 107, 107, 0.12);
+}
+
+@media (max-width: 900px) {
+  .profileCard {
+    align-items: flex-start;
+  }
+
+  .infoRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .infoRow strong {
+    text-align: left;
+  }
+
+  .manageCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actionArea {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .dangerButton {
+    flex: 1;
+  }
+}
