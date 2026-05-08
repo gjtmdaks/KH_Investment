@@ -39,7 +39,6 @@ public class DartCorpCodeService {
     public String downloadCorpCodeXml() {
 
         try {
-
             String url =
                     "https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key="
                     + properties.getAppKey();

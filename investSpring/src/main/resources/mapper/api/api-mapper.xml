@@ -111,5 +111,65 @@
 	        UPDATED_AT = SYSDATE
 	    WHERE STOCK_CODE = #{stockCode}
 	</update>
+	
+	<select id="selectAllStockCodes" resultType="String">
+	    SELECT STOCK_CODE
+	    FROM STOCKS
+	    WHERE STOCK_CODE IS NOT NULL
+	</select>
+	
+	<insert id="mergeHistory">
+	    MERGE INTO STOCK_HISTORY_CACHE t
+	    USING (
+	        SELECT
+	            #{stockCode}  AS STOCK_CODE,
+	            #{periodType} AS PERIOD_TYPE,
+	            #{baseDate}   AS BASE_DATE
+	        FROM dual
+	    ) s
+	    ON (
+	        t.STOCK_CODE  = s.STOCK_CODE
+	        AND t.PERIOD_TYPE = s.PERIOD_TYPE
+	        AND t.BASE_DATE = s.BASE_DATE
+	    )
+	
+	    WHEN MATCHED THEN
+	    UPDATE SET
+	        OPEN_PRICE  = #{openPrice},
+	        HIGH_PRICE  = #{highPrice},
+	        LOW_PRICE   = #{lowPrice},
+	        CLOSE_PRICE = #{closePrice},
+	        VOLUME      = #{volume},
+	        CHANGE_PRICE = #{changePrice},
+	        CHANGE_RATE = #{changeRate}
+	
+	    WHEN NOT MATCHED THEN
+	    INSERT (
+	        HISTORY_ID,
+	        STOCK_CODE,
+	        PERIOD_TYPE,
+	        BASE_DATE,
+	        OPEN_PRICE,
+	        HIGH_PRICE,
+	        LOW_PRICE,
+	        CLOSE_PRICE,
+	        VOLUME,
+	        CHANGE_PRICE,
+	        CHANGE_RATE
+	    )
+	    VALUES (
+	        SEQ_STOCK_HISTORY_CACHE.NEXTVAL,
+	        #{stockCode},
+	        #{periodType},
+	        #{baseDate},
+	        #{openPrice},
+	        #{highPrice},
+	        #{lowPrice},
+	        #{closePrice},
+	        #{volume},
+	        #{changePrice},
+	        #{changeRate}
+	    )
+	</insert>
 
 </mapper>
