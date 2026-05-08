@@ -47,3 +47,19 @@
   padding: 24px;
   background-color: #0f1015;
 }
+
+.loadingMessage,
+.loadError {
+  margin: 0;
+  padding: 12px 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.loadingMessage {
+  color: #94a3b8;
+}
+
+.loadError {
+  color: #f87171;
+}

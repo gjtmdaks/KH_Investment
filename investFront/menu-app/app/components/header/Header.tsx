@@ -1,9 +1,32 @@
-import Link from "next/link";
-import styles from "./Header.module.css";
-import Image from "next/image";
+"use client";
 
-export default function Header({ data }: any) {
-  const isLogin = !!data?.header;
+import Image from "next/image";
+import Link from "next/link";
+
+import styles from "./Header.module.css";
+
+type MainHeaderPayload = {
+  userNo?: number;
+  userName?: string;
+};
+
+export default function Header({ data }: { data?: unknown }) {
+  const header = (data as { header?: MainHeaderPayload } | null)?.header;
+  const isLogin = !!(header && header.userName != null && header.userName !== "");
+
+  function handleLogout() {
+    try {
+      window.localStorage.removeItem("accessToken");
+    } catch {
+      /* ignore */
+    }
+    window.location.assign("/main/stock");
+  }
+
+  const displayName =
+    header?.userName && header.userName.trim() !== ""
+      ? header.userName.trim()
+      : "회원";
 
   return (
     <header className={styles.header}>
@@ -19,7 +42,6 @@ export default function Header({ data }: any) {
           />
         </Link>
 
-        {/* 메뉴 영역 */}
         <nav className={styles.nav}>
           <Link href="/main" className={styles.navItem}>
             홈
@@ -35,10 +57,23 @@ export default function Header({ data }: any) {
           </Link>
         </nav>
 
-        {/* 로그인 버튼 */}
         <div className={styles.rightArea}>
           {isLogin ? (
-            <span>{data.header.userName}님</span>
+            <div className={styles.loggedInWrap}>
+              <span className={styles.welcome}>
+                {displayName}님, 환영합니다!
+              </span>
+              <span className={styles.sep} aria-hidden>
+                |
+              </span>
+              <button
+                type="button"
+                className={styles.logoutButton}
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
           ) : (
             <Link href="/sign-in" className={styles.loginButton}>
               로그인

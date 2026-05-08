@@ -7,6 +7,20 @@
         FROM USER_LOCAL
         WHERE USER_ID = #{userId}
     </select>
+
+	<select id="selectUserByUserNo" parameterType="long" resultType="com.kh.investSpring.domain.user.vo.User">
+        SELECT
+            USER_NO AS userNo,
+            USER_NAME AS userName,
+            EMAIL AS email,
+            PHONE AS phone,
+            PROVIDER AS provider,
+            AUTH AS auth
+        FROM USERS
+        WHERE USER_NO = #{userNo}
+          AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'
+          AND DELETE_AT IS NULL
+    </select>
     
 	<insert id="insertUser" parameterType="com.kh.investSpring.domain.user.vo.User">
         <selectKey keyProperty="userNo" resultType="int" order="BEFORE">
