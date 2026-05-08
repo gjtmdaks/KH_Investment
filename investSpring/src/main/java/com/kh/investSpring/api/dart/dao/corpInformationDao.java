@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.kh.investSpring.api.dart.dto.DartCorpCodeDto;
+import com.kh.investSpring.api.dart.dto.MinorityShareholderDto;
 import com.kh.investSpring.api.dart.dto.StockTotalQuantityDto;
 
 public interface corpInformationDao {
@@ -13,5 +14,7 @@ public interface corpInformationDao {
 	List<Map<String, Object>> selectCorpCodes();
 
 	void updateStockTotals(StockTotalQuantityDto dto);
+
+	void updateMinorityShareholder(MinorityShareholderDto dto);
 
 }

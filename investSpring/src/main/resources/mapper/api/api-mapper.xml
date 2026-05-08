@@ -98,8 +98,18 @@
 	       SET ISSUED_STOCK      = #{issuedStock},
 	           DECLINED_STOCK    = #{declinedStock},
 	           TREASURY_STOCK    = #{treasuryStock},
-	           OUTSTANDING_SHARES = #{outstandingShares}
+	           OUTSTANDING_SHARES = #{outstandingShares},
+	           UPDATED_AT = SYSDATE
 	     WHERE STOCK_CODE = #{stockCode}
+	</update>
+	
+	<update id="updateMinorityShareholder" parameterType="MinorityShareholderDto">
+	    UPDATE CO_INFORMATION
+	    SET
+	        MINORITY_SHAREHOLDER_RATIO = #{minorityShareholderRatio},
+	        MINORITY_OWNERSHIP_RATIO   = #{minorityOwnershipRatio},
+	        UPDATED_AT = SYSDATE
+	    WHERE STOCK_CODE = #{stockCode}
 	</update>
 
 </mapper>
