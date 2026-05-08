@@ -63,9 +63,11 @@ export default function Header({ data }: { data?: unknown }) {
         <div className={styles.rightArea}>
           {isLogin ? (
             <div className={styles.loggedInWrap}>
+              <a href="/main/myPage">
               <span className={styles.welcome}>
                 {displayName}님, 환영합니다!
               </span>
+              </a>
               <span className={styles.sep} aria-hidden>
                 |
               </span>
