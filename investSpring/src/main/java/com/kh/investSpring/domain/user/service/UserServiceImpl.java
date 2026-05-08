@@ -1,6 +1,7 @@
 package com.kh.investSpring.domain.user.service;
 
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
     
     
     @Override
@@ -58,10 +60,12 @@ public class UserServiceImpl implements UserService {
 
         userDao.insertUser(user);
 
+        String encodedPassword = passwordEncoder.encode(request.password());
+
         LocalUser localUser = new LocalUser(
                 user.getUserNo(),
                 request.userId(),
-                request.password()
+                encodedPassword
         );
 
         userDao.insertLocalUser(localUser);
@@ -98,12 +102,20 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public UserSignInResponse signIn(UserSignInRequest request) {
 	    LocalUser localUser = userDao.selectLocalUserByUserId(request.getUserId());
-
+	    
 	    if (localUser == null) {
 	        throw new RuntimeException("존재하지 않는 아이디입니다.");
 	    }
-
-	    if (!localUser.getPassword().equals(request.getPassword())) {
+	    
+	    boolean isPasswordMatched;
+	    
+	    if (localUser.getPassword() != null && localUser.getPassword().startsWith("$2")) {
+	        isPasswordMatched = passwordEncoder.matches(request.getPassword(), localUser.getPassword());
+	    } else {
+	        isPasswordMatched = localUser.getPassword().equals(request.getPassword());
+	    }
+	    
+	    if (!passwordEncoder.matches(request.getPassword(), localUser.getPassword())) {
 	        throw new RuntimeException("비밀번호가 일치하지 않습니다.");
 	    }
 

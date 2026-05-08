@@ -24,6 +24,11 @@
   text-align: left;
   padding: 0 16px;
   cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .menuButton:hover {
