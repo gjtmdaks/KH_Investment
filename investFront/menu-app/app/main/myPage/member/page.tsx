@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import layoutStyles from "../myPage.module.css";
 import memberStyles from "./member.module.css";
 import MyPageSidebar from "../components/MyPageSidebar";
+import { useRouter } from "next/navigation";
+import { apiClient } from "@/lib/api-client";
 
 type LoginUser = {
   accessToken?: string;
@@ -18,7 +20,7 @@ type LoginUser = {
 
 export default function MemberPage() {
   const [user, setUser] = useState<LoginUser | null>(null);
-
+  const router = useRouter();
   useEffect(() => {
     const savedUser = window.localStorage.getItem("user");
 
@@ -33,6 +35,24 @@ export default function MemberPage() {
       setUser(null);
     }
   }, []);
+
+  async function handleWithdraw() {
+    const ok = window.confirm("정말 회원 탈퇴하시겠습니까?");
+
+    if (!ok) return;
+
+    try {
+      await apiClient.patch("/users/me/withdraw");
+
+      window.localStorage.removeItem("accessToken");
+      window.localStorage.removeItem("user");
+
+      alert("회원 탈퇴가 완료되었습니다.");
+      router.replace("/main");
+    } catch {
+      alert("회원 탈퇴 처리 중 오류가 발생했습니다.");
+    }
+  }
 
   return (
     <main className={layoutStyles.page}>
@@ -110,7 +130,11 @@ export default function MemberPage() {
                 <button type="button" className={memberStyles.primaryButton}>
                   회원정보 수정
                 </button>
-                <button type="button" className={memberStyles.dangerButton}>
+                <button
+                  type="button"
+                  className={memberStyles.dangerButton}
+                  onClick={handleWithdraw}
+                >
                   회원 탈퇴
                 </button>
               </div>

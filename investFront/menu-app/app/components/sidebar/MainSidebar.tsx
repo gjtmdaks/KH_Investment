@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./MainSidebar.module.css";
 
 type SidebarMenu = "myInvestment" | "interest" | "recent" | "liveTime";
@@ -19,8 +19,24 @@ const menus: {
 export default function MainSidebar({ data }: any) {
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
+  const [localUser, setLocalUser] = useState<any>(null);
 
-  const isLogin = !!data?.sidebar;
+  useEffect(() => {
+    const savedUser = window.localStorage.getItem("user");
+
+    if (!savedUser) {
+      setLocalUser(null);
+      return;
+    }
+
+    try {
+      setLocalUser(JSON.parse(savedUser));
+    } catch {
+      setLocalUser(null);
+    }
+  }, []);
+
+  const isLogin = !!data?.header?.userName || !!localUser?.userName;
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.close}`}>

@@ -2,6 +2,7 @@
 package com.kh.investSpring.domain.user.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +14,6 @@ import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
-import com.kh.investSpring.global.util.JwtUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService us;
-    private final JwtUtil jwtUtil;
     
     // 로컬 회원가입
     @PostMapping("/signup")
@@ -36,10 +35,15 @@ public class UserController {
     
     // 로그인 (테스트용)
     @PostMapping("/signin")
-    public ApiResponse<?> login(
-    		@RequestBody UserSignInRequest request
-    		) {
-    	UserSignInResponse response = us.signIn(request);
+    public ApiResponse<UserSignInResponse> login(
+            @RequestBody UserSignInRequest request
+    ) {
+        System.out.println("로그인 컨트롤러 진입");
+        System.out.println("userId = " + request.getUserId());
+
+        UserSignInResponse response = us.signIn(request);
+
+        System.out.println("로그인 서비스 처리 완료");
 
         return ApiResponse.success(response, "로그인 성공");
     }
@@ -50,6 +54,16 @@ public class UserController {
         Long userNo = (Long) request.getAttribute("userNo");
 
         return ApiResponse.success(userNo, "내 정보");
+    }
+    
+    // 탈퇴
+    @PatchMapping("/me/withdraw")
+    public ApiResponse<?> withdraw(HttpServletRequest request) {
+        Long userNo = (Long) request.getAttribute("userNo");
+
+        us.userDelete(userNo);
+
+        return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다.");
     }
     
     

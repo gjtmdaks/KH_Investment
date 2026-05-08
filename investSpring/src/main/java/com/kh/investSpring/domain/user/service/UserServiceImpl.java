@@ -13,7 +13,7 @@ import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
-import com.kh.investSpring.global.util.JwtUtil;
+import com.kh.investSpring.global.jwt.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
-    private final JwtUtil jwtUtil;
+    private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     
     
@@ -129,7 +129,7 @@ public class UserServiceImpl implements UserService {
 	        throw new RuntimeException("로컬 로그인 계정이 아닙니다.");
 	    }
 
-	    String accessToken = jwtUtil.createToken((long) user.getUserNo());
+	    String accessToken = jwtTokenProvider.createAccessToken((long) user.getUserNo());
 
 	    return new UserSignInResponse(
 	            accessToken,
@@ -141,5 +141,26 @@ public class UserServiceImpl implements UserService {
 	            user.getProvider(),
 	            user.getAuth()
 	    );
+	}
+
+	@Override
+	@Transactional
+	public void userDelete(Long userNo) {
+		if (userNo == null) {
+	        throw new IllegalArgumentException("로그인이 필요합니다.");
+	    }
+
+	    User user = userDao.selectUserByUserNo(userNo);
+
+	    if (user == null) {
+	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+	    }
+
+	    int result = userDao.updateUserStatusDelete(userNo);
+
+	    if (result == 0) {
+	        throw new IllegalStateException("회원 탈퇴 처리에 실패했습니다.");
+	    }
+		
 	}
 }
