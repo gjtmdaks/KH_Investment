@@ -147,6 +147,9 @@ export default function SignInPage() {
           카카오로 로그인 하기
         </a>
       </section>
+      <Link href="/sign-in/find_password" className={styles.findPasswordLink}>
+        비밀번호를 잊으셨나요?
+      </Link>
     </main>
   );
 }
