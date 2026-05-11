@@ -98,9 +98,6 @@ export default function SignInPage() {
       <section className={styles.card}>
         <p className={styles.brand}>KH 증권</p>
         <h1 className={styles.title}>로그인</h1>
-        <p className={styles.description}>
-          계정으로 로그인하거나 카카오로 시작할 수 있습니다.
-        </p>
         <form className={styles.form} onSubmit={handleCredentialLogin}>
           {error ? <p className={styles.error}>{error}</p> : null}
           <div>

@@ -8,7 +8,7 @@ const apiBase = rawBase.trim() || "http://localhost:8081/final";
 
 type SidebarMenu = "myInvestment" | "interest" | "recent" | "liveTime" | "admin";
 
-const menus: {
+const baseMenus: {
   id: SidebarMenu;
   label: string;
   icon: string;
@@ -17,13 +17,23 @@ const menus: {
   { id: "interest", label: "관심", icon: "♥" },
   { id: "recent", label: "최근 본", icon: "🕘" },
   { id: "liveTime", label: "실시간", icon: "🔥" },
-  { id: "admin", label: "관리자", icon: "⚙" },
 ];
+
+const adminMenu: {
+  id: SidebarMenu;
+  label: string;
+  icon: string;
+} = { id: "admin", label: "관리자", icon: "⚙" };
 
 export default function MainSidebar({ data }: any) {
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
   const [localUser, setLocalUser] = useState<any>(null);
+
+  const isLogin = !!data?.header?.userName || !!localUser?.userName;
+
+  const isAdmin = localUser?.auth === 1;
+  const visibleMenus = isAdmin ? [...baseMenus, adminMenu] : baseMenus;
 
   useEffect(() => {
     function handleResize() {
@@ -53,8 +63,12 @@ export default function MainSidebar({ data }: any) {
       setLocalUser(null);
     }
   }, []);
-
-  const isLogin = !!data?.header?.userName || !!localUser?.userName;
+  
+  useEffect(() => {
+    if (activeMenu === "admin" && !isAdmin) {
+      setActiveMenu("interest");
+    }
+  }, [activeMenu, isAdmin]);
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.close}`}>
@@ -78,7 +92,7 @@ export default function MainSidebar({ data }: any) {
           {activeMenu === "interest" && <InterestPanel data={data} />}
           {activeMenu === "recent" && <RecentPanel data={data} />}
           {activeMenu === "liveTime" && <LiveTimePanel />}
-          {activeMenu === "admin" && <AdminPanel />}
+          {activeMenu === "admin" && isAdmin && <AdminPanel />}
         </section>
       )}
 
@@ -93,7 +107,7 @@ export default function MainSidebar({ data }: any) {
           </button>
         )}
 
-        {menus.map((menu) => (
+        {visibleMenus.map((menu) => (
           <button
             key={menu.id}
             type="button"
