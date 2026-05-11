@@ -1,28 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import layoutStyles from "../myPage.module.css";
-import memberStyles from "./member.module.css";
-import MyPageSidebar from "../components/MyPageSidebar";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 
-type LoginUser = {
-  accessToken?: string;
-  userNo: number;
-  userId?: string | null;
-  userName: string;
-  email?: string | null;
-  phone?: string | null;
-  provider: string;
-  auth: number;
-};
+import layoutStyles from "../myPage.module.css";
+import memberStyles from "./member.module.css";
+import MyPageSidebar from "../components/MyPageSidebar";
 
-type ApiEnvelope<T> = {
-  success: boolean;
-  data: T;
-  message?: string | null;
-};
+import {
+  getCurrentUser,
+  clearLoginStorage,
+  type LoginUser,
+} from "@/lib/auth-user";
 
 function getProviderName(provider?: string) {
   switch (provider) {
@@ -52,62 +42,32 @@ function getAccountValue(user: LoginUser) {
 export default function MemberPage() {
   const [user, setUser] = useState<LoginUser | null>(null);
   const router = useRouter();
-  
+
   useEffect(() => {
-  async function loadMyInfo() {
-    const token = window.localStorage.getItem("accessToken");
-
-    if (!token) {
-      setUser(null);
-      return;
+    async function loadMyInfo() {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
     }
 
-    try {
-      const { data } = await apiClient.get<ApiEnvelope<LoginUser>>("/users/me");
-
-      if (!data.success || !data.data) {
-        setUser(null);
-        return;
-      }
-
-      setUser(data.data);
-      window.localStorage.setItem("user", JSON.stringify(data.data));
-    } catch {
-      const savedUser = window.localStorage.getItem("user");
-
-      if (!savedUser) {
-        setUser(null);
-        return;
-      }
-
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        setUser(null);
-      }
-    }
-  }
-
-  loadMyInfo();
-}, []);
+    loadMyInfo();
+  }, []);
 
   async function handleWithdraw() {
-    const ok = window.confirm("정말 회원 탈퇴하시겠습니까?");
+  const ok = window.confirm("정말 회원 탈퇴하시겠습니까?");
 
-    if (!ok) return;
+  if (!ok) return;
 
-    try {
-      await apiClient.patch("/users/me/withdraw");
+  try {
+    await apiClient.patch("/users/me/withdraw");
 
-      window.localStorage.removeItem("accessToken");
-      window.localStorage.removeItem("user");
+    clearLoginStorage();
 
-      alert("회원 탈퇴가 완료되었습니다.");
-      router.replace("/main");
-    } catch {
-      alert("회원 탈퇴 처리 중 오류가 발생했습니다.");
-    }
+    alert("회원 탈퇴가 완료되었습니다.");
+    router.replace("/main");
+  } catch {
+    alert("회원 탈퇴 처리 중 오류가 발생했습니다.");
   }
+}
 
   return (
     <main className={layoutStyles.page}>
@@ -155,9 +115,9 @@ export default function MemberPage() {
                   <strong>{user.userName}</strong>
                 </div>
 
-              <div className={memberStyles.infoRow}>
-                <span>{getAccountLabel(user.provider)}</span>
-                <strong>{getAccountValue(user)}</strong>
+                <div className={memberStyles.infoRow}>
+                  <span>{getAccountLabel(user.provider)}</span>
+                  <strong>{getAccountValue(user)}</strong>
                 </div>
 
                 <div className={memberStyles.infoRow}>

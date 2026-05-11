@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import {
+  getCurrentUser,
+  clearLoginStorage,
+  type LoginUser,
+} from "@/lib/auth-user";
+
 import styles from "./Header.module.css";
 
 type MainHeaderPayload = {
@@ -11,30 +17,18 @@ type MainHeaderPayload = {
   userName?: string;
 };
 
-type LocalUser = {
-  userNo?: number;
-  userName?: string;
-};
-
 export default function Header({ data }: { data?: unknown }) {
   const header = (data as { header?: MainHeaderPayload } | null)?.header;
 
-  const [localUser, setLocalUser] = useState<LocalUser | null>(null);
+  const [localUser, setLocalUser] = useState<LoginUser | null>(null);
 
   useEffect(() => {
-    const savedUser = window.localStorage.getItem("user");
-
-    if (!savedUser) {
-      setLocalUser(null);
-      return;
+    async function loadUser() {
+      const user = await getCurrentUser();
+      setLocalUser(user);
     }
 
-    try {
-      const parsedUser = JSON.parse(savedUser);
-      setLocalUser(parsedUser);
-    } catch {
-      setLocalUser(null);
-    }
+    loadUser();
   }, []);
 
   const dataUserName = header?.userName?.trim() ?? "";
@@ -44,14 +38,7 @@ export default function Header({ data }: { data?: unknown }) {
   const isLogin = !!dataUserName || !!localUserName;
 
   function handleLogout() {
-    try {
-      window.localStorage.removeItem("accessToken");
-      window.localStorage.removeItem("user");
-      window.sessionStorage.clear();
-    } catch {
-      /* ignore */
-    }
-
+    clearLoginStorage();
     window.location.replace("/main");
   }
 
