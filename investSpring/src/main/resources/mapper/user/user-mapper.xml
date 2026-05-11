@@ -77,5 +77,15 @@
 	      AND DELETE_AT IS NULL
 	</update>
 	
+	<select id="selectLocalUserByUserNo"
+	        parameterType="long"
+	        resultType="com.kh.investSpring.domain.user.vo.LocalUser">
+	    SELECT
+	        USER_NO AS userNo,
+	        USER_ID AS userId,
+	        PASSWORD AS password
+	    FROM USER_LOCAL
+	    WHERE USER_NO = #{userNo}
+	</select>
 	
 </mapper>

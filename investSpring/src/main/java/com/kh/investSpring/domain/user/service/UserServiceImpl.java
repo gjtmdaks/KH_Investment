@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
+import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
@@ -104,29 +105,21 @@ public class UserServiceImpl implements UserService {
 	    LocalUser localUser = userDao.selectLocalUserByUserId(request.getUserId());
 	    
 	    if (localUser == null) {
-	        throw new RuntimeException("존재하지 않는 아이디입니다.");
-	    }
-	    
-	    boolean isPasswordMatched;
-	    
-	    if (localUser.getPassword() != null && localUser.getPassword().startsWith("$2")) {
-	        isPasswordMatched = passwordEncoder.matches(request.getPassword(), localUser.getPassword());
-	    } else {
-	        isPasswordMatched = localUser.getPassword().equals(request.getPassword());
+	        throw new IllegalArgumentException("존재하지 않는 아이디입니다.");
 	    }
 	    
 	    if (!passwordEncoder.matches(request.getPassword(), localUser.getPassword())) {
-	        throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+	        throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
 	    }
 
 	    User user = userDao.selectUserByUserNo(localUser.getUserNo());
 
 	    if (user == null) {
-	        throw new RuntimeException("사용자 정보를 찾을 수 없습니다.");
+	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
 	    }
 
 	    if (!"LOCAL".equalsIgnoreCase(user.getProvider())) {
-	        throw new RuntimeException("로컬 로그인 계정이 아닙니다.");
+	        throw new IllegalArgumentException("로컬 로그인 계정이 아닙니다.");
 	    }
 
 	    String accessToken = jwtTokenProvider.createAccessToken((long) user.getUserNo());
@@ -162,5 +155,38 @@ public class UserServiceImpl implements UserService {
 	        throw new IllegalStateException("회원 탈퇴 처리에 실패했습니다.");
 	    }
 		
+	}
+
+	@Override
+	public UserMeResponse getMyInfo(Long userNo) {
+	    if (userNo == null) {
+	        throw new IllegalArgumentException("로그인이 필요합니다.");
+	    }
+
+	    User user = userDao.selectUserByUserNo(userNo);
+
+	    if (user == null) {
+	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+	    }
+
+	    String userId = null;
+
+	    if ("LOCAL".equalsIgnoreCase(user.getProvider())) {
+	        LocalUser localUser = userDao.selectLocalUserByUserNo(userNo);
+
+	        if (localUser != null) {
+	            userId = localUser.getUserId();
+	        }
+	    }
+
+	    return new UserMeResponse(
+	            user.getUserNo(),
+	            userId,
+	            user.getUserName(),
+	            user.getEmail(),
+	            user.getPhone(),
+	            user.getProvider(),
+	            user.getAuth()
+	    );
 	}
 }

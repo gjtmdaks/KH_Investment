@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
@@ -51,9 +52,11 @@ public class UserController {
     // 인증 테스트
     @GetMapping("/me")
     public ApiResponse<?> me(HttpServletRequest request) {
-        Long userNo = (Long) request.getAttribute("userNo");
+    	Long userNo = (Long) request.getAttribute("userNo");
 
-        return ApiResponse.success(userNo, "내 정보");
+        UserMeResponse response = us.getMyInfo(userNo);
+
+        return ApiResponse.success(response, "내 정보 조회 성공");
     }
     
     // 탈퇴

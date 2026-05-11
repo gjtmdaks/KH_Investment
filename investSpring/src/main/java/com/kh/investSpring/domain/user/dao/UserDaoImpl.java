@@ -4,6 +4,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.kh.investSpring.domain.user.vo.LocalUser;
+import com.kh.investSpring.domain.user.vo.SocialUser;
 import com.kh.investSpring.domain.user.vo.User;
 
 import lombok.RequiredArgsConstructor;
@@ -51,4 +52,9 @@ public class UserDaoImpl implements UserDao {
 		return session.update("user.updateUserStatusDelete", userNo);
 	}
 
+	@Override
+	public LocalUser selectLocalUserByUserNo(Long userNo) {
+	    return session.selectOne("user.selectLocalUserByUserNo", userNo);
+	}
+	
 }
