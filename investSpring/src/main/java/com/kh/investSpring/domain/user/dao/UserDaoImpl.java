@@ -56,5 +56,11 @@ public class UserDaoImpl implements UserDao {
 	public LocalUser selectLocalUserByUserNo(Long userNo) {
 	    return session.selectOne("user.selectLocalUserByUserNo", userNo);
 	}
+
+	@Override
+	public int updateUserInfo(User user) {
+		// TODO Auto-generated method stub
+		return session.update("user.updateUserInfo", user);
+	}
 	
 }

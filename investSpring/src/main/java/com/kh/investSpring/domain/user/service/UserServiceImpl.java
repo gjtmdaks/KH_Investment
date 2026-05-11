@@ -12,6 +12,7 @@ import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
+import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
@@ -188,5 +189,47 @@ public class UserServiceImpl implements UserService {
 	            user.getProvider(),
 	            user.getAuth()
 	    );
+	}
+
+	@Override
+	@Transactional
+	public UserMeResponse updateMyInfo(Long userNo, UserUpdateRequest updateRequest) {
+	    if (userNo == null) {
+	        throw new IllegalArgumentException("로그인이 필요합니다.");
+	    }
+
+	    if (updateRequest == null) {
+	        throw new IllegalArgumentException("수정할 회원정보가 없습니다.");
+	    }
+
+	    if (updateRequest.getUserName() == null || updateRequest.getUserName().isBlank()) {
+	        throw new IllegalArgumentException("이름은 필수입니다.");
+	    }
+
+	    User user = userDao.selectUserByUserNo(userNo);
+
+	    if (user == null) {
+	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+	    }
+
+	    user.setUserName(updateRequest.getUserName().trim());
+	    user.setEmail(toNullIfBlank(updateRequest.getEmail()));
+	    user.setPhone(toNullIfBlank(updateRequest.getPhone()));
+
+	    int result = userDao.updateUserInfo(user);
+
+	    if (result == 0) {
+	        throw new IllegalStateException("회원정보 수정에 실패했습니다.");
+	    }
+
+	    return getMyInfo(userNo);
+	}
+
+	private String toNullIfBlank(String value) {
+	    if (value == null || value.isBlank()) {
+	        return null;
+	    }
+
+	    return value.trim();
 	}
 }

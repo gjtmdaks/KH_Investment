@@ -88,4 +88,16 @@
 	    WHERE USER_NO = #{userNo}
 	</select>
 	
+	<update id="updateUserInfo"
+	        parameterType="com.kh.investSpring.domain.user.vo.User">
+	    UPDATE USERS
+	    SET
+	        USER_NAME = #{userName},
+	        EMAIL = #{email},
+	        PHONE = #{phone}
+	    WHERE USER_NO = #{userNo}
+	      AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'
+	      AND DELETE_AT IS NULL
+	</update>
+	
 </mapper>

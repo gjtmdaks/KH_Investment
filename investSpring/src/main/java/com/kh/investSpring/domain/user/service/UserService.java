@@ -6,6 +6,7 @@ import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
+import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
 
 public interface UserService {
 
@@ -19,4 +20,6 @@ public interface UserService {
 	void userDelete(Long userNo);
 	
 	UserMeResponse getMyInfo(Long userNo);
+
+	UserMeResponse updateMyInfo(Long userNo, UserUpdateRequest updateRequest);
 }
