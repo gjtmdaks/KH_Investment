@@ -237,7 +237,29 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void resetPassword(UserResetPasswordRequest request) {
+    	
+    	// 검사 로직
+    	if (request == null) {
+            throw new IllegalArgumentException("요청값이 없습니다.");
+        }
 
+        if (request.getUserId() == null || request.getUserId().isBlank()) {
+            throw new IllegalArgumentException("아이디를 입력해주세요.");
+        }
+
+        if (request.getUserName() == null || request.getUserName().isBlank()) {
+            throw new IllegalArgumentException("이름을 입력해주세요.");
+        }
+
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new IllegalArgumentException("새 비밀번호를 입력해주세요.");
+        }
+
+        if (request.getNewPassword().length() < 4) {
+            throw new IllegalArgumentException("비밀번호는 최소 4글자 이상이어야 합니다.");
+        }
+        // 검사 로직 끝
+        
         LocalUser localUser =
                 userDao.selectLocalUserByUserIdAndUserName(
                         request.getUserId(),
@@ -248,7 +270,8 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("회원 정보가 일치하지 않습니다.");
         }
 
-        localUser.setPassword(request.getNewPassword());
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        localUser.setPassword(encodedPassword);
 
         userDao.updatePassword(localUser);
     }

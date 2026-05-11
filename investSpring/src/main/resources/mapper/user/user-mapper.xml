@@ -104,12 +104,18 @@
     <select id="selectLocalUserByUserIdAndUserName"
 	        resultType="com.kh.investSpring.domain.user.vo.LocalUser">
 	
-	    SELECT LU.*
+	    SELECT
+	        LU.USER_NO AS userNo,
+	        LU.USER_ID AS userId,
+	        LU.PASSWORD AS password,
+	        U.USER_NAME AS userName
 	    FROM USER_LOCAL LU
 	    JOIN USERS U
 	      ON LU.USER_NO = U.USER_NO
 	    WHERE LU.USER_ID = #{userId}
 	      AND U.USER_NAME = #{userName}
+	      AND NVL(U.STATUS, 'ACTIVE') = 'ACTIVE'
+	      AND U.DELETE_AT IS NULL
 	
 	</select>
 	

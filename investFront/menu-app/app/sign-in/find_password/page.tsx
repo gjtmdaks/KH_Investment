@@ -1,78 +1,145 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { apiClient } from "@/lib/api-client";
+import styles from "./findPassword.module.css";
 
 export default function ResetPasswordPage() {
-
   const [userId, setUserId] = useState("");
   const [userName, setUserName] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleReset = async () => {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleReset(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!userId.trim()) {
+      setError("아이디를 입력해주세요.");
+      return;
+    }
+
+    if (!userName.trim()) {
+      setError("이름을 입력해주세요.");
+      return;
+    }
+
+    if (!newPassword.trim()) {
+      setError("새 비밀번호를 입력해주세요.");
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      setError("비밀번호는 최소 4글자 이상이어야 합니다.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-
-      const response = await fetch(
-        "http://localhost:8081/final/users/find_password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            userName,
-            newPassword,
-          }),
-        }
-      );
-
-      console.log("응답 상태:", response.status);
-
-      const data = await response.json();
-
-      console.log(data);
+      const { data } = await apiClient.post("/users/find_password", {
+        userId,
+        userName,
+        newPassword,
+      });
 
       if (data.success) {
-        alert("비밀번호 변경 완료");
+        alert("비밀번호가 변경되었습니다.");
+        window.location.href = "/sign-in";
       } else {
-        alert(data.message || "실패");
+        setError(data.message || "비밀번호 변경에 실패했습니다.");
       }
-
-    } catch (error) {
-
-      console.error("fetch 에러:", error);
-
-      alert("서버 연결 실패");
+    } catch (error: any) {
+      setError(error.response?.data?.message || "서버와 통신할 수 없습니다.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div>
-      <h1>비밀번호 찾기</h1>
+    <main className={styles.container}>
+      <div className={styles.topBar}>
+        <Link href="/main" className={styles.logoArea}>
+          <Image
+            src="/logo-full.png"
+            alt="KH 증권 로고"
+            width={132}
+            height={33}
+            className={styles.logoImage}
+            priority
+          />
+        </Link>
 
-      <input
-        placeholder="아이디"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-      />
+        <Link href="/sign-in" className={styles.signInLink}>
+          로그인
+        </Link>
+      </div>
 
-      <input
-        placeholder="이름"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
-      />
+      <section className={styles.card}>
+        <p className={styles.brand}>KH 증권</p>
+        <h1 className={styles.title}>비밀번호 찾기</h1>
+        <p className={styles.description}>
+          가입한 아이디와 이름을 입력한 뒤 새 비밀번호로 변경하세요.
+        </p>
 
-      <input
-        type="password"
-        placeholder="새 비밀번호"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-      />
+        <form className={styles.form} onSubmit={handleReset}>
+          {error ? <p className={styles.error}>{error}</p> : null}
 
-      <button type="button" onClick={handleReset}>
-        비밀번호 변경
-      </button>
-    </div>
+          <div>
+            <label className={styles.fieldLabel} htmlFor="user-id">
+              아이디
+            </label>
+            <input
+              id="user-id"
+              type="text"
+              className={styles.fieldInput}
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="아이디를 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className={styles.fieldLabel} htmlFor="user-name">
+              이름
+            </label>
+            <input
+              id="user-name"
+              type="text"
+              className={styles.fieldInput}
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="이름을 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className={styles.fieldLabel} htmlFor="new-password">
+              새 비밀번호
+            </label>
+            <input
+              id="new-password"
+              type="password"
+              className={styles.fieldInput}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="새 비밀번호를 입력하세요"
+            />
+          </div>
+
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? "변경 중..." : "비밀번호 변경"}
+          </button>
+        </form>
+
+        <Link href="/sign-in" className={styles.backLink}>
+          로그인 화면으로 돌아가기
+        </Link>
+      </section>
+    </main>
   );
 }
