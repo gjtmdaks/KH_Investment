@@ -21,4 +21,10 @@ public interface UserDao {
 	LocalUser selectLocalUserByUserNo(Long userNo);
 
 	int updateUserInfo(User user);
+
+	LocalUser selectLocalUserByUserIdAndUserName(String userId, String userName);
+
+	int updatePassword(LocalUser localUser);
+
+	
 }

@@ -62,5 +62,30 @@ public class UserDaoImpl implements UserDao {
 		// TODO Auto-generated method stub
 		return session.update("user.updateUserInfo", user);
 	}
+
+    @Override
+    public LocalUser selectLocalUserByUserIdAndUserName(
+            String userId,
+            String userName
+    ) {
+
+        LocalUser localUser = new LocalUser();
+        localUser.setUserId(userId);
+        localUser.setUserName(userName);
+
+        return session.selectOne(
+                "user.selectLocalUserByUserIdAndUserName",
+                localUser
+        );
+    }
+    
+    @Override
+    public int updatePassword(LocalUser localUser) {
+
+        return session.update(
+                "user.updatePassword",
+                localUser
+        );
+    }
 	
 }
