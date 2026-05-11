@@ -1,6 +1,7 @@
 package com.kh.investSpring.domain.user.service;
 
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
+import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
@@ -14,4 +15,6 @@ public interface UserService {
 	UserSignUpResponse signUp(UserSignUpRequest request);
 
 	UserSignInResponse signIn(UserSignInRequest request);
+	
+	void resetPassword(UserResetPasswordRequest request);
 }

@@ -1,0 +1,54 @@
+/* guide.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 20px;
+}
+
+/* 3단계 가이드 섹션 */
+.stepSection {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.stepCard {
+  flex: 1;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #eee;
+}
+
+/* 주요 기능 그리드 */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5컬럼 구성 */
+  gap: 15px;
+}
+
+.featureCard {
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.iconPlaceholder {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 10px;
+  background: #eef2ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -54,14 +54,7 @@ public class SecurityFilterChainFactory {
 		}
 
 		http
-				.csrf(csrf -> {
-					csrf.csrfTokenRepository(csrfRepo)
-							.ignoringRequestMatchers("/oauth2/**", "/login/oauth2/**", "/users/signup",
-						            "/users/signin");
-					if (extraPermitAllPathPatterns.length > 0) {
-						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
-					}
-				})
+		.csrf(AbstractHttpConfigurer::disable)
 				.httpBasic(AbstractHttpConfigurer::disable)
 				.formLogin(AbstractHttpConfigurer::disable)
 				.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))

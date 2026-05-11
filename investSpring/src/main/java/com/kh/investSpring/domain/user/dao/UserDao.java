@@ -15,4 +15,10 @@ public interface UserDao {
 
 	LocalUser selectLocalUserByUserId(String userId);
 
+	LocalUser selectLocalUserByUserIdAndUserName(
+	        String userId,
+	        String userName
+	);
+	
+	int updatePassword(LocalUser localUser);
 }

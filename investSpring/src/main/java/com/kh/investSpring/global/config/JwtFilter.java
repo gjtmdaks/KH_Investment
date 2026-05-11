@@ -4,7 +4,7 @@ package com.kh.investSpring.global.config;
 import java.io.IOException;
 
 import com.kh.investSpring.global.util.JwtUtil;
-
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,6 +32,16 @@ public class JwtFilter implements Filter {
 			throws IOException, ServletException {
 
 		HttpServletRequest req = (HttpServletRequest) request;
+		HttpServletResponse res = (HttpServletResponse) response;
+
+		res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+		res.setHeader("Access-Control-Allow-Methods", "*");
+		res.setHeader("Access-Control-Allow-Headers", "*");
+
+		if (req.getMethod().equals("OPTIONS")) {
+		    res.setStatus(HttpServletResponse.SC_OK);
+		    return;
+		}
 
 		String authHeader = req.getHeader("Authorization");
 

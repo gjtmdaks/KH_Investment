@@ -135,7 +135,12 @@ export default function SignInPage() {
           </button>
          
         </form>
+        {/* <div>
+          <link rel="stylesheet" href="/sign-in/reset-password" >123</link>
 
+        </div> */}
+        
+        
         <div className={styles.divider} aria-hidden>
           또는
         </div>

@@ -7,9 +7,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
-
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -18,9 +21,21 @@ public class SecurityConfig {
 	private final SecurityFilterChainFactory securityFilterChainFactory;
 
 	@Bean
-	public CorsConfigurationSource corsConfigurationSource(
-			@Value("${app.cors.allowed-origins:http://localhost:3000}") String allowedOrigins) {
-		return CorsConfigurationFactory.createSource(allowedOrigins);
+	public CorsConfigurationSource corsConfigurationSource() {
+
+	    CorsConfiguration configuration = new CorsConfiguration();
+
+	    configuration.addAllowedOrigin("http://localhost:3000");
+	    configuration.addAllowedMethod("*");
+	    configuration.addAllowedHeader("*");
+	    configuration.setAllowCredentials(true);
+
+	    UrlBasedCorsConfigurationSource source =
+	            new UrlBasedCorsConfigurationSource();
+
+	    source.registerCorsConfiguration("/**", configuration);
+
+	    return source;
 	}
 
 	@Bean
@@ -34,4 +49,5 @@ public class SecurityConfig {
 		}
 		return securityFilterChainFactory.build(http, corsConfigurationSource, redirectToHttps);
 	}
+	
 }

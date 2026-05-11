@@ -13,7 +13,7 @@ import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.util.JwtUtil;
-
+import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -129,5 +129,23 @@ public class UserServiceImpl implements UserService {
 	            user.getProvider(),
 	            user.getAuth()
 	    );
+	}
+	@Override
+	@Transactional
+	public void resetPassword(UserResetPasswordRequest request) {
+
+	    LocalUser localUser =
+	            userDao.selectLocalUserByUserIdAndUserName(
+	                    request.getUserId(),
+	                    request.getUserName()
+	            );
+
+	    if (localUser == null) {
+	        throw new RuntimeException("회원 정보가 일치하지 않습니다.");
+	    }
+
+	    localUser.setPassword(request.getNewPassword());
+
+	    userDao.updatePassword(localUser);
 	}
 }
