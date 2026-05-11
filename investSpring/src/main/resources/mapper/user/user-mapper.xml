@@ -100,4 +100,26 @@
 	      AND DELETE_AT IS NULL
 	</update>
 	
+	    
+    <select id="selectLocalUserByUserIdAndUserName"
+	        resultType="com.kh.investSpring.domain.user.vo.LocalUser">
+	
+	    SELECT LU.*
+	    FROM USER_LOCAL LU
+	    JOIN USERS U
+	      ON LU.USER_NO = U.USER_NO
+	    WHERE LU.USER_ID = #{userId}
+	      AND U.USER_NAME = #{userName}
+	
+	</select>
+	
+	<update id="updatePassword"
+	        parameterType="com.kh.investSpring.domain.user.vo.LocalUser">
+	
+	    UPDATE USER_LOCAL
+	    SET PASSWORD = #{password}
+	    WHERE USER_NO = #{userNo}
+	
+	</update>
+	
 </mapper>

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
+import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
@@ -232,4 +233,23 @@ public class UserServiceImpl implements UserService {
 
 	    return value.trim();
 	}
+
+    @Override
+    @Transactional
+    public void resetPassword(UserResetPasswordRequest request) {
+
+        LocalUser localUser =
+                userDao.selectLocalUserByUserIdAndUserName(
+                        request.getUserId(),
+                        request.getUserName()
+                );
+
+        if (localUser == null) {
+            throw new RuntimeException("회원 정보가 일치하지 않습니다.");
+        }
+
+        localUser.setPassword(request.getNewPassword());
+
+        userDao.updatePassword(localUser);
+    }
 }

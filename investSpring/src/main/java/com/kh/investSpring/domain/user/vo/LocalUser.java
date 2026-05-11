@@ -11,6 +11,7 @@ public class LocalUser {
 	private int userNo;
     private String userId;
     private String password;
+    private String userName;
 
     public LocalUser(int userNo, String userId, String password) {
         this.userNo = userNo;
