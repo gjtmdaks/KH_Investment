@@ -13,7 +13,7 @@ export default function ResetPasswordPage() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/users/find_password",
+        "http://localhost:8081/final/users/find_password",
         {
           method: "POST",
           headers: {
