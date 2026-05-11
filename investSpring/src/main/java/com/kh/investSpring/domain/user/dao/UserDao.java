@@ -1,6 +1,7 @@
 package com.kh.investSpring.domain.user.dao;
 
 import com.kh.investSpring.domain.user.vo.LocalUser;
+import com.kh.investSpring.domain.user.vo.SocialUser;
 import com.kh.investSpring.domain.user.vo.User;
 
 public interface UserDao {
@@ -17,6 +18,5 @@ public interface UserDao {
 
 	int updateUserStatusDelete(Long userNo);
 
-	
-
+	LocalUser selectLocalUserByUserNo(Long userNo);
 }

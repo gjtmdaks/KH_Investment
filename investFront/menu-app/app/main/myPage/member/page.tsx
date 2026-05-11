@@ -10,7 +10,7 @@ import { apiClient } from "@/lib/api-client";
 type LoginUser = {
   accessToken?: string;
   userNo: number;
-  userId: string;
+  userId?: string | null;
   userName: string;
   email?: string | null;
   phone?: string | null;
@@ -18,23 +18,78 @@ type LoginUser = {
   auth: number;
 };
 
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T;
+  message?: string | null;
+};
+
+function getProviderName(provider?: string) {
+  switch (provider) {
+    case "LOCAL":
+      return "로컬";
+    case "KAKAO":
+      return "카카오";
+    case "NAVER":
+      return "네이버";
+    default:
+      return provider || "-";
+  }
+}
+
+function getAccountLabel(provider?: string) {
+  return provider === "LOCAL" ? "아이디" : "연동 계정";
+}
+
+function getAccountValue(user: LoginUser) {
+  if (user.provider === "LOCAL") {
+    return user.userId || "-";
+  }
+
+  return `${getProviderName(user.provider)} 로그인`;
+}
+
 export default function MemberPage() {
   const [user, setUser] = useState<LoginUser | null>(null);
   const router = useRouter();
+  
   useEffect(() => {
-    const savedUser = window.localStorage.getItem("user");
+  async function loadMyInfo() {
+    const token = window.localStorage.getItem("accessToken");
 
-    if (!savedUser) {
+    if (!token) {
       setUser(null);
       return;
     }
 
     try {
-      setUser(JSON.parse(savedUser));
+      const { data } = await apiClient.get<ApiEnvelope<LoginUser>>("/users/me");
+
+      if (!data.success || !data.data) {
+        setUser(null);
+        return;
+      }
+
+      setUser(data.data);
+      window.localStorage.setItem("user", JSON.stringify(data.data));
     } catch {
-      setUser(null);
+      const savedUser = window.localStorage.getItem("user");
+
+      if (!savedUser) {
+        setUser(null);
+        return;
+      }
+
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        setUser(null);
+      }
     }
-  }, []);
+  }
+
+  loadMyInfo();
+}, []);
 
   async function handleWithdraw() {
     const ok = window.confirm("정말 회원 탈퇴하시겠습니까?");
@@ -79,7 +134,9 @@ export default function MemberPage() {
               <div className={memberStyles.profileText}>
                 <h2>{user.userName}님</h2>
                 <p>
-                  {user.userId} · {user.provider}
+                  {user.provider === "LOCAL"
+                    ? `${user.userId || "-"} · ${getProviderName(user.provider)}`
+                    : `${getProviderName(user.provider)} 로그인`}
                 </p>
               </div>
             </section>
@@ -98,9 +155,9 @@ export default function MemberPage() {
                   <strong>{user.userName}</strong>
                 </div>
 
-                <div className={memberStyles.infoRow}>
-                  <span>아이디</span>
-                  <strong>{user.userId}</strong>
+              <div className={memberStyles.infoRow}>
+                <span>{getAccountLabel(user.provider)}</span>
+                <strong>{getAccountValue(user)}</strong>
                 </div>
 
                 <div className={memberStyles.infoRow}>
@@ -115,7 +172,7 @@ export default function MemberPage() {
 
                 <div className={memberStyles.infoRow}>
                   <span>가입 방식</span>
-                  <strong>{user.provider}</strong>
+                  <strong>{getProviderName(user.provider)}</strong>
                 </div>
               </div>
             </section>
