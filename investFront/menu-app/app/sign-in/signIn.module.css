@@ -68,13 +68,6 @@
   font-weight: 800;
 }
 
-.description {
-  margin: 16px 0 28px;
-  color: #64748b;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
 .form {
   display: flex;
   flex-direction: column;
