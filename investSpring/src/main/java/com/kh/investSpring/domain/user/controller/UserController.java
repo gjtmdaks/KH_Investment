@@ -13,6 +13,7 @@ import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
+import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
 
@@ -67,6 +68,18 @@ public class UserController {
         us.userDelete(userNo);
 
         return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다.");
+    }
+    
+    @PatchMapping("/me")
+    public ApiResponse<UserMeResponse> updateMyInfo(
+            HttpServletRequest request,
+            @RequestBody UserUpdateRequest updateRequest
+    ) {
+        Long userNo = (Long) request.getAttribute("userNo");
+
+        UserMeResponse response = us.updateMyInfo(userNo, updateRequest);
+
+        return ApiResponse.success(response, "회원정보 수정 성공");
     }
     
     

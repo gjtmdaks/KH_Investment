@@ -13,6 +13,7 @@ import {
   clearLoginStorage,
   type LoginUser,
 } from "@/lib/auth-user";
+import Link from "next/link";
 
 function getProviderName(provider?: string) {
   switch (provider) {
@@ -105,7 +106,7 @@ export default function MemberPage() {
               <div className={memberStyles.cardHeader}>
                 <h2>기본 정보</h2>
                 <button type="button" className={memberStyles.textButton}>
-                  정보 수정
+                  투자 성향 분석
                 </button>
               </div>
 
@@ -144,9 +145,11 @@ export default function MemberPage() {
               </div>
 
               <div className={memberStyles.actionArea}>
-                <button type="button" className={memberStyles.primaryButton}>
-                  회원정보 수정
-                </button>
+                <Link href="/main/myPage/member/edit">
+                  <button type="button" className={memberStyles.primaryButton}>
+                    회원정보 수정
+                  </button>
+                </Link>
                 <button
                   type="button"
                   className={memberStyles.dangerButton}

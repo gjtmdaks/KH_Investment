@@ -61,6 +61,7 @@ public class SecurityFilterChainFactory {
 									"/login/oauth2/**", 
 									"/users/signup",
 						            "/users/signin",
+						            "/users/me",
 						            "/users/me/withdraw");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
