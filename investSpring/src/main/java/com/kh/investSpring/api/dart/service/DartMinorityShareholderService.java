@@ -33,9 +33,7 @@ public class DartMinorityShareholderService {
 
     @Transactional
     public void syncMinorityShareholders() {
-
         List<Map<String, Object>> corpList = coDao.selectCorpCodes();
-
         int year = LocalDate.now().getYear() - 1;
 
         for (Map<String, Object> corp : corpList) {
@@ -48,29 +46,17 @@ public class DartMinorityShareholderService {
 					                                String.valueOf(year),
 					                                "11011"
 					                        );
-
                 if (dto != null) {
-                	log.info(
-                		    "stockCode={} shareholderRatio={} ownershipRatio={}",
-                		    dto.getStockCode(),
-                		    dto.getMinorityShareholderRatio(),
-                		    dto.getMinorityOwnershipRatio()
-                		);
                     coDao.updateMinorityShareholder(dto);
                 }
-
                 Thread.sleep(120);
 
             } catch (Exception e) {
-
-                log.error(
-                        "소액주주 저장 실패 stockCode={}",
-                        corp.get("STOCK_CODE"),
-                        e
+                log.error("소액주주 저장 실패 stockCode={}",
+                        corp.get("STOCK_CODE"), e
                 );
             }
         }
-
         log.info("소액주주 저장 완료");
     }
 
@@ -80,7 +66,6 @@ public class DartMinorityShareholderService {
             String year,
             String reportCode
     ) throws IOException, InterruptedException {
-
         String url =
                 "https://opendart.fss.or.kr/api/mrhlSttus.json"
                 + "?crtfc_key=" + properties.getAppKey()
@@ -115,18 +100,16 @@ public class DartMinorityShareholderService {
         }
 
         if (!"000".equals(body.get("status"))) {
-
             log.warn(
-                    "소액주주 응답 실패 corpCode={} status={}",
+                    "소액주주비율 응답 실패 corpCode={} status={} message={}",
                     corpCode,
-                    body.get("status")
+                    body.get("status"),
+    	            body.get("message")
             );
-
             return null;
         }
 
-        List<Map<String, Object>> list =
-                (List<Map<String, Object>>) body.get("list");
+        List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
 
         if (list == null || list.isEmpty()) {
             return null;
@@ -134,16 +117,13 @@ public class DartMinorityShareholderService {
 
         Map<String, Object> target = list.get(0);
 
-        MinorityShareholderDto dto =
-                new MinorityShareholderDto();
+        MinorityShareholderDto dto = new MinorityShareholderDto();
 
         dto.setCorpCode(corpCode);
         dto.setStockCode(stockCode);
-
         dto.setMinorityShareholderRatio(
                 parseDouble(target.get("shrholdr_rate"))
         );
-
         dto.setMinorityOwnershipRatio(
                 parseDouble(target.get("hold_stock_rate"))
         );
@@ -152,7 +132,6 @@ public class DartMinorityShareholderService {
     }
 
     private Double parseDouble(Object value) {
-
         if (value == null) {
             return 0.0;
         }
@@ -167,14 +146,11 @@ public class DartMinorityShareholderService {
         }
 
         try {
-
             double result = Double.parseDouble(str);
 
             // 비정상 값 방어
             if (result < 0 || result > 100) {
-
                 log.warn("비정상 비율 데이터 value={}", result);
-
                 return 0.0;
             }
 

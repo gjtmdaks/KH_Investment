@@ -58,12 +58,12 @@ public class SecurityFilterChainFactory {
 					csrf.csrfTokenRepository(csrfRepo)
 							.ignoringRequestMatchers(
 									"/oauth2/**", 
-									"/login/oauth2/**", 
-									"/users/signup",
+									"/login/oauth2/**",
+									"/users/login",
 						            "/users/signin",
-						            "/users/me",
+						            "/users/signup",
 						            "/users/find_password",
-						            "/users/me/withdraw");
+						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
 					}

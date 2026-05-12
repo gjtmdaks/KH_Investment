@@ -36,7 +36,6 @@ public class KisHistoryService {
 
     @Async
     public void syncAllHistory(AtomicBoolean running) {
-
         if (!running.compareAndSet(false, true)) {
             log.warn("이미 초기 적재 실행 중");
             return;
@@ -57,8 +56,7 @@ public class KisHistoryService {
                     Thread.sleep(1000);
                 } catch (Exception e) {
                     log.error("과거시세 저장 실패 stockCode={}",
-                            stockCode,
-                            e
+                            stockCode, e
                     );
                 }
             }
@@ -76,7 +74,7 @@ public class KisHistoryService {
     ) throws IOException, InterruptedException {
 
         String token = kisTokenService.getAccessToken();
-
+        
         String url =
                 properties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-daily-price"
@@ -115,91 +113,70 @@ public class KisHistoryService {
         HttpResponse<String> response = null;
 
         while (retry < 5) {
-
-            response =
-                    httpClient.send(
-                            request,
-                            HttpResponse.BodyHandlers.ofString()
-                    );
+            response = httpClient.send(
+	                            request,
+	                            HttpResponse.BodyHandlers.ofString()
+	                    );
 
             if (response.body().contains("EGW00201")) {
-
                 retry++;
 
-                log.warn(
-                        "Rate Limit 발생 stockCode={} period={} retry={}",
+                log.warn("Rate Limit 발생 stockCode={} period={} retry={}",
                         stockCode,
                         periodType,
                         retry
                 );
-
                 Thread.sleep(5000);
 
                 continue;
             }
 
             if (response.statusCode() != 200) {
-
-                log.warn(
-                        "KIS 응답 실패 stockCode={} status={} body={}",
+                log.warn("KIS 응답 실패 stockCode={} status={} body={}",
                         stockCode,
                         response.statusCode(),
                         response.body()
                 );
-
                 return;
             }
-
             break;
         }
         if (retry >= 5) {
-
-            log.warn(
-                    "Rate Limit 최대 재시도 초과 stockCode={} period={}",
+            log.warn("Rate Limit 최대 재시도 초과 stockCode={} period={}",
                     stockCode,
                     periodType
             );
-
             return;
         }
         if (response == null) {
             return;
         }
 
-        Map<String, Object> body =
-                objectMapper.readValue(
-                        response.body(),
-                        new TypeReference<Map<String, Object>>() {}
-                );
+        Map<String, Object> body = objectMapper.readValue(
+					                        response.body(),
+					                        new TypeReference<Map<String, Object>>() {}
+					                );
 
         if (!"0".equals(String.valueOf(body.get("rt_cd")))) {
-
-            log.warn(
-                    "KIS API 실패 stockCode={} msg={}",
+            log.warn("KIS API 실패 stockCode={} msg={}",
                     stockCode,
                     body.get("msg1")
             );
-
             return;
         }
 
-        List<Map<String, Object>> output =
-                (List<Map<String, Object>>) body.get("output");
+        List<Map<String, Object>> output = (List<Map<String, Object>>) body.get("output");
 
         if (output == null || output.isEmpty()) {
             return;
         }
 
         for (Map<String, Object> item : output) {
-
             try {
-
-                StockHistoryCacheDto dto =
-                        new StockHistoryCacheDto();
+                StockHistoryCacheDto dto = new StockHistoryCacheDto();
 
                 dto.setStockCode(stockCode);
                 dto.setPeriodType(periodType);
-
                 dto.setBaseDate(
                         LocalDate.parse(
                                 String.valueOf(
@@ -208,7 +185,6 @@ public class KisHistoryService {
                                 DateTimeFormatter.BASIC_ISO_DATE
                         )
                 );
-
                 dto.setOpenPrice(
                         parseLong(item.get("stck_oprc"))
                 );
@@ -240,9 +216,7 @@ public class KisHistoryService {
                 stockHistoryDao.mergeHistory(dto);
 
             } catch (Exception e) {
-
-                log.error(
-                        "개별 시세 저장 실패 stockCode={} period={}",
+                log.error("개별 시세 저장 실패 stockCode={} period={}",
                         stockCode,
                         periodType,
                         e
@@ -250,21 +224,18 @@ public class KisHistoryService {
             }
         }
 
-        log.info(
-                "개별 시세 저장 완료 stockCode={} period={}",
+        log.info("개별 시세 저장 완료 stockCode={} period={}",
                 stockCode,
                 periodType
         );
     }
 
     private Long parseLong(Object value) {
-
         if (value == null) {
             return 0L;
         }
 
         try {
-
             return Long.parseLong(
                     String.valueOf(value)
                             .replace(",", "")
@@ -277,13 +248,11 @@ public class KisHistoryService {
     }
 
     private Double parseDouble(Object value) {
-
         if (value == null) {
             return 0.0;
         }
 
         try {
-
             return Double.parseDouble(
                     String.valueOf(value)
                             .replace(",", "")
