@@ -1,0 +1,286 @@
+.introCard {
+  width: 100%;
+  border: 1px solid #2a2d38;
+  border-radius: 20px;
+  background: #171922;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.introCard h2 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.introCard p {
+  margin: 0;
+  color: #a5adbf;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.progressBox {
+  flex-shrink: 0;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: rgba(79, 124, 255, 0.14);
+  color: #ffffff;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  padding-top: 21px;
+  box-sizing: border-box;
+}
+
+.progressBox span {
+  font-size: 24px;
+  font-weight: 900;
+  color: #7fa0ff;
+}
+
+.progressBox small {
+  font-size: 13px;
+  font-weight: 800;
+  color: #a5adbf;
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.questionCard {
+  border: 1px solid #2a2d38;
+  border-radius: 20px;
+  background: #171922;
+  padding: 26px;
+}
+
+.questionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.questionHeader span {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #4f7cff;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.questionHeader h2 {
+  margin: 8px 0 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.optionList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.optionButton {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid #2a2d38;
+  border-radius: 14px;
+  background: #101219;
+  color: #cbd5e1;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.optionButton:hover {
+  border-color: #4f7cff;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.optionButton strong {
+  flex-shrink: 0;
+  color: #7fa0ff;
+  font-size: 13px;
+}
+
+.selected {
+  border-color: #4f7cff;
+  background: rgba(79, 124, 255, 0.18);
+  color: #ffffff;
+}
+
+.submitCard {
+  margin-top: 22px;
+  border: 1px solid #2a2d38;
+  border-radius: 20px;
+  background: #171922;
+  padding: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.submitCard h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.submitCard p {
+  margin: 0;
+  color: #a5adbf;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.submitButton {
+  flex-shrink: 0;
+  min-width: 150px;
+  height: 46px;
+  border: none;
+  border-radius: 14px;
+  background: #4f7cff;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    filter 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  min-width: 120px;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid #374151;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  border-color: #4f7cff;
+  color: #ffffff;
+}
+
+.resultCard {
+  border: 1px solid #2a2d38;
+  border-radius: 22px;
+  background: #171922;
+  padding: 34px;
+  text-align: center;
+}
+
+.resultLabel {
+  margin: 0 0 12px;
+  color: #7fa0ff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.resultCard h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.resultCard strong {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(79, 124, 255, 0.16);
+  color: #7fa0ff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.resultCard p {
+  max-width: 520px;
+  margin: 20px auto 0;
+  color: #a5adbf;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.resultActions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .introCard,
+  .submitCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .progressBox {
+    width: 100%;
+    height: 46px;
+    border-radius: 14px;
+    padding-top: 0;
+    align-items: center;
+  }
+
+  .submitButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .resultActions {
+    flex-direction: column;
+  }
+}

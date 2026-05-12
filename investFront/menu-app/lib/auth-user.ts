@@ -9,6 +9,9 @@ export type LoginUser = {
   phone?: string | null;
   provider: string;
   auth: number;
+
+  investmentTotalPoint?: number | null;
+  investmentType?: string | null;
 };
 
 type ApiEnvelope<T> = {

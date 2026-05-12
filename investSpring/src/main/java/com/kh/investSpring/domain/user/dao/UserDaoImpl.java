@@ -1,5 +1,8 @@
 package com.kh.investSpring.domain.user.dao;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -87,5 +90,26 @@ public class UserDaoImpl implements UserDao {
                 localUser
         );
     }
+
+	@Override
+	public void deleteInvestmentType(Long userNo) {
+		session.delete("user.deleteInvestmentType", userNo);
+	}
+
+	@Override
+	public int insertInvestmentType(Long userNo, int calculatedTotalPoint, String resultFile) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("userNo", userNo);
+	    param.put("totalPoint", calculatedTotalPoint);
+	    param.put("resultFile", resultFile);
+
+	    return session.insert("user.insertInvestmentType", param);
+	}
+
+	@Override
+	public Integer selectInvestmentTotalPointByUserNo(Long userNo) {
+		// TODO Auto-generated method stub
+		return session.selectOne("user.selectInvestmentTotalPointByUserNo", userNo);
+	}
 	
 }

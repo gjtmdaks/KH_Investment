@@ -26,5 +26,13 @@ public interface UserDao {
 
 	int updatePassword(LocalUser localUser);
 
+	void deleteInvestmentType(Long userNo);
+
+	int insertInvestmentType(Long userNo, int calculatedTotalPoint, String resultFile);
+
+	Integer selectInvestmentTotalPointByUserNo(Long userNo);
+
+	
+
 	
 }
