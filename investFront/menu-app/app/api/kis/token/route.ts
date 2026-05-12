@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { resolveKisBaseUrl } from "@/lib/kis-config";
+
 type KisTokenResponse = {
   access_token?: string;
   token_type?: string;
@@ -12,7 +14,7 @@ type KisTokenResponse = {
 export async function GET() {
   const appKey = process.env.KIS_APP_KEY;
   const appSecret = process.env.KIS_APP_SECRET;
-  const baseUrl = process.env.KIS_BASE_URL ?? "https://openapi.koreainvestment.com:9443";
+  const baseUrl = resolveKisBaseUrl();
 
   if (!appKey || !appSecret) {
     return NextResponse.json(

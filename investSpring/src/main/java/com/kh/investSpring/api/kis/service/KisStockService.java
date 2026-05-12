@@ -1,12 +1,20 @@
 package com.kh.investSpring.api.kis.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.kh.investSpring.api.kis.config.KisProperties;
+import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
+import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse;
 import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
+import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
+import com.kh.investSpring.domain.stock.dao.StockDao;
+import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 
 @Service
 public class KisStockService {
@@ -14,15 +22,21 @@ public class KisStockService {
 	private final RestClient restClient;
     private final KisProperties kisProperties;
     private final KisTokenService kisTokenService;
+    private final KisApiRequestCoordinator kisApiRequestCoordinator;
+    private final StockDao stockDao;
 
     public KisStockService(
             RestClient restClient,
             KisProperties kisProperties,
-            KisTokenService kisTokenService
+            KisTokenService kisTokenService,
+            KisApiRequestCoordinator kisApiRequestCoordinator,
+            StockDao stockDao
     ) {
         this.restClient = restClient;
         this.kisProperties = kisProperties;
         this.kisTokenService = kisTokenService;
+        this.kisApiRequestCoordinator = kisApiRequestCoordinator;
+        this.stockDao = stockDao;
     }
 
     public KisStockPriceResponse getStockPrice(String stockCode) {
@@ -33,15 +47,17 @@ public class KisStockService {
                 + "?FID_COND_MRKT_DIV_CODE=J"
                 + "&FID_INPUT_ISCD=" + stockCode;
 
-        KisInquirePriceResponse response = restClient.get()
-                .uri(url)
-                .header("content-type", "application/json; charset=utf-8")
-                .header("authorization", "Bearer " + accessToken)
-                .header("appkey", kisProperties.getAppKey())
-                .header("appsecret", kisProperties.getAppSecret())
-                .header("tr_id", "FHKST01010100")
-                .retrieve()
-                .body(KisInquirePriceResponse.class);
+        KisInquirePriceResponse response = kisApiRequestCoordinator.execute(
+                () -> restClient.get()
+                        .uri(url)
+                        .header("content-type", "application/json; charset=utf-8")
+                        .header("authorization", "Bearer " + accessToken)
+                        .header("appkey", kisProperties.getAppKey())
+                        .header("appsecret", kisProperties.getAppSecret())
+                        .header("tr_id", "FHKST01010100")
+                        .retrieve()
+                        .body(KisInquirePriceResponse.class)
+        );
 
         if (response == null) {
             throw new IllegalStateException("한국투자증권 현재가 응답이 없습니다.");
@@ -51,7 +67,7 @@ public class KisStockService {
             throw new IllegalStateException("한국투자증권 현재가 조회 실패: " + response.msg1());
         }
 
-        Map<String, Object> output = response.output();
+        Map<String, Object> output = safeMap(response.output());
 
         return new KisStockPriceResponse(
                 stockCode,
@@ -67,11 +83,206 @@ public class KisStockService {
         );
     }
 
+    public KisStockOrderbookResponse getStockOrderbook(String stockCode) {
+        String url = kisProperties.getBaseUrl()
+                + "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn"
+                + "?FID_COND_MRKT_DIV_CODE=J"
+                + "&FID_INPUT_ISCD=" + stockCode;
+
+        KisOrderbookApiResponse response = kisApiRequestCoordinator.execute(
+                () -> restClient.get()
+                        .uri(url)
+                        .headers(headers -> addKisHeaders(headers, "FHKST01010200"))
+                        .retrieve()
+                        .body(KisOrderbookApiResponse.class)
+        );
+
+        if (response == null) {
+            throw new IllegalStateException("한국투자증권 호가 응답이 없습니다.");
+        }
+
+        if (!"0".equals(response.rt_cd())) {
+            throw new IllegalStateException("한국투자증권 호가 조회 실패: " + response.msg1());
+        }
+
+        Map<String, Object> output1 = safeMap(response.output1());
+        Map<String, Object> output2 = safeMap(response.output2());
+
+        return new KisStockOrderbookResponse(
+                stockCode,
+                buildOrderbookLevels(output1, "askp", "askp_rsqn", "askp_rsqn_icdc"),
+                buildOrderbookLevels(output1, "bidp", "bidp_rsqn", "bidp_rsqn_icdc"),
+                valueToString(output1.get("total_askp_rsqn")),
+                valueToString(output1.get("total_bidp_rsqn")),
+                valueToString(output2.get("stck_prpr")),
+                valueToString(output2.get("cntg_vol"))
+        );
+    }
+
+    public KisStockSummaryResponse getStockSummary(String stockCode) {
+        if (kisProperties.isVirtualTrading()) {
+            return buildLocalStockSummary(stockCode);
+        }
+
+        String url = kisProperties.getBaseUrl()
+                + "/uapi/domestic-stock/v1/quotations/search-stock-info"
+                + "?PRDT_TYPE_CD=300"
+                + "&PDNO=" + stockCode;
+
+        KisSearchStockInfoResponse response = kisApiRequestCoordinator.execute(
+                () -> restClient.get()
+                        .uri(url)
+                        .headers(headers -> addKisHeaders(headers, "CTPF1002R"))
+                        .retrieve()
+                        .body(KisSearchStockInfoResponse.class)
+        );
+
+        if (response == null) {
+            throw new IllegalStateException("한국투자증권 종목 요약 응답이 없습니다.");
+        }
+
+        if (!"0".equals(response.rt_cd())) {
+            throw new IllegalStateException("한국투자증권 종목 요약 조회 실패: " + response.msg1());
+        }
+
+        Map<String, Object> output = safeMap(response.output());
+
+        return new KisStockSummaryResponse(
+                stockCode,
+                valueToString(output.get("prdt_name")),
+                valueToString(output.get("mket_id_cd")),
+                valueToString(output.get("scty_grp_id_cd")),
+                valueToString(output.get("stck_kind_cd")),
+                valueToString(output.get("lstg_stqt")),
+                valueToString(output.get("cpta")),
+                valueToString(output.get("papr")),
+                firstNonBlank(output, "scts_mket_lstg_dt", "kosdaq_mket_lstg_dt", "frbd_mket_lstg_dt"),
+                valueToString(output.get("setl_mmdd")),
+                valueToString(output.get("kospi200_item_yn")),
+                valueToString(output.get("std_pdno")),
+                firstNonBlank(output, "scts_mket_lstg_abol_dt", "kosdaq_mket_lstg_abol_dt", "frbd_mket_lstg_abol_dt", "lstg_abol_dt")
+        );
+    }
+
+    public KisStockDetailResponse getStockDetail(String stockCode) {
+        return new KisStockDetailResponse(
+                getStockPrice(stockCode),
+                getStockSummary(stockCode)
+        );
+    }
+
+    private KisStockSummaryResponse buildLocalStockSummary(String stockCode) {
+        StockInfoDto stockInfo = stockDao.getStockInfo(stockCode);
+
+        if (stockInfo == null) {
+            return new KisStockSummaryResponse(
+                    stockCode,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        return new KisStockSummaryResponse(
+                stockCode,
+                stockInfo.getStockName(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private void addKisHeaders(
+            org.springframework.http.HttpHeaders headers,
+            String trId
+    ) {
+        headers.set("content-type", "application/json; charset=utf-8");
+        headers.set("authorization", "Bearer " + kisTokenService.getAccessToken());
+        headers.set("appkey", kisProperties.getAppKey());
+        headers.set("appsecret", kisProperties.getAppSecret());
+        headers.set("tr_id", trId);
+    }
+
+    private List<KisStockOrderbookResponse.OrderbookLevel> buildOrderbookLevels(
+            Map<String, Object> output,
+            String pricePrefix,
+            String quantityPrefix,
+            String changePrefix
+    ) {
+        List<KisStockOrderbookResponse.OrderbookLevel> levels = new ArrayList<>();
+
+        for (int i = 1; i <= 10; i++) {
+            levels.add(
+                    new KisStockOrderbookResponse.OrderbookLevel(
+                            i,
+                            valueToString(output.get(pricePrefix + i)),
+                            valueToString(output.get(quantityPrefix + i)),
+                            valueToString(output.get(changePrefix + i))
+                    )
+            );
+        }
+
+        return levels;
+    }
+
+    private Map<String, Object> safeMap(Map<String, Object> output) {
+        return output == null ? Collections.emptyMap() : output;
+    }
+
+    private String firstNonBlank(
+            Map<String, Object> output,
+            String... keys
+    ) {
+        for (String key : keys) {
+            String value = valueToString(output.get(key));
+
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
     private String valueToString(Object value) {
         return value == null ? null : String.valueOf(value);
     }
 
     private record KisInquirePriceResponse(
+            String rt_cd,
+            String msg_cd,
+            String msg1,
+            Map<String, Object> output
+    ) {
+    }
+
+    private record KisOrderbookApiResponse(
+            String rt_cd,
+            String msg_cd,
+            String msg1,
+            Map<String, Object> output1,
+            Map<String, Object> output2
+    ) {
+    }
+
+    private record KisSearchStockInfoResponse(
             String rt_cd,
             String msg_cd,
             String msg1,

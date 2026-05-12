@@ -34,26 +34,34 @@ public class KisHistoryService {
     private final ObjectMapper objectMapper;
     private final StockHistoryDao stockHistoryDao;
 
+    private volatile boolean bulkSyncInProgress = false;
+
+    public boolean isBulkSyncInProgress() {
+        return bulkSyncInProgress;
+    }
+
     @Async
     public void syncAllHistory(AtomicBoolean running) {
         if (!running.compareAndSet(false, true)) {
             log.warn("이미 초기 적재 실행 중");
             return;
         }
-        
+
+        bulkSyncInProgress = true;
+
         try {
             List<String> stockCodes = stockHistoryDao.selectAllStockCodes();
 
             for (String stockCode : stockCodes) {
                 try {
                     syncHistory(stockCode, "D");
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
 
                     syncHistory(stockCode, "W");
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
 
                     syncHistory(stockCode, "M");
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
                 } catch (Exception e) {
                     log.error("과거시세 저장 실패 stockCode={}",
                             stockCode, e
@@ -63,6 +71,7 @@ public class KisHistoryService {
 
             log.info("과거 시세 저장 완료");
         } finally {
+            bulkSyncInProgress = false;
             running.set(false);
             log.info("과거 시세 동기화 락 해제");
         }
@@ -72,7 +81,6 @@ public class KisHistoryService {
             String stockCode,
             String periodType
     ) throws IOException, InterruptedException {
-
         String token = kisTokenService.getAccessToken();
         
         String url =

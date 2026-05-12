@@ -31,7 +31,7 @@ public class KisApprovalService {
         );
 
         Map response = restClient.post()
-                .uri("https://openapi.koreainvestment.com:9443/oauth2/Approval")
+                .uri(properties.getBaseUrl() + "/oauth2/Approval")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()

@@ -14,6 +14,7 @@ public class KisTokenService {
 
     private final RestClient restClient;
     private final KisProperties kisProperties;
+    private final KisApiRequestCoordinator kisApiRequestCoordinator;
 
     private String accessToken;
     private LocalDateTime expiredAt;
@@ -21,9 +22,14 @@ public class KisTokenService {
     private static final DateTimeFormatter KIS_DATE_TIME_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public KisTokenService(RestClient restClient, KisProperties kisProperties) {
+    public KisTokenService(
+            RestClient restClient,
+            KisProperties kisProperties,
+            KisApiRequestCoordinator kisApiRequestCoordinator
+    ) {
         this.restClient = restClient;
         this.kisProperties = kisProperties;
+        this.kisApiRequestCoordinator = kisApiRequestCoordinator;
     }
 
     public synchronized String getAccessToken() {
@@ -50,12 +56,14 @@ public class KisTokenService {
                 "appsecret", kisProperties.getAppSecret()
         );
 
-        KisTokenResponse response = restClient.post()
-                .uri(kisProperties.getBaseUrl() + "/oauth2/tokenP")
-                .header("content-type", "application/json; charset=utf-8")
-                .body(requestBody)
-                .retrieve()
-                .body(KisTokenResponse.class);
+        KisTokenResponse response = kisApiRequestCoordinator.execute(
+                () -> restClient.post()
+                        .uri(kisProperties.getBaseUrl() + "/oauth2/tokenP")
+                        .header("content-type", "application/json; charset=utf-8")
+                        .body(requestBody)
+                        .retrieve()
+                        .body(KisTokenResponse.class)
+        );
 
         if (response == null || response.access_token() == null) {
             throw new IllegalStateException("한국투자증권 access token 발급 실패");
