@@ -22,7 +22,6 @@ public class RealtimeQueueServiceImpl implements RealtimeQueueService {
     }
 
     public List<StockRealtimeTickDto> pollBatch(int size) {
-
         List<StockRealtimeTickDto> list = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
@@ -32,7 +31,6 @@ public class RealtimeQueueServiceImpl implements RealtimeQueueService {
             	log.info("Queue Empty");
                 break;
             }
-
             list.add(dto);
         }
 

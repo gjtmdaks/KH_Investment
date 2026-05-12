@@ -2,25 +2,31 @@
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid black;
+  border: 1px solid #e5e7eb;
   background: white;
 }
 
+/* 헤더 */
 .header {
   display: grid;
-  grid-template-columns:
-    2fr
-    1fr
-    1fr
-    1fr
-    1fr
-    180px;
 
-  padding: 16px 24px;
+  grid-template-columns:
+    40px   /* 하트 */
+    50px   /* 순위 */
+    minmax(220px, 1.5fr) /* 종목 */
+    1fr    /* 현재가 */
+    1fr    /* 등락률 */
+    1.2fr  /* 거래량 */
+    1.2fr  /* 거래대금 */
+    160px; /* 버튼 */
+
+  align-items: center;
+
+  padding: 14px 20px;
 
   background: #f9fafb;
 
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 
   color: #6b7280;
@@ -28,70 +34,137 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+/* 한 줄 유지 핵심 */
 .row {
   display: grid;
 
   grid-template-columns:
-    2fr
+    40px
+    50px
+    minmax(220px, 1.5fr)
     1fr
     1fr
-    1fr
-    1fr
-    180px;
+    1.2fr
+    1.2fr
+    160px;
 
   align-items: center;
 
-  padding: 20px 24px;
+  padding: 16px 20px;
 
   text-decoration: none;
-
   color: black;
 
   border-bottom: 1px solid #f1f5f9;
 
-  transition:
-    background 0.15s,
-    transform 0.15s;
+  transition: background 0.15s;
+
+  min-height: 72px;
+
+  white-space: nowrap;
 }
 
 .row:hover {
-  background: #f8fbff;
+  background: #e2e0e0;
 }
 
+/* 하트 */
+.favorite {
+  font-size: 20px;
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+}
+
+/* 순위 */
+.rank {
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #6b7280;
+
+  text-align: center;
+}
+
+/* 종목 영역 */
+.stockInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  overflow: hidden;
+}
+
+/* 로고 */
+.logo {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  flex-shrink: 0;
+
+  background: #f3f4f6;
+}
+
+/* 종목명 */
 .stockName {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.price {
+/* 숫자 */
+.price,
+.volume,
+.tradingValue {
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
+/* 상승 */
 .up {
   color: #ef4444;
   font-weight: 700;
 }
 
+/* 하락 */
 .down {
-  color: #3b82f6;
+  color: #2563eb;
   font-weight: 700;
 }
 
+/* 버튼 */
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .buyBtn,
 .sellBtn {
   border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
 
-  font-size: 14px;
+  border-radius: 10px;
+
+  padding: 9px 14px;
+
+  font-size: 13px;
   font-weight: 700;
 
   cursor: pointer;
+
+  transition: opacity 0.15s;
+}
+
+.buyBtn:hover,
+.sellBtn:hover {
+  opacity: 0.6;
 }
 
 .buyBtn {

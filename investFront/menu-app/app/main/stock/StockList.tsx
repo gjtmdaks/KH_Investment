@@ -5,6 +5,8 @@ export default function StockList({ stocks }: any) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <div></div>
+        <div></div>
         <div>종목명</div>
         <div>현재가</div>
         <div>등락률</div>
@@ -13,10 +15,11 @@ export default function StockList({ stocks }: any) {
         <div></div>
       </div>
 
-      {stocks.map((stock: any) => (
+      {stocks.map((stock: any, index: number) => (
         <StockRow
           key={stock.stockCode}
           stock={stock}
+          rank={index + 1}
         />
       ))}
     </div>

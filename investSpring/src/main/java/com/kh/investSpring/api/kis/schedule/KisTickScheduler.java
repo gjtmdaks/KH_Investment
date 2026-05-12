@@ -27,25 +27,16 @@ public class KisTickScheduler {
      */
     @Scheduled(fixedRate = 1000)
     public void saveTickData() {
-
         if (!kisProperties.isWebsocketEnabled()) {
             return;
         }
-
     	log.info("스케줄 실행");
 
         List<StockRealtimeTickDto> batch = queueService.pollBatch(1000);
-        
+
         log.info("queue size={}", batch.size());
 
         if (batch.isEmpty()) return;
-        
-        for (StockRealtimeTickDto dto : batch) {
-            log.info(
-                "DB 저장 시도 stockCode={}",
-                dto.getStockCode()
-            );
-        }
 
         stockRealtimeDao.batchInsertTick(batch);
 

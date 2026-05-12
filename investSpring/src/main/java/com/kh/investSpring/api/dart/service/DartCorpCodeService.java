@@ -149,8 +149,6 @@ public class DartCorpCodeService {
         // 2. XML → DTO List
         List<DartCorpCodeDto> list = parseXml(xml);
 
-        log.info("corpCode 저장 시작 count={}", list.size());
-
         // 3. DB 저장
         for (DartCorpCodeDto dto : list) {
         	CoDao.mergeCorpCode(dto);

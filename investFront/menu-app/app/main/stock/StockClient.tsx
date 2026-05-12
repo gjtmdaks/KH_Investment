@@ -18,7 +18,7 @@ export default function StockClient({ initialData }: any) {
         })
         .then(setData)
         .catch(() => {});
-    }, 3000); // 3초
+    }, 1000); // 3초
 
     return () => clearInterval(interval);
   }, []);
