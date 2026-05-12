@@ -33,7 +33,6 @@ public class DartStockService {
 
     @Transactional
     public void syncStockTotals() {
-
         List<Map<String, Object>> corpList = coDao.selectCorpCodes();
         int year = LocalDate.now().getYear()-1;
 

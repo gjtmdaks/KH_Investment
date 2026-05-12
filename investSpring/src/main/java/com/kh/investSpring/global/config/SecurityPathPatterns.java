@@ -12,6 +12,7 @@ public final class SecurityPathPatterns {
 	 * 로그인·회원가입·토큰 재발급 등 인증 없이 허용할 경로
 	 */
 	public static final String[] AUTH_WHITELIST = {
+			"/",
 			"/oauth2/**",
 			"/login/oauth2/**",
 			"/logout/oauth2/**",
@@ -23,6 +24,7 @@ public final class SecurityPathPatterns {
 			"/users/logout",
 			"/users/logout/**",
 			"/users/find_password",
+			"/_next/**",
 			"/admin/**" // 개발단계에서만
 	};
 

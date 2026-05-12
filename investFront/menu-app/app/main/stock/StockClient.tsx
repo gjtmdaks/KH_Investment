@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import StockList from "./StockList";
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const apiBase = rawBase.trim() || "http://localhost:8081/final";
@@ -10,15 +11,14 @@ export default function StockClient({ initialData }: any) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const url = `${apiBase}/api/main`;
-      fetch(url, { credentials: "include" })
+      fetch(`${apiBase}/api/main`, { credentials: "include" })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then(setData)
         .catch(() => {});
-    }, 1000); // 1초
+    }, 3000); // 3초
 
     return () => clearInterval(interval);
   }, []);
@@ -27,15 +27,10 @@ export default function StockClient({ initialData }: any) {
 
   return (
     <div>
-        {data?.main?.stockList?.length === 0 ? (
-        <div>데이터 없음</div>
-        ) : (
-        data?.main?.stockList?.map((s: any) => (
-            <div key={s.stockCode}>
-            {s.stockName} - {s.price}
-            </div>
-        ))
-        )}
+        {data?.main?.stockList?.length === 0 ?
+        <div>데이터 없음</div> : 
+        <StockList stocks={data?.main?.stockList || []}/>
+        }
     </div>
   );
 }

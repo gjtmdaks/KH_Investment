@@ -91,6 +91,7 @@ public class MainServiceImpl implements MainService {
                                 .price(s.getPrice())
                                 .changeRate(s.getChangeRate())
                                 .volume(s.getVolume())
+                                .tradingValue(s.getTradingValue())
                                 .build()
                         ).toList();
 

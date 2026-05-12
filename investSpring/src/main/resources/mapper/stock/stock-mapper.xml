@@ -6,34 +6,38 @@
     <!-- =========================
          메인 종목 리스트
     ========================== -->
-    <select id="getStockList" resultType="StockDto">
-        SELECT
-            s.stock_code,
-            s.stock_name,
-            NVL(t.current_price, 0) AS price,
-            NVL(t.change_rate, 0) AS changeRate,
-            NVL(t.volume, 0) AS volume
-        FROM stocks s
-
-        LEFT JOIN (
-            SELECT
-                stock_code,
-                current_price,
-                change_rate,
-                volume,
-                ROW_NUMBER() OVER (
-                    PARTITION BY stock_code
-                    ORDER BY trade_time DESC
-                ) rn
-            FROM stock_realtime_tick
-        ) t
-        ON s.stock_code = t.stock_code
-        AND t.rn = 1
-
-        WHERE s.status = 'ACTIVE'
-
-        ORDER BY volume DESC NULLS LAST
-    </select>
+	<select id="getStockList" resultType="StockDto">
+	    SELECT *
+	    FROM (
+	        SELECT
+	            s.stock_code,
+	            s.stock_name,
+	            t.current_price AS price,
+	            t.change_rate AS changeRate,
+	            t.volume AS volume,
+	            (t.current_price * t.volume) AS tradingValue
+	        FROM stocks s
+	
+	        INNER JOIN (
+	            SELECT
+	                stock_code,
+	                current_price,
+	                change_rate,
+	                volume,
+	                ROW_NUMBER() OVER (
+	                    PARTITION BY stock_code
+	                    ORDER BY trade_time DESC
+	                ) rn
+	            FROM stock_realtime_tick
+	        ) t
+	            ON s.stock_code = t.stock_code
+	           AND t.rn = 1
+	
+	        WHERE s.status = 'ACTIVE'
+	        ORDER BY t.current_price DESC
+	    )
+	    WHERE ROWNUM <![CDATA[ <= ]]> 50
+	</select>
 
     <!-- =========================
          거래량 1위 종목 코드
@@ -44,8 +48,9 @@
             SELECT
                 stock_code,
                 volume,
+                CURRENT_PRICE,
                 ROW_NUMBER() OVER (
-                    ORDER BY volume DESC
+                    ORDER BY (current_price * volume) DESC
                 ) rn
             FROM stock_realtime_tick
         )

@@ -66,78 +66,54 @@ public class DartCorpCodeService {
                 throw new RuntimeException("ZIP 다운로드 실패");
             }
 
-            ZipInputStream zis =
-                    new ZipInputStream(
-                            new ByteArrayInputStream(zipBytes)
-                    );
-
+            ZipInputStream zis = new ZipInputStream(
+			                            new ByteArrayInputStream(zipBytes)
+			                    );
             ZipEntry entry = zis.getNextEntry();
 
             if (entry == null) {
                 throw new RuntimeException("ZIP 내부 XML 없음");
             }
 
-            String xml =
-                    new String(
-                            zis.readAllBytes(),
-                            java.nio.charset.StandardCharsets.UTF_8
-                    );
-
+            String xml = new String(
+	                            zis.readAllBytes(),
+	                            java.nio.charset.StandardCharsets.UTF_8
+	                    );
             zis.close();
-
             log.info("corpCode XML 다운로드 완료");
-
             return xml;
 
         } catch (Exception e) {
-
             log.error("corpCode 다운로드 실패", e);
-
             throw new RuntimeException(e);
         }
     }
     
     public List<DartCorpCodeDto> parseXml(String xml) {
-
         List<DartCorpCodeDto> list = new ArrayList<>();
 
         try {
-
-            DocumentBuilderFactory factory =
-                    DocumentBuilderFactory.newInstance();
-
-            DocumentBuilder builder =
-                    factory.newDocumentBuilder();
-
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
             Document document =
                     builder.parse(
                             new InputSource(
                                     new StringReader(xml)
                             )
                     );
-
-            NodeList nodeList =
-                    document.getElementsByTagName("list");
+            NodeList nodeList = document.getElementsByTagName("list");
 
             for (int i = 0; i < nodeList.getLength(); i++) {
-
                 Element element = (Element) nodeList.item(i);
-
-                String corpCode =
-                        getTagValue(element, "corp_code");
-
-                String stockCode =
-                        getTagValue(element, "stock_code");
-
-                String corpName =
-                        getTagValue(element, "corp_name");
+                String corpCode = getTagValue(element, "corp_code");
+                String stockCode = getTagValue(element, "stock_code");
+                String corpName = getTagValue(element, "corp_name");
 
                 if (stockCode == null || stockCode.isBlank()) {
                     continue;
                 }
 
-                DartCorpCodeDto dto =
-                        new DartCorpCodeDto();
+                DartCorpCodeDto dto = new DartCorpCodeDto();
 
                 dto.setCorpCode(corpCode);
                 dto.setStockCode(stockCode);
@@ -149,7 +125,6 @@ public class DartCorpCodeService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
         return list;
     }
     
@@ -157,9 +132,7 @@ public class DartCorpCodeService {
             Element element,
             String tagName
     ) {
-
-        NodeList list =
-                element.getElementsByTagName(tagName);
+        NodeList list = element.getElementsByTagName(tagName);
 
         if (list.getLength() == 0) {
             return null;
@@ -170,13 +143,11 @@ public class DartCorpCodeService {
     
     @Transactional
     public void syncCorpCodes() {
-
         // 1. XML 다운로드
         String xml = downloadCorpCodeXml();
 
         // 2. XML → DTO List
-        List<DartCorpCodeDto> list =
-                parseXml(xml);
+        List<DartCorpCodeDto> list = parseXml(xml);
 
         log.info("corpCode 저장 시작 count={}", list.size());
 

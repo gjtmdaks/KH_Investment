@@ -1,0 +1,105 @@
+.container {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid black;
+  background: white;
+}
+
+.header {
+  display: grid;
+  grid-template-columns:
+    2fr
+    1fr
+    1fr
+    1fr
+    1fr
+    180px;
+
+  padding: 16px 24px;
+
+  background: #f9fafb;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #6b7280;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.row {
+  display: grid;
+
+  grid-template-columns:
+    2fr
+    1fr
+    1fr
+    1fr
+    1fr
+    180px;
+
+  align-items: center;
+
+  padding: 20px 24px;
+
+  text-decoration: none;
+
+  color: black;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.row:hover {
+  background: #f8fbff;
+}
+
+.stockName {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.price {
+  font-weight: 700;
+}
+
+.up {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.down {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.buyBtn,
+.sellBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.buyBtn {
+  background: #ef4444;
+  color: white;
+}
+
+.sellBtn {
+  background: #2563eb;
+  color: white;
+}
