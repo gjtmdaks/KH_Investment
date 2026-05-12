@@ -89,19 +89,16 @@ public class DartMinorityShareholderService {
             return null;
         }
 
-        Map<String, Object> body =
-                objectMapper.readValue(
-                        response.body(),
-                        new TypeReference<Map<String, Object>>() {}
-                );
-
+        Map<String, Object> body = objectMapper.readValue(
+					                        response.body(),
+					                        new TypeReference<Map<String, Object>>() {}
+					                );
         if (body == null) {
             return null;
         }
 
         if (!"000".equals(body.get("status"))) {
-            log.warn(
-                    "소액주주비율 응답 실패 corpCode={} status={} message={}",
+            log.warn("소액주주비율 응답 실패 corpCode={} status={} message={}",
                     corpCode,
                     body.get("status"),
     	            body.get("message")

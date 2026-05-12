@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeAnswerRequest;
@@ -27,7 +28,6 @@ import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @Primary

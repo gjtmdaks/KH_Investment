@@ -95,5 +95,6 @@ public class MainResponse {
         private Long price;
         private Double changeRate;
         private Long volume;
+        private Long tradingValue;
     }
 }

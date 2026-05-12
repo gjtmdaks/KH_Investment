@@ -14,14 +14,17 @@ export default async function StockPage() {
   const data = await getInitialData();
 
   return (
-    <div>
-      <h2>주식</h2>
-      <p>전체 종목 목록이 들어갈 영역입니다.</p>
+    <div style={{ padding: "30px" }}>
+      <h1
+        style={{
+          fontSize: "32px",
+          fontWeight: 700,
+          marginBottom: "24px",
+        }}
+      >
+        주식
+      </h1>
       <StockClient initialData={data} />
-
-      <Link href="/main/stock/005930">
-        디테일(삼전)
-      </Link>
     </div>
   );
 }
