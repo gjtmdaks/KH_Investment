@@ -429,12 +429,13 @@ public class UserServiceImpl implements UserService {
             data.put("totalPoint", totalPoint);
             data.put("resultType", resultType);
             data.put("answers", saveRequest.getAnswers());
-
+            
             objectMapper
                     .writerWithDefaultPrettyPrinter()
                     .writeValue(filePath.toFile(), data);
 
             return "uploads/investment-type/" + fileName;
+//            return "http://192.168.10.25:8081/uploads/investment-type/" + fileName;
         } catch (Exception e) {
             throw new IllegalStateException("투자성향 결과 파일 저장에 실패했습니다.", e);
         }

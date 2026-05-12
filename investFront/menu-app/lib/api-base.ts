@@ -1,19 +1,58 @@
+// function resolveApiBase(): string {
+//   const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "").trim();
+
+//   if (!raw) {
+//     return "http://localhost:8081/final";
+//   }
+
+//   if (raw.endsWith("/final")) {
+//     return raw;
+//   }
+
+//   if (/^https?:\/\/[^/]+$/i.test(raw)) {
+//     return `${raw}/final`;
+//   }
+
+//   return raw;
+// }
+
+// export const API_BASE_URL = resolveApiBase();
+
+// 위
+
+function normalizeFinalUrl(raw: string): string {
+  const cleaned = raw.replace(/\/$/, "").trim();
+
+  if (cleaned.endsWith("/final")) {
+    return cleaned;
+  }
+
+  if (/^https?:\/\/[^/]+$/i.test(cleaned)) {
+    return `${cleaned}/final`;
+  }
+
+  return cleaned;
+}
+
 function resolveApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "").trim();
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8081/final";
+    }
+
+    return `${protocol}//${hostname}:8081/final`;
+  }
+
+  const raw = process.env.NEXT_PUBLIC_API_URL;
 
   if (!raw) {
     return "http://localhost:8081/final";
   }
 
-  if (raw.endsWith("/final")) {
-    return raw;
-  }
-
-  if (/^https?:\/\/[^/]+$/i.test(raw)) {
-    return `${raw}/final`;
-  }
-
-  return raw;
+  return normalizeFinalUrl(raw);
 }
 
 export const API_BASE_URL = resolveApiBase();
