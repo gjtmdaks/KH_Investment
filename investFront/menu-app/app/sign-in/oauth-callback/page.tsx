@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
+import { getCurrentUser } from "@/lib/auth-user";
+
 import styles from "./oauthCallback.module.css";
 
 type Phase = "pending" | "working" | "done" | "error";
@@ -64,18 +66,30 @@ function OAuthCallbackBody() {
     }
 
     setPhase("working");
-    try {
-      window.localStorage.setItem("accessToken", raw);
-    } catch {
-      setErrorMessage(
-        "브라우저 저장소에 접근할 수 없습니다. 쿠키·저장 설정을 확인해 주세요."
-      );
-      setPhase("error");
-      return;
+
+    async function completeLogin() {
+      try {
+        window.localStorage.setItem("accessToken", raw);
+      } catch {
+        setErrorMessage(
+          "브라우저 저장소에 접근할 수 없습니다. 쿠키·저장 설정을 확인해 주세요."
+        );
+        setPhase("error");
+        return;
+      }
+
+      const user = await getCurrentUser();
+      if (!user) {
+        setErrorMessage("로그인 정보를 불러오지 못했습니다. 다시 로그인해 주세요.");
+        setPhase("error");
+        return;
+      }
+
+      setPhase("done");
+      router.replace("/main");
     }
 
-    setPhase("done");
-    router.replace("/main");
+    void completeLogin();
   }, [phase, accessToken, oauthError, oauthErrorDescription, router]);
 
   const showSpinner = phase === "pending" || phase === "working" || phase === "done";
