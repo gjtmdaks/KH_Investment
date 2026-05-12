@@ -35,6 +35,8 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+console.log("API_BASE_URL =", API_BASE_URL);
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<AuthErrorBody>) => {
