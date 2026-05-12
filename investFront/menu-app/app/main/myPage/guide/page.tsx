@@ -13,10 +13,19 @@ function MobileUIScreen({ children }: { children: any }) {
 function Step1UI() {
   return (
     <MobileUIScreen>
-      <div className={styles.ui_SearchBar}><span style={{color: '#888'}}>🔍</span><span style={{color: '#bbb'}}>삼성전자</span></div>
+      <div className={styles.ui_SearchBar}>
+        <span style={{color: '#4a90e2'}}>🔍</span>
+        <span style={{color: '#4a5568'}}>삼성전자</span> 
+      </div>
       <div className={styles.ui_StockItem}>
-        <div><div style={{fontWeight: 'bold'}}>삼성전자</div><div style={{fontSize: '11px', color: '#888'}}>005930</div></div>
-        <div><div>72,500</div><div style={{fontSize: '11px', color: '#f04e4e'}}>+1.25%</div></div>
+        <div>
+          <div style={{fontWeight: 'bold', color: '#1a202c'}}>삼성전자</div>
+          <div style={{fontSize: '11px', color: '#718096'}}>005930</div>
+        </div>
+        <div style={{textAlign: 'right'}}>
+          <div style={{color: '#1a202c', fontWeight: '600'}}>72,500</div>
+          <div style={{fontSize: '11px', color: '#f04e4e'}}>+1.25%</div>
+        </div>
       </div>
     </MobileUIScreen>
   );
@@ -24,20 +33,52 @@ function Step1UI() {
 function Step2UI() {
   return (
     <MobileUIScreen>
-      <div style={{padding: '5px 10px', fontWeight: 'bold'}}>매수 주문</div>
-      <div style={{borderBottom: '1px solid #ddd', margin: '5px 0'}}/>
-      <div className={styles.ui_OrderItem}><span>주문유형</span><div className={styles.ui_Dropdown}>시장가</div></div>
-      <div className={styles.ui_OrderItem}><span>수량</span><div className={styles.ui_Input}>10</div></div>
-      <div className={styles.ui_OrderButton}>매수 주문하기</div>
+      <div style={{ display: 'flex', borderBottom: '1px solid #edf2f7' }}>
+        <div style={{ flex: 1, textAlign: 'center', padding: '8px 0', color: '#f04e4e', fontWeight: 'bold', borderBottom: '2px solid #f04e4e', fontSize: '10px' }}>매수</div>
+        <div style={{ flex: 1, textAlign: 'center', padding: '8px 0', color: '#718096', fontSize: '10px' }}>매도</div>
+      </div>
+
+      <div style={{ padding: '10px' }}>
+        <div className={styles.ui_OrderItem}>
+          <span style={{ color: '#4a5568', fontWeight: '500' }}>주문유형</span>
+          <div className={styles.ui_Dropdown} style={{ color: '#2d3748', fontSize: '10px' }}>시장가</div>
+        </div>
+
+        <div className={styles.ui_OrderItem} style={{ marginTop: '5px' }}>
+          <span style={{ color: '#4a5568', fontWeight: '500' }}>수량</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div className={styles.ui_Input} style={{ width: '40px', textAlign: 'center', color: '#2d3748' }}>10</div>
+            <span style={{ color: '#718096', fontSize: '10px' }}>주</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 10px', marginTop: '10px', background: '#f8fafc', borderRadius: '4px' }}>
+          <span style={{ color: '#718096', fontSize: '10px' }}>예상금액</span>
+          <span style={{ color: '#2d3748', fontWeight: 'bold' }}>725,000 원</span>
+        </div>
+      </div>
+
+      <div className={styles.ui_OrderButton} style={{ marginTop: 'auto', marginBottom: '10px' }}>
+        매수 주문
+      </div>
     </MobileUIScreen>
   );
 }
 function Step3UI() {
   return (
     <MobileUIScreen>
-      <div style={{padding: '5px 10px', fontWeight: 'bold'}}>내 자산 현황</div>
-      <div style={{background: '#f1f6ff', padding: '10px', borderRadius: '4px', margin: '10px'}}><div style={{fontWeight: 'bold', fontSize: '15px'}}>10,250,000 원</div></div>
-      <div className={styles.ui_StockItem}><span>삼성전자 (10주)</span><span style={{color: '#f04e4e'}}>+10.5%</span></div>
+      <div style={{padding: '8px 10px', fontWeight: 'bold', color: '#2d3748'}}>내 자산 현황</div>
+      <div style={{background: '#ebf4ff', padding: '10px', borderRadius: '8px', margin: '0 10px 10px'}}>
+        <div style={{fontSize: '10px', color: '#5a67d8', marginBottom: '2px'}}>총 자산</div>
+        <div style={{fontWeight: 'bold', fontSize: '14px', color: '#2c5282'}}>10,250,000 원</div>
+        <div style={{fontSize: '10px', color: '#e53e3e'}}>전일 대비 +2.35%</div>
+      </div>
+      <div style={{padding: '0 10px'}}>
+        <div className={styles.ui_StockItem} style={{padding: '5px 0', borderBottom: '1px solid #edf2f7'}}>
+          <span style={{color: '#4a5568'}}>삼성전자 (10주)</span>
+          <span style={{color: '#e53e3e', fontWeight: '600'}}>+10.5%</span>
+        </div>
+      </div>
     </MobileUIScreen>
   );
 }

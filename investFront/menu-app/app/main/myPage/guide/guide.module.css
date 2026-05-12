@@ -103,19 +103,23 @@
 .mobileUIScreen {
   width: 180px; 
   height: 220px;
-  background: white;
-  border: 4px solid #333; 
-  border-radius: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background-color: #ffffff; 
+  border: 3px solid #2c3e50; 
+  border-radius: 18px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
   font-size: 11px; 
   text-align: left;
   display: flex;
   flex-direction: column;
+  position: relative; 
+  z-index: 1;
 }
 
 .mobileUIHeader {
-  padding: 5px;
-  background: #fdfdfd;
+ padding: 8px 5px 5px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  z-index: 2;
 }
 
 .mobileUIStatusBar {
@@ -131,20 +135,23 @@
 }
 
 .ui_SearchBar {
-  background: #f0f3f7;
+  background: #edf2f7; 
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   gap: 5px;
   align-items: center;
-  margin: 5px;
+  margin: 2px 5px;
+  border: 1px solid #e2e8f0;
 }
 
 .ui_StockItem {
   display: flex;
   justify-content: space-between;
-  padding: 8px;
+  padding: 10px 8px;
   align-items: center;
+  background: #ffffff;
+  color: #2d3748; 
 }
 
 .ui_OrderItem {
@@ -222,11 +229,11 @@
 .stepImagePlaceholder {
   width: 100%;
   height: 230px;
-  background: #f8f9fb; 
+  background: #f1f4f8; 
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e2e8f0;
 }
