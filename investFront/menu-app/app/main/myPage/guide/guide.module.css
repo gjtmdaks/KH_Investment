@@ -5,23 +5,25 @@
   padding: 20px 0;
 }
 
-/* 3단계 프로세스 영역 */
+
 .stepWrapper {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  background: #f8faff;
-  padding: 30px;
-  border-radius: 12px;
+  display: flex; 
+  justify-content: center; 
+  gap: 12px; 
+  background: #f8faff; 
+  padding: 25px; 
+  border-radius: 12px; 
 }
 
 .stepCard {
-  flex: 1;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #eef2f6;
+  flex: 1; 
+  max-width: 260px; 
+  background: white; 
+  padding: 15px; 
+  border-radius: 10px; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+  border: 1px solid #eef2f6; 
+  text-align: left;
 }
 
 .stepBadge {
@@ -35,7 +37,7 @@
   border-radius: 50%;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin: 0 auto 10px;
 }
 
 .stepTitle {
@@ -44,19 +46,24 @@
   margin-bottom: 15px;
 }
 
+
 .stepImagePlaceholder {
   width: 100%;
-  height: 200px;
+  height: 230px; 
   background: #f0f3f7;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
-  font-size: 13px;
+  overflow: hidden; 
 }
 
-/* 하단 주요 기능 요약 */
+.stepDesc {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
 .featureGrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -69,6 +76,7 @@
   padding: 15px;
   text-align: center;
   transition: transform 0.2s;
+  cursor: pointer;
 }
 
 .featureCard:hover {
@@ -90,4 +98,135 @@
   font-size: 12px;
   color: #666;
   line-height: 1.4;
+}
+
+.mobileUIScreen {
+  width: 180px; 
+  height: 220px;
+  background: white;
+  border: 4px solid #333; 
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  font-size: 11px; 
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileUIHeader {
+  padding: 5px;
+  background: #fdfdfd;
+}
+
+.mobileUIStatusBar {
+  height: 5px;
+  background: #eee;
+  border-radius: 2px;
+  margin-bottom: 5px;
+}
+
+.mobileUIBody {
+  flex: 1;
+  overflow: hidden;
+}
+
+.ui_SearchBar {
+  background: #f0f3f7;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin: 5px;
+}
+
+.ui_StockItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  align-items: center;
+}
+
+.ui_OrderItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  align-items: center;
+}
+
+.ui_Dropdown, .ui_Input {
+  border: 1px solid #ccc;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: white;
+}
+
+.ui_Dropdown:after {
+  content: ' ▼';
+  font-size: 8px;
+  color: #888;
+}
+
+.ui_OrderButton {
+  background: #f04e4e; 
+  color: white;
+  text-align: center;
+  padding: 6px;
+  margin: 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 12px;
+  justify-content: flex-start;
+}
+
+.stepBadge {
+  background: #4a90e2;
+  color: white;
+  width: 22px;  
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin: 0; 
+}
+
+.stepTitleText {
+  font-size: 16px; 
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  line-height: 1; 
+}
+
+
+.stepDescText {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  word-break: keep-all; 
+}
+
+.stepImagePlaceholder {
+  width: 100%;
+  height: 230px;
+  background: #f8f9fb; 
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
 }

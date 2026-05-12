@@ -1,12 +1,52 @@
 import layoutStyles from "../myPage.module.css";
-import styles from "./guide.module.css"; // 새로 만든 스타일
+import styles from "./guide.module.css";
 import MyPageSidebar from "../components/MyPageSidebar";
+
+function MobileUIScreen({ children }: { children: any }) {
+  return (
+    <div className={styles.mobileUIScreen}>
+      <div className={styles.mobileUIHeader}><div className={styles.mobileUIStatusBar} />{children}</div>
+      <div className={styles.mobileUIBody}></div>
+    </div>
+  );
+}
+function Step1UI() {
+  return (
+    <MobileUIScreen>
+      <div className={styles.ui_SearchBar}><span style={{color: '#888'}}>🔍</span><span style={{color: '#bbb'}}>삼성전자</span></div>
+      <div className={styles.ui_StockItem}>
+        <div><div style={{fontWeight: 'bold'}}>삼성전자</div><div style={{fontSize: '11px', color: '#888'}}>005930</div></div>
+        <div><div>72,500</div><div style={{fontSize: '11px', color: '#f04e4e'}}>+1.25%</div></div>
+      </div>
+    </MobileUIScreen>
+  );
+}
+function Step2UI() {
+  return (
+    <MobileUIScreen>
+      <div style={{padding: '5px 10px', fontWeight: 'bold'}}>매수 주문</div>
+      <div style={{borderBottom: '1px solid #ddd', margin: '5px 0'}}/>
+      <div className={styles.ui_OrderItem}><span>주문유형</span><div className={styles.ui_Dropdown}>시장가</div></div>
+      <div className={styles.ui_OrderItem}><span>수량</span><div className={styles.ui_Input}>10</div></div>
+      <div className={styles.ui_OrderButton}>매수 주문하기</div>
+    </MobileUIScreen>
+  );
+}
+function Step3UI() {
+  return (
+    <MobileUIScreen>
+      <div style={{padding: '5px 10px', fontWeight: 'bold'}}>내 자산 현황</div>
+      <div style={{background: '#f1f6ff', padding: '10px', borderRadius: '4px', margin: '10px'}}><div style={{fontWeight: 'bold', fontSize: '15px'}}>10,250,000 원</div></div>
+      <div className={styles.ui_StockItem}><span>삼성전자 (10주)</span><span style={{color: '#f04e4e'}}>+10.5%</span></div>
+    </MobileUIScreen>
+  );
+}
 
 export default function Guide() {
   const steps = [
-    { id: 1, title: "종목 검색하기", desc: "상단 검색창에 원하는 종목명을 입력해보세요." },
-    { id: 2, title: "주문하기 (매수/매도)", desc: "수량과 주문유형을 설정하고 주문 버튼을 눌러주세요." },
-    { id: 3, title: "결과 확인하기", desc: "내 정보에서 보유 종목과 수익률을 확인하세요." },
+    { id: 1, title: "종목 검색하기", desc: "상단 검색창에 원하는 종목명을 입력해보세요. 예) 삼성전자", ui: <Step1UI /> },
+    { id: 2, title: "주문하기 (매수 또는 매도)", desc: "매수/매도 선택 후 수량과 주문유형을 설정하고 주문 버튼을 눌러주세요.", ui: <Step2UI /> },
+    { id: 3, title: "결과 확인하기", desc: "내 정보에서 보유 종목과 수익률을 확인 할 수 있어요.", ui: <Step3UI /> },
   ];
 
   const features = [
@@ -28,26 +68,30 @@ export default function Guide() {
         </div>
 
         <div className={styles.guideContainer}>
-          {/* 빠른 시작 가이드 영역 */}
-          <div>
-            <h3 style={{ marginBottom: "15px" }}>빠른 시작 가이드 (3단계로 시작하기)</h3>
+          <div className={styles.sectionWrapper}>
+            <h3 className={styles.sectionTitle}>빠른 시작 가이드 (3단계로 시작하기)</h3>
             <div className={styles.stepWrapper}>
+              
               {steps.map((step) => (
                 <div key={step.id} className={styles.stepCard}>
-                  <div className={styles.stepBadge}>{step.id}</div>
-                  <h4 className={styles.stepTitle}>{step.title}</h4>
-                  <div className={styles.stepImagePlaceholder}>
-                    이미지 영역 (UI 스크린샷)
+                  <div className={styles.stepHeader}>
+                    <div className={styles.stepBadge}>{step.id}</div>
+                    <h4 className={styles.stepTitleText}>{step.title}</h4>
                   </div>
-                  <p style={{ marginTop: "10px", fontSize: "14px", color: "#555" }}>{step.desc}</p>
+                  
+                  <div className={styles.stepImagePlaceholder}>
+                    {step.ui}
+                  </div>
+                  
+                  <p className={styles.stepDescText}>{step.desc}</p>
                 </div>
               ))}
+
             </div>
           </div>
 
-          {/* 주요 기능 요약 영역 */}
-          <div>
-            <h3 style={{ marginBottom: "15px" }}>주요 기능 한눈에 보기</h3>
+          <div className={styles.sectionWrapper}>
+            <h3 className={styles.sectionTitle}>주요 기능 한눈에 보기</h3>
             <div className={styles.featureGrid}>
               {features.map((f, idx) => (
                 <div key={idx} className={styles.featureCard}>
