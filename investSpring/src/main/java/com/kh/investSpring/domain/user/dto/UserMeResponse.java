@@ -14,4 +14,7 @@ public class UserMeResponse {
     private String phone;
     private String provider;
     private Integer auth;
+    
+    private Integer investmentTotalPoint;
+    private String investmentType;
 }

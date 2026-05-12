@@ -63,6 +63,7 @@ public class SecurityFilterChainFactory {
 						            "/users/signin",
 						            "/users/signup",
 						            "/users/find_password",
+						            "/users/me/investment-type",
 						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);

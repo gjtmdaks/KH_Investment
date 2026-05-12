@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
@@ -96,6 +97,20 @@ public class UserController {
                 null,
                 "비밀번호 변경 성공"
         );
+    }
+    
+    // 투자성향 분석 결과 저장
+    @PostMapping("/me/investment-type")
+    public ApiResponse<InvestmentTypeSaveRequest> saveInvestmentType(
+            HttpServletRequest request,
+            @RequestBody InvestmentTypeSaveRequest saveRequest
+    ) {
+        Long userNo = (Long) request.getAttribute("userNo");
+
+        InvestmentTypeSaveRequest response =
+                us.insertInvestmentType(userNo, saveRequest);
+
+        return ApiResponse.success(response, "투자성향 분석 결과 저장 성공");
     }
     
 }

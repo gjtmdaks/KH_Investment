@@ -1,6 +1,7 @@
 package com.kh.investSpring.domain.user.service;
 
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
+import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
@@ -25,4 +26,7 @@ public interface UserService {
 	UserMeResponse updateMyInfo(Long userNo, UserUpdateRequest updateRequest);
 
 	void resetPassword(UserResetPasswordRequest request);
+
+	InvestmentTypeSaveRequest insertInvestmentType(Long userNo, InvestmentTypeSaveRequest saveRequest);
+
 }

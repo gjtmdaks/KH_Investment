@@ -128,4 +128,28 @@
 	
 	</update>
 	
+	<delete id="deleteInvestmentType" parameterType="long">
+	    DELETE FROM INVESTMENT_TYPE
+	    WHERE USER_NO = #{userNo}
+	</delete>
+	
+	<insert id="insertInvestmentType" parameterType="map">
+	    INSERT INTO INVESTMENT_TYPE (
+	        USER_NO,
+	        TOTAL_POINT,
+	        RESULT_FILE
+	    ) VALUES (
+	        #{userNo},
+	        #{totalPoint},
+	        #{resultFile}
+	    )
+	</insert>
+	
+	<select id="selectInvestmentTotalPointByUserNo"
+	        parameterType="long"
+	        resultType="int">
+	    SELECT TOTAL_POINT
+	    FROM INVESTMENT_TYPE
+	    WHERE USER_NO = #{userNo}
+	</select>
 </mapper>

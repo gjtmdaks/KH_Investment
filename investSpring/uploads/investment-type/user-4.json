@@ -1,0 +1,48 @@
+{
+  "totalPoint" : 7,
+  "userNo" : 4,
+  "answers" : [ {
+    "questionNo" : 1,
+    "questionText" : "투자에서 가장 중요하게 생각하는 것은 무엇인가요?",
+    "optionNo" : 1,
+    "optionText" : "원금 손실을 최대한 피하고 싶어요",
+    "point" : 1
+  }, {
+    "questionNo" : 2,
+    "questionText" : "보유한 주식이 10% 하락하면 어떻게 하실 건가요?",
+    "optionNo" : 1,
+    "optionText" : "불안해서 바로 매도할 것 같아요",
+    "point" : 1
+  }, {
+    "questionNo" : 3,
+    "questionText" : "투자 기간은 어느 정도로 생각하고 있나요?",
+    "optionNo" : 1,
+    "optionText" : "3개월 이내의 짧은 기간",
+    "point" : 1
+  }, {
+    "questionNo" : 4,
+    "questionText" : "투자 경험은 어느 정도인가요?",
+    "optionNo" : 1,
+    "optionText" : "거의 없어요",
+    "point" : 1
+  }, {
+    "questionNo" : 5,
+    "questionText" : "감당할 수 있는 손실 수준은 어느 정도인가요?",
+    "optionNo" : 1,
+    "optionText" : "원금 손실은 거의 감당하기 어려워요",
+    "point" : 1
+  }, {
+    "questionNo" : 6,
+    "questionText" : "선호하는 종목 유형은 무엇인가요?",
+    "optionNo" : 1,
+    "optionText" : "배당주나 안정적인 우량주",
+    "point" : 1
+  }, {
+    "questionNo" : 7,
+    "questionText" : "투자 판단은 주로 어떻게 하고 싶나요?",
+    "optionNo" : 1,
+    "optionText" : "전문가 추천이나 안정적인 정보만 참고하고 싶어요",
+    "point" : 1
+  } ],
+  "resultType" : "안정형"
+}

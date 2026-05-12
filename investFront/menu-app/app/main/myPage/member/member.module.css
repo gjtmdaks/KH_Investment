@@ -185,3 +185,106 @@
     flex: 1;
   }
 }
+
+.startCard {
+  width: 100%;
+  max-width: 620px;
+  margin: 80px auto 0;
+  border: 1px solid #2a2d38;
+  border-radius: 24px;
+  background: #171922;
+  padding: 42px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.startCard h2 {
+  margin: 14px 0 12px;
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.startCard p {
+  margin: 0 auto 28px;
+  max-width: 460px;
+  color: #a5adbf;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(79, 124, 255, 0.16);
+  color: #7fa0ff;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.surveyCard {
+  width: 100%;
+  max-width: 680px;
+  margin: 48px auto 0;
+  border: 1px solid #2a2d38;
+  border-radius: 24px;
+  background: #171922;
+  padding: 34px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.surveyTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.progressText {
+  color: #a5adbf;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #101219;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 999px;
+  background: #4f7cff;
+  transition: width 0.25s ease;
+}
+
+.questionTitle {
+  margin: 0 0 24px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.surveyActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.surveyActions .submitButton,
+.surveyActions .secondaryButton {
+  min-width: 130px;
+}

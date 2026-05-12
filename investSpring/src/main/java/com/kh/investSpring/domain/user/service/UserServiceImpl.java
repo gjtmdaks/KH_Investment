@@ -1,5 +1,11 @@
 package com.kh.investSpring.domain.user.service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -7,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
+import com.kh.investSpring.domain.user.dto.InvestmentTypeAnswerRequest;
+import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
@@ -19,6 +27,7 @@ import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @Primary
@@ -28,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final UserDao userDao;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
     
     
     @Override
@@ -180,7 +190,16 @@ public class UserServiceImpl implements UserService {
 	            userId = localUser.getUserId();
 	        }
 	    }
+	    
+	    Integer investmentTotalPoint =
+	            userDao.selectInvestmentTotalPointByUserNo(userNo);
 
+	    String investmentType = null;
+
+	    if (investmentTotalPoint != null) {
+	        investmentType = getInvestmentResultType(investmentTotalPoint);
+	    }
+	    
 	    return new UserMeResponse(
 	            user.getUserNo(),
 	            userId,
@@ -188,7 +207,9 @@ public class UserServiceImpl implements UserService {
 	            user.getEmail(),
 	            user.getPhone(),
 	            user.getProvider(),
-	            user.getAuth()
+	            user.getAuth(),
+	            investmentTotalPoint,
+	            investmentType
 	    );
 	}
 
@@ -274,5 +295,148 @@ public class UserServiceImpl implements UserService {
         localUser.setPassword(encodedPassword);
 
         userDao.updatePassword(localUser);
+    }
+
+    @Override
+    @Transactional
+    public InvestmentTypeSaveRequest insertInvestmentType(
+            Long userNo,
+            InvestmentTypeSaveRequest saveRequest
+    ) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        if (saveRequest == null) {
+            throw new IllegalArgumentException("투자성향 분석 결과가 없습니다.");
+        }
+
+        if (saveRequest.getAnswers() == null || saveRequest.getAnswers().isEmpty()) {
+            throw new IllegalArgumentException("투자성향 답변이 없습니다.");
+        }
+
+        if (saveRequest.getAnswers().size() != 7) {
+            throw new IllegalArgumentException("투자성향 답변은 7개여야 합니다.");
+        }
+
+        int calculatedTotalPoint = 0;
+
+        for (InvestmentTypeAnswerRequest answer : saveRequest.getAnswers()) {
+            if (answer == null) {
+                throw new IllegalArgumentException("잘못된 답변 정보가 포함되어 있습니다.");
+            }
+
+            if (answer.getQuestionNo() < 1 || answer.getQuestionNo() > 7) {
+                throw new IllegalArgumentException("잘못된 질문 번호입니다.");
+            }
+
+            if (answer.getOptionNo() < 1 || answer.getOptionNo() > 5) {
+                throw new IllegalArgumentException("잘못된 선택지 번호입니다.");
+            }
+
+            if (answer.getPoint() < 1 || answer.getPoint() > 5) {
+                throw new IllegalArgumentException("잘못된 점수입니다.");
+            }
+
+            if (answer.getQuestionText() == null || answer.getQuestionText().isBlank()) {
+                throw new IllegalArgumentException("질문 내용이 없습니다.");
+            }
+
+            if (answer.getOptionText() == null || answer.getOptionText().isBlank()) {
+                throw new IllegalArgumentException("선택지 내용이 없습니다.");
+            }
+
+            calculatedTotalPoint += answer.getPoint();
+        }
+
+        if (saveRequest.getTotalPoint() != calculatedTotalPoint) {
+            throw new IllegalArgumentException("투자성향 총점이 올바르지 않습니다.");
+        }
+
+        String calculatedResultType = getInvestmentResultType(calculatedTotalPoint);
+
+        if (saveRequest.getResultType() == null || saveRequest.getResultType().isBlank()) {
+            throw new IllegalArgumentException("투자성향 결과가 없습니다.");
+        }
+
+        if (!calculatedResultType.equals(saveRequest.getResultType())) {
+            throw new IllegalArgumentException("투자성향 결과가 올바르지 않습니다.");
+        }
+
+        User user = userDao.selectUserByUserNo(userNo);
+
+        if (user == null) {
+            throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+        }
+
+        String resultFile = saveInvestmentTypeFile(
+                userNo,
+                calculatedTotalPoint,
+                calculatedResultType,
+                saveRequest
+        );
+
+        userDao.deleteInvestmentType(userNo);
+
+        int result = userDao.insertInvestmentType(
+                userNo,
+                calculatedTotalPoint,
+                resultFile
+        );
+
+        if (result == 0) {
+            throw new IllegalStateException("투자성향 결과 저장에 실패했습니다.");
+        }
+
+        return saveRequest;
+    }
+    
+    private String getInvestmentResultType(int totalPoint) {
+        if (totalPoint <= 11) {
+            return "안정형";
+        }
+
+        if (totalPoint <= 18) {
+            return "안정추구형";
+        }
+
+        if (totalPoint <= 24) {
+            return "위험중립형";
+        }
+
+        if (totalPoint <= 31) {
+            return "적극투자형";
+        }
+
+        return "공격투자형";
+    }
+    
+    private String saveInvestmentTypeFile(
+            Long userNo,
+            int totalPoint,
+            String resultType,
+            InvestmentTypeSaveRequest saveRequest
+    ) {
+        try {
+            Path dir = Paths.get("uploads", "investment-type");
+            Files.createDirectories(dir);
+
+            String fileName = "user-" + userNo + ".json";
+            Path filePath = dir.resolve(fileName);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("userNo", userNo);
+            data.put("totalPoint", totalPoint);
+            data.put("resultType", resultType);
+            data.put("answers", saveRequest.getAnswers());
+
+            objectMapper
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValue(filePath.toFile(), data);
+
+            return "uploads/investment-type/" + fileName;
+        } catch (Exception e) {
+            throw new IllegalStateException("투자성향 결과 파일 저장에 실패했습니다.", e);
+        }
     }
 }

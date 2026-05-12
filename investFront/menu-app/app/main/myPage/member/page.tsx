@@ -105,9 +105,6 @@ export default function MemberPage() {
             <section className={memberStyles.infoCard}>
               <div className={memberStyles.cardHeader}>
                 <h2>기본 정보</h2>
-                <button type="button" className={memberStyles.textButton}>
-                  투자 성향 분석
-                </button>
               </div>
 
               <div className={memberStyles.infoList}>
@@ -135,8 +132,36 @@ export default function MemberPage() {
                   <span>가입 방식</span>
                   <strong>{getProviderName(user.provider)}</strong>
                 </div>
+
+                <div className={memberStyles.infoRow}>
+                  <span>투자 성향</span>
+                  <strong>
+                    {user.investmentType
+                      ? `${user.investmentType} (${user.investmentTotalPoint}점)`
+                      : "아직 분석 전"}
+                  </strong>
+                </div>
               </div>
             </section>
+
+            <section className={memberStyles.manageCard}>
+              <div>
+                <h2>투자 성향 분석</h2>
+                <p>몇 가지 질문에 답하면 내 투자 성향을 확인할 수 있습니다.</p>
+              </div>
+
+              <div className={memberStyles.actionArea}>
+                <button
+                  type="button"
+                  className={memberStyles.primaryButton}
+                  onClick={() => router.push("/main/myPage/member/investment-type")}
+                >
+                  분석하기
+                </button>
+              </div>
+            </section>
+
+            <br />
 
             <section className={memberStyles.manageCard}>
               <div>
