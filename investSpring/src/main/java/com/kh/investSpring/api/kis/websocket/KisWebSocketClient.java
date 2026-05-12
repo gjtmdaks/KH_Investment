@@ -36,22 +36,18 @@ public class KisWebSocketClient {
     private final RealtimeQueueService queueService;
     private final ObjectMapper objectMapper;
     private final StockDao stockDao;
+    private static final int FIELD_COUNT = 46;
 
     @EventListener(ApplicationReadyEvent.class)
     public void connect() {
-
         if (!properties.isWebsocketEnabled()) {
             log.info("KIS websocket 비활성화됨(kis.websocket.enabled=false). 실시간 연결을 건너뜁니다.");
             return;
         }
 
         try {
-
-            String approvalKey =
-                    approvalService.getApprovalKey();
-
-            StandardWebSocketClient client =
-                    new StandardWebSocketClient();
+            String approvalKey = approvalService.getApprovalKey();
+            StandardWebSocketClient client = new StandardWebSocketClient();
 
             client.doHandshake(
                     new KisSocketHandler(
@@ -71,7 +67,6 @@ public class KisWebSocketClient {
 
     @RequiredArgsConstructor
     static class KisSocketHandler extends TextWebSocketHandler {
-
         private final String approvalKey;
         private final RealtimeQueueService queueService;
         private final ObjectMapper objectMapper;
@@ -81,7 +76,6 @@ public class KisWebSocketClient {
         public void afterConnectionEstablished(
                 WebSocketSession session
         ) throws Exception {
-
             log.info("KIS websocket 연결 성공");
 
             List<String> stockCodes = stockDao.findAllStockCodes();
@@ -90,7 +84,6 @@ public class KisWebSocketClient {
 
             for (String stockCode : stockCodes) {
                 try {
-
                     subscribe(session, stockCode);
                     Thread.sleep(50);
 
@@ -105,12 +98,8 @@ public class KisWebSocketClient {
                 WebSocketSession session,
                 TextMessage message
         ) {
-
             try {
-
                 String payload = message.getPayload();
-
-                log.info(payload);
 
                 // pingpong 처리
                 if (payload.contains("\"tr_id\":\"PINGPONG\"")) {
@@ -121,7 +110,6 @@ public class KisWebSocketClient {
                 }
 
                 if (payload.contains("SUBSCRIBE SUCCESS")) {
-                    log.info("구독 성공 응답={}", payload);
                     return;
                 }
 
@@ -129,7 +117,6 @@ public class KisWebSocketClient {
                     log.error("실시간 구독 제한 초과={}", payload);
                     return;
                 }
-
                 parseRealtime(payload);
 
             } catch (Exception e) {
@@ -142,9 +129,7 @@ public class KisWebSocketClient {
                 WebSocketSession session,
                 CloseStatus status
         ) {
-
-            log.warn(
-                "KIS websocket 연결 종료 sessionId={}, status={}",
+            log.warn("KIS websocket 연결 종료 sessionId={}, status={}",
                 session.getId(),
                 status
             );
@@ -155,16 +140,13 @@ public class KisWebSocketClient {
                 WebSocketSession session,
                 Throwable exception
         ) {
-
-            log.error(
-                "KIS websocket transport error sessionId={}",
+            log.error("KIS websocket transport error sessionId={}",
                 session.getId(),
                 exception
             );
         }
 
         private void parseRealtime(String payload) {
-
             if (!payload.startsWith("0|H0STCNT0")) {
                 return;
             }
@@ -174,6 +156,8 @@ public class KisWebSocketClient {
             if (split.length < 4) {
                 return;
             }
+
+            int count = Integer.parseInt(split[2]);
 
             String body = split[3];
 
@@ -188,40 +172,43 @@ public class KisWebSocketClient {
              * [5] 등락률
              * [12] 거래량
              */
-            if (data.length < 13) {
-                return;
+            for (int i = 0; i < count; i++) {
+
+                int start = i * FIELD_COUNT;
+
+                if (data.length < start + FIELD_COUNT) {
+                    break;
+                }
+
+                String stockCode = data[start];
+                String time = data[start + 1];
+
+                long currentPrice =
+                    Long.parseLong(data[start + 2]);
+
+                double changeRate =
+                    Double.parseDouble(data[start + 5]);
+
+                long volume =
+                    Long.parseLong(data[start + 12]);
+
+	            LocalDate today = LocalDate.now();
+	            LocalTime localTime = LocalTime.parse(
+					                        time,
+					                        java.time.format.DateTimeFormatter.ofPattern("HHmmss")
+					                    );
+	
+	            LocalDateTime tradeTime = LocalDateTime.of(today, localTime);
+	
+	            StockRealtimeTickDto dto = StockRealtimeTickDto.builder()
+								                            .stockCode(stockCode)
+								                            .currentPrice(currentPrice)
+								                            .changeRate(changeRate)
+								                            .volume(volume)
+								                            .tradeTime(tradeTime)
+								                            .build();
+	            queueService.add(dto);
             }
-
-            String stockCode = data[0];
-            log.info("실시간 종목코드={}", stockCode);
-            
-            String time = data[1];
-            long currentPrice = Long.parseLong(data[2]);
-            double changeRate = Double.parseDouble(data[5]);
-            long volume = Long.parseLong(data[12]);
-
-            LocalDate today = LocalDate.now();
-            LocalTime localTime = LocalTime.parse(
-				                        time,
-				                        java.time.format.DateTimeFormatter.ofPattern("HHmmss")
-				                    );
-
-            LocalDateTime tradeTime = LocalDateTime.of(today, localTime);
-
-            StockRealtimeTickDto dto = StockRealtimeTickDto.builder()
-							                            .stockCode(stockCode)
-							                            .currentPrice(currentPrice)
-							                            .changeRate(changeRate)
-							                            .volume(volume)
-							                            .tradeTime(tradeTime)
-							                            .build();
-            queueService.add(dto);
-
-            log.info("QUEUE 적재 완료 stockCode={}, price={}, volume={}",
-	                stockCode,
-	                currentPrice,
-	                volume
-            );
         }
 
         private void subscribe(
@@ -245,12 +232,9 @@ public class KisWebSocketClient {
                             )
                     );
 
-            String json =
-                    objectMapper.writeValueAsString(request);
+            String json = objectMapper.writeValueAsString(request);
 
-            session.sendMessage(
-                    new TextMessage(json)
-            );
+            session.sendMessage(new TextMessage(json));
 
             log.info("KIS 구독 완료: {}", stockCode);
         }

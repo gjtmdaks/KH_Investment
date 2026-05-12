@@ -34,6 +34,25 @@
 	           AND t.rn = 1
 	
 	        WHERE s.status = 'ACTIVE'
+			AND t.current_price IS NOT NULL
+			
+			<!--SELECT
+			    s.stock_code,
+			    s.stock_name,
+			    NVL(c.current_price, 0) AS price,
+			    NVL(c.change_rate, 0) AS changeRate,
+			    NVL(c.volume, 0) AS volume,
+			    NVL(c.current_price * c.volume, 0) AS tradingValue
+			
+			FROM stocks s
+			
+			LEFT JOIN stock_realtime_current c
+			    ON s.stock_code = c.stock_code
+			
+			WHERE s.status = 'ACTIVE'
+			AND c.current_price IS NOT NULL
+			
+			ORDER BY c.current_price DESC-->
 	        ORDER BY t.current_price DESC
 	    )
 	    WHERE ROWNUM <![CDATA[ <= ]]> 50
@@ -110,7 +129,7 @@
         FROM stocks
         WHERE status = 'ACTIVE'
         	AND market_type IN ('KOSPI', 'KOSDAQ', 'KONEX')
-			AND ROWNUM <![CDATA[ <= ]]> 25
+			AND ROWNUM <![CDATA[ <= ]]> 50
         ORDER BY stock_code
     </select>
 
