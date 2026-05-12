@@ -1,10 +1,15 @@
-import styles from "./stockDetails.module.css";
+import StockDetailClient from "./StockDetailClient";
 
-export default function stockCode(){
-    return (
-    <div>
-      <h2>주식 디테일</h2>
-      <p>주식에 대한 정보가 들어갈 영역</p>
-    </div>
+type StockDetailPageProps = {
+  params: Promise<{
+    stockCode: string;
+  }>;
+};
+
+export default async function StockDetailPage({ params }: StockDetailPageProps) {
+  const { stockCode } = await params;
+
+  return (
+    <StockDetailClient stockCode={stockCode} />
   );
 }

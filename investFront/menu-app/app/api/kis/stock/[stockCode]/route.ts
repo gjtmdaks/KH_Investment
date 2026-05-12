@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { resolveKisBaseUrl } from "@/lib/kis-config";
+
 type KisStockPriceResponse = {
   rt_cd: string;
   msg_cd: string;
@@ -27,9 +29,9 @@ export async function GET(
   const appKey = process.env.KIS_APP_KEY;
   const appSecret = process.env.KIS_APP_SECRET;
   const accessToken = process.env.KIS_ACCESS_TOKEN;
-  const baseUrl = process.env.KIS_BASE_URL;
+  const baseUrl = resolveKisBaseUrl();
 
-  if (!appKey || !appSecret || !accessToken || !baseUrl) {
+  if (!appKey || !appSecret || !accessToken) {
     return NextResponse.json(
       {
         message: "KIS 환경변수가 설정되지 않았습니다.",

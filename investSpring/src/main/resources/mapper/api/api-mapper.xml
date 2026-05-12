@@ -4,6 +4,7 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="api">
+
     <!-- 실시간 체결 데이터 배치 INSERT -->
     <insert id="batchInsertTick" parameterType="list">
         INSERT INTO STOCK_REALTIME_TICK (
@@ -33,6 +34,7 @@
                     #{item.volume}       AS VOLUME,
                     #{item.tradeTime}    AS TRADE_TIME
                 FROM DUAL
+
             </foreach>
         ) A
     </insert>
@@ -116,6 +118,26 @@
 	    WHERE STOCK_CODE IS NOT NULL
 	</select>
 	
+	<select id="selectHistoryByRange" resultType="com.kh.investSpring.api.kis.dto.StockHistoryCacheDto">
+	    SELECT
+	        HISTORY_ID AS historyId,
+	        STOCK_CODE AS stockCode,
+	        PERIOD_TYPE AS periodType,
+	        BASE_DATE AS baseDate,
+	        OPEN_PRICE AS openPrice,
+	        HIGH_PRICE AS highPrice,
+	        LOW_PRICE AS lowPrice,
+	        CLOSE_PRICE AS closePrice,
+	        VOLUME AS volume,
+	        CHANGE_PRICE AS changePrice,
+	        CHANGE_RATE AS changeRate
+	    FROM STOCK_HISTORY_CACHE
+	    WHERE STOCK_CODE = #{stockCode}
+	      AND PERIOD_TYPE = #{periodType}
+	      AND BASE_DATE BETWEEN #{fromDate} AND #{toDate}
+	    ORDER BY BASE_DATE ASC
+	</select>
+
 	<insert id="mergeHistory">
 	    MERGE INTO STOCK_HISTORY_CACHE t
 	    USING (

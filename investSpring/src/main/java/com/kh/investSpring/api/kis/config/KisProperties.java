@@ -24,4 +24,8 @@ public class KisProperties {
 
     @Value("${kis.api.base-url}")
     private String baseUrl;
+
+    public boolean isVirtualTrading() {
+        return baseUrl != null && baseUrl.contains("openapivts");
+    }
 }
