@@ -1,0 +1,23 @@
+package com.kh.investSpring.global.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+
+@Configuration
+public class OAuth2AuthorizationRequestConfig {
+
+	@Bean
+	public OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver(
+			ClientRegistrationRepository clientRegistrationRepository) {
+		DefaultOAuth2AuthorizationRequestResolver resolver = new DefaultOAuth2AuthorizationRequestResolver(
+				clientRegistrationRepository,
+				"/oauth2/authorization");
+		resolver.setAuthorizationRequestCustomizer(customizer -> customizer.additionalParameters(params -> {
+			params.put("prompt", "login");
+		}));
+		return resolver;
+	}
+}

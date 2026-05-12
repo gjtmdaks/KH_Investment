@@ -14,11 +14,14 @@ public final class SecurityPathPatterns {
 	public static final String[] AUTH_WHITELIST = {
 			"/oauth2/**",
 			"/login/oauth2/**",
+			"/logout/oauth2/**",
 			"/api/stocks/**",
 			"/api/news",
 			"/users/login",
 			"/users/signin",
 			"/users/signup",
+			"/users/logout",
+			"/users/logout/**",
 			"/users/find_password",
 			"/admin/**" // 개발단계에서만
 	};

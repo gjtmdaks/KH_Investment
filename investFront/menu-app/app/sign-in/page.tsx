@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { API_BASE_URL } from "@/lib/api-base";
 import styles from "./signIn.module.css";
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081";
-const kakaoOAuthStartUrl = `${apiBase.replace(/\/$/, "")}/oauth2/authorization/kakao`;
+const kakaoOAuthStartUrl = `${API_BASE_URL}/oauth2/authorization/kakao?prompt=login`;
 
 type SignInResponse = {
   accessToken: string;

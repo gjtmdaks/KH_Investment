@@ -6,6 +6,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -21,14 +22,16 @@ public class SecurityFilterChainFactory {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
 	private final AuthenticationSuccessHandler oAuth2LoginSuccessHandler;
-
+	private final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver;
 	public SecurityFilterChainFactory(
 			JwtAuthenticationFilter jwtAuthenticationFilter,
 			JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
-			@Qualifier("oauth2LoginSuccessHandler") AuthenticationSuccessHandler oAuth2LoginSuccessHandler) {
+			@Qualifier("oauth2LoginSuccessHandler") AuthenticationSuccessHandler oAuth2LoginSuccessHandler,
+			OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver) {
 		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
 		this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
 		this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+		this.oauth2AuthorizationRequestResolver = oauth2AuthorizationRequestResolver;
 	}
 
 	public SecurityFilterChain build(
@@ -59,9 +62,12 @@ public class SecurityFilterChainFactory {
 							.ignoringRequestMatchers(
 									"/oauth2/**", 
 									"/login/oauth2/**",
+									"/logout/oauth2/**",
 									"/users/login",
 						            "/users/signin",
 						            "/users/signup",
+						            "/users/logout",
+						            "/users/logout/**",
 						            "/users/find_password",
 						            "/users/me/investment-type",
 						            "/admin/**");
@@ -71,7 +77,10 @@ public class SecurityFilterChainFactory {
 				})
 				.httpBasic(AbstractHttpConfigurer::disable)
 				.formLogin(AbstractHttpConfigurer::disable)
-				.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
+				.oauth2Login(oauth2 -> oauth2
+						.authorizationEndpoint(authorization -> authorization
+								.authorizationRequestResolver(oauth2AuthorizationRequestResolver))
+						.successHandler(oAuth2LoginSuccessHandler))
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthenticationEntryPoint))
 				.authorizeHttpRequests(auth -> {
 					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();

@@ -23,15 +23,29 @@ public class RefreshTokenCookieWriter {
 
 	private final RefreshCookieSettings refreshCookieSettings;
 
+	@Value("${server.servlet.context-path:}")
+	private String contextPath;
+
 	public void addCookie(HttpServletResponse response, String refreshToken) {
 		long maxAgeSeconds = Math.max(1, refreshExpirationMs / 1000);
-		ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE_NAME, refreshToken)
+		ResponseCookie cookie = buildCookie(refreshToken, Duration.ofSeconds(maxAgeSeconds));
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+	}
+
+	private ResponseCookie buildCookie(String value, Duration maxAge) {
+		return ResponseCookie.from(REFRESH_COOKIE_NAME, value)
 				.httpOnly(true)
 				.secure(refreshCookieSettings.secure())
-				.path("/")
+				.path(resolveCookiePath())
 				.sameSite(refreshCookieSettings.sameSite())
-				.maxAge(Duration.ofSeconds(maxAgeSeconds))
+				.maxAge(maxAge)
 				.build();
-		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+	}
+
+	private String resolveCookiePath() {
+		if (contextPath == null || contextPath.isBlank()) {
+			return "/";
+		}
+		return contextPath.startsWith("/") ? contextPath : "/" + contextPath;
 	}
 }

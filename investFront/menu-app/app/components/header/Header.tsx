@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import {
   getCurrentUser,
-  clearLoginStorage,
+  performLogout,
   type LoginUser,
 } from "@/lib/auth-user";
 
@@ -37,9 +37,8 @@ export default function Header({ data }: { data?: unknown }) {
   const displayName = dataUserName || localUserName || "회원";
   const isLogin = !!dataUserName || !!localUserName;
 
-  function handleLogout() {
-    clearLoginStorage();
-    window.location.replace("/main");
+  async function handleLogout() {
+    await performLogout();
   }
 
   return (

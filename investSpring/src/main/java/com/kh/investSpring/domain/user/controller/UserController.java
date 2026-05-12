@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.auth.dto.LogoutResponse;
+import com.kh.investSpring.domain.auth.service.AuthLogoutService;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
@@ -21,6 +23,7 @@ import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -29,7 +32,8 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService us;
-    
+	private final AuthLogoutService authLogoutService;
+	
     // 로컬 회원가입
     @PostMapping("/signup")
     public ApiResponse<UserSignUpResponse> signUp(@RequestBody UserSignUpRequest request) {
@@ -51,6 +55,15 @@ public class UserController {
         System.out.println("로그인 서비스 처리 완료");
 
         return ApiResponse.success(response, "로그인 성공");
+    }
+    
+    @PostMapping("/logout")
+    public ApiResponse<LogoutResponse> logout(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        LogoutResponse logoutResponse = authLogoutService.logout(request, response);
+
+        return ApiResponse.success(logoutResponse, "로그아웃 성공");
     }
 
     // 인증 테스트

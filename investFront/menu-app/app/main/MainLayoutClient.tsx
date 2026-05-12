@@ -5,9 +5,10 @@ import Header from "../components/header/Header";
 import MainSidebar from "../components/sidebar/MainSidebar";
 import styles from "./MainLayout.module.css";
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "").trim() ||
-  "http://localhost:8081";
+import { API_BASE_URL } from "@/lib/api-base";
+import { completeLogoutFromQuery } from "@/lib/auth-user";
+
+const apiBase = API_BASE_URL;
 
 async function fetchMainJson(): Promise<unknown> {
   const headers = new Headers({ Accept: "application/json" });
@@ -34,6 +35,10 @@ export default function MainLayoutClient({
 }) {
   const [data, setData] = useState<unknown | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    completeLogoutFromQuery();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

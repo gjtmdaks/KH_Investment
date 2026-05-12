@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client";
+import { API_BASE_URL, apiClient } from "@/lib/api-client";
 
 export type LoginUser = {
   accessToken?: string;
@@ -19,6 +19,22 @@ type ApiEnvelope<T> = {
   data: T;
   message?: string | null;
 };
+
+type LogoutData = {
+  kakaoLogoutUrl?: string | null;
+};
+
+export function getLogoutUrl(): string {
+  return `${API_BASE_URL.replace(/\/$/, "")}/users/logout/kakao`;
+}
+
+function redirectToLoggedOutHome(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.location.assign("/main?auth=logged_out");
+}
 
 export async function getCurrentUser(): Promise<LoginUser | null> {
   if (typeof window === "undefined") {
@@ -82,4 +98,64 @@ export function clearLoginStorage() {
   window.localStorage.removeItem("accessToken");
   window.localStorage.removeItem("user");
   window.sessionStorage.clear();
+}
+
+export function completeLogoutFromQuery(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("auth") !== "logged_out") {
+    return false;
+  }
+
+  clearLoginStorage();
+  params.delete("auth");
+  const query = params.toString();
+  const nextUrl = query
+    ? `${window.location.pathname}?${query}`
+    : window.location.pathname;
+  window.history.replaceState(null, "", nextUrl);
+  return true;
+}
+
+export async function performAppLogout(): Promise<void> {
+  try {
+    await apiClient.post("/users/logout");
+  } catch {
+    // ignore
+  }
+
+  clearLoginStorage();
+}
+
+export async function performLogout(): Promise<void> {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const provider = getSavedUser()?.provider?.toUpperCase();
+
+  if (provider === "LOCAL") {
+    await performAppLogout();
+    redirectToLoggedOutHome();
+    return;
+  }
+
+  try {
+    const { data } = await apiClient.post<ApiEnvelope<LogoutData>>("/users/logout");
+    const kakaoLogoutUrl = data.data?.kakaoLogoutUrl?.trim();
+
+    clearLoginStorage();
+
+    if (kakaoLogoutUrl) {
+      window.location.assign(kakaoLogoutUrl);
+      return;
+    }
+  } catch {
+    // ignore
+  }
+
+  window.location.assign(getLogoutUrl());
 }
