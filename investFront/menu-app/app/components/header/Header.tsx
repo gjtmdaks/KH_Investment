@@ -65,7 +65,7 @@ export default function Header({ data }: { data?: unknown }) {
           <Link href="/main/screener" className={styles.navItem}>
             주식 골라보기
           </Link>
-          <Link href="/main/myAccount" className={styles.navItem}>
+          <Link href="/main/my-account" className={styles.navItem}>
             내 계좌
           </Link>
         </nav>
