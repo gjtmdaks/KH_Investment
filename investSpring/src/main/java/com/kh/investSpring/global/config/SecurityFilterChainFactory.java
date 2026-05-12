@@ -67,6 +67,7 @@ public class SecurityFilterChainFactory {
 						            "/users/signin",
 						            "/users/signup",
 						            "/users/logout",
+                                    "/users/me",
 						            "/users/logout/**",
 						            "/users/find_password",
 						            "/users/me/investment-type",
