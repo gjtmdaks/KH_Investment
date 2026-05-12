@@ -15,11 +15,12 @@ public final class SecurityPathPatterns {
 			"/oauth2/**",
 			"/login/oauth2/**",
 			"/api/stocks/**",
-			"/api/news/",
+			"/api/news",
 			"/users/login",
 			"/users/signin",
 			"/users/signup",
-			"/users/find_password"
+			"/users/find_password",
+			"/admin/**" // 개발단계에서만
 	};
 
 	/**
@@ -29,6 +30,6 @@ public final class SecurityPathPatterns {
 			"/",
 			"/api/public/**",
 			"/api/main",
-			"/error",
+			"/error"
 	};
 }

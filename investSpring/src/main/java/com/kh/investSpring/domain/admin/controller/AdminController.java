@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/admin/api")
+@RequestMapping("/admin")
 public class AdminController {
 	
     private final AdminService adminService;
@@ -27,7 +27,7 @@ public class AdminController {
     /**
      * 회사 정보 전체 동기화
      */
-    @PostMapping("/init")
+    @PostMapping("/api/dart/init")
     public void init() {
         log.info("회사 정보 동기화 시작");
     	adminService.initAllData(companySyncRunning);
@@ -36,9 +36,8 @@ public class AdminController {
     /**
      * 과거 시세 전체 동기화
      */
-    @PostMapping("/kis/historysync")
+    @PostMapping("/api/kis/historysync")
     public void syncHistory() {
-
         try {
             log.info("과거 시세 동기화 시작");
             kisHistoryService.syncAllHistory(historySyncRunning);

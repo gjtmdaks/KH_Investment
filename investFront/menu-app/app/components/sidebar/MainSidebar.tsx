@@ -292,7 +292,7 @@ function AdminPanel() {
       setCompanyLoading(true);
 
       const response = await fetch(
-        `${apiBase}/admin/api/init`,
+        `${apiBase}/admin/api/dart/init`,
         {
           method: "POST",
         }
