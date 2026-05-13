@@ -175,21 +175,23 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <div>
-          <div className={styles.stockMeta}>
+        <div className={styles.heroPrimary}>
+          <div className={styles.heroNameRow}>
             <span className={styles.marketBadge}>
               {summary?.marketId || "KIS"}
             </span>
-            <span>{stockCode}</span>
-          </div>
-          <div className={styles.heroTitleRow}>
             <h1>{displayName}</h1>
-            <div className={styles.priceLine}>
-              <strong>{formatWon(price?.currentPrice)}</strong>
-              <span className={isUp ? styles.up : styles.down}>
-                {formatChange(price?.changePrice)} ({formatPercent(price?.changeRate)})
-              </span>
-            </div>
+            <span className={styles.heroCode}>{stockCode}</span>
+          </div>
+          <div className={styles.heroPriceRow}>
+            <strong>{formatWon(price?.currentPrice)}</strong>
+            <span className={styles.priceDot} aria-hidden>
+              ·
+            </span>
+            <span className={styles.yesterdayLabel}>어제보다</span>
+            <span className={isUp ? styles.up : styles.down}>
+              {formatChange(price?.changePrice)} ({formatPercent(price?.changeRate)})
+            </span>
           </div>
         </div>
 

@@ -5,7 +5,10 @@ import {
   CandlestickSeries,
   ColorType,
   createChart,
+  CrosshairMode,
   HistogramSeries,
+  isBusinessDay,
+  type Time,
   type CandlestickData,
   type HistogramData,
   type IChartApi,
@@ -50,6 +53,39 @@ const CHART_INTERACTION_OPTIONS = {
   },
 } as const;
 
+const CHART_SCALE_FONT_SIZE = 19;
+
+function formatCrosshairKoreanDate(time: Time): string {
+  if (isBusinessDay(time)) {
+    const yy = time.year % 100;
+
+    return `${yy}년 ${time.month}월 ${time.day}일`;
+  }
+
+  if (typeof time === "number" && Number.isFinite(time)) {
+    const d = new Date(time * 1000);
+    const yy = d.getFullYear() % 100;
+
+    return `${yy}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  }
+
+  if (typeof time === "string") {
+    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(time.trim());
+
+    if (iso) {
+      const y = Number(iso[1]);
+      const month = Number(iso[2]);
+      const day = Number(iso[3]);
+
+      if (Number.isFinite(y) && Number.isFinite(month) && Number.isFinite(day)) {
+        return `${y % 100}년 ${month}월 ${day}일`;
+      }
+    }
+  }
+
+  return String(time);
+}
+
 export default function StockCandleChart({
   candles,
   loading,
@@ -74,6 +110,11 @@ export default function StockCandleChart({
         layout: {
           background: { type: ColorType.Solid, color: "#0b1120" },
           textColor: "#94a3b8",
+          fontSize: CHART_SCALE_FONT_SIZE,
+        },
+        localization: {
+          locale: "ko-KR",
+          timeFormatter: formatCrosshairKoreanDate,
         },
         grid: {
           vertLines: { color: "rgba(148, 163, 184, 0.08)" },
@@ -89,6 +130,9 @@ export default function StockCandleChart({
           lockVisibleTimeRangeOnResize: true,
           rightOffset: 0,
         },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+        },
         ...CHART_INTERACTION_OPTIONS,
         width: container.clientWidth,
         height: CHART_HEIGHT,
@@ -100,6 +144,11 @@ export default function StockCandleChart({
         borderVisible: false,
         wickUpColor: "#fb7185",
         wickDownColor: "#60a5fa",
+        priceFormat: {
+          type: "price",
+          precision: 0,
+          minMove: 1,
+        },
       });
 
       const volumeSeries = chart.addSeries(
@@ -158,6 +207,16 @@ export default function StockCandleChart({
     chart.applyOptions({
       width: container.clientWidth,
       height: CHART_HEIGHT,
+      layout: {
+        fontSize: CHART_SCALE_FONT_SIZE,
+      },
+      localization: {
+        locale: "ko-KR",
+        timeFormatter: formatCrosshairKoreanDate,
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
       ...CHART_INTERACTION_OPTIONS,
     });
     chart.timeScale().setVisibleLogicalRange({
