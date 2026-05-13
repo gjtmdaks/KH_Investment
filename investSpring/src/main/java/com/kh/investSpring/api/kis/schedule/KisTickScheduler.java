@@ -42,4 +42,23 @@ public class KisTickScheduler {
 
         log.info("실시간 Tick 저장 완료: {}건", batch.size());
     }
+    
+    /**
+     * 0.5초마다 batch insert
+     */
+    @Scheduled(fixedRate = 500)
+    public void saveCurrentData() {
+
+        List<StockRealtimeTickDto> batch = queueService.pollCurrentBatch();
+
+        if (batch.isEmpty()) {
+            return;
+        }
+
+        for (StockRealtimeTickDto dto : batch) {
+            stockRealtimeDao.mergeRealtimeCurrent(dto);
+        }
+
+        log.info("current 갱신 완료={}", batch.size());
+    }
 }

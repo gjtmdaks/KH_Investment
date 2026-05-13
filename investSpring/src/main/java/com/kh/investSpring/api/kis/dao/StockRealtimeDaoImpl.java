@@ -20,4 +20,9 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 		session.insert("api.batchInsertTick", batch);
 	}
 
+	@Override
+	public void mergeRealtimeCurrent(StockRealtimeTickDto dto) {
+		session.update("api.mergeRealtimeCurrent", dto);
+	}
+
 }

@@ -12,7 +12,9 @@ import com.kh.investSpring.domain.stock.service.StockService;
 import com.kh.investSpring.domain.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MainServiceImpl implements MainService {
@@ -71,6 +73,7 @@ public class MainServiceImpl implements MainService {
         try {
             stocks = stockService.getStockList();
         } catch (Exception e) {
+        	log.error("stock list 조회 실패", e);
             stocks = List.of();
         }
 
