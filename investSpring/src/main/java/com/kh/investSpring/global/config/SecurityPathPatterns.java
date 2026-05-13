@@ -25,7 +25,8 @@ public final class SecurityPathPatterns {
 			"/users/logout/**",
 			"/users/find_password",
 			"/_next/**",
-			"/watchlist/**",
+			"/watchlist",
+			"/watchlist/sidebar/stocks",
 			"/admin/**" // 개발단계에서만
 	};
 

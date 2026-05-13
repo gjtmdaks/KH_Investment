@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 import com.kh.investSpring.domain.watchlist.service.WatchlistService;
 import com.kh.investSpring.global.common.ApiResponse;
@@ -47,4 +48,16 @@ public class WatchlistController {
 
         return ApiResponse.success(response, "관심종목 조회 성공");
     }
+    
+
+	@GetMapping("/sidebar/stocks")
+	public ApiResponse<SidebarWatchResponse> getSidebarStocks(HttpServletRequest request) {
+
+		Long userNo = (Long) request.getAttribute("userNo");
+
+		SidebarWatchResponse response = service.getSidebarWatch(userNo);
+
+		return ApiResponse.success(response, "사이드바 종목 조회 성공");
+	}
+    
 }
