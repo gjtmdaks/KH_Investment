@@ -3,6 +3,26 @@
 
 <mapper namespace="account">
 	
+	<update id="updatePreviousTotalAssetForAllActiveAccounts">
+	    UPDATE ACCOUNTS a
+	    SET a.INITIAL_BALANCE =
+	        NVL((
+	            SELECT
+	                NVL(ab.AVAILABLE_CASH, 0)
+	                + NVL(ab.LOCKED_CASH, 0)
+	            FROM ACCOUNT_BALANCE ab
+	            WHERE ab.ACCOUNT_NO = a.ACCOUNT_NO
+	        ), 0)
+	        +
+	        NVL((
+	            SELECT
+	                SUM(NVL(sh.STOCK_RESERVES, 0) * NVL(sh.AVG_PRICE, 0))
+	            FROM STOCKS_HELD sh
+	            WHERE sh.ACCOUNT_NO = a.ACCOUNT_NO
+	        ), 0)
+	    WHERE a.STATUS = 'ACTIVE'
+	</update>
+	
 	<insert id="insertAccount" parameterType="int">
 	    INSERT INTO ACCOUNTS (
 	        ACCOUNT_NO,
@@ -54,7 +74,7 @@
 	
 	        NVL(stock_summary.STOCK_VALUE, 0) AS stockValue,
 	
-	        NVL(a.INITIAL_BALANCE, 0) AS initialBalance,
+	        NVL(a.INITIAL_BALANCE, 0) AS previousTotalAsset,
 	
 	        CASE
 	            WHEN a.STATUS = 'ACTIVE' THEN '정상'

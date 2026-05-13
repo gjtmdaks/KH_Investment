@@ -15,32 +15,59 @@ import java.math.RoundingMode;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountDao accountDao;
-
+    private static final BigDecimal BASE_CAPITAL = BigDecimal.valueOf(10000000); // 기본자산은 고정
+    
+    // 전일(장시작) 돈 자동저장
+    @Override
+	public int updatePreviousTotalAssetForAllActiveAccounts() {
+		// TODO Auto-generated method stub
+		return accountDao.updatePreviousTotalAssetForAllActiveAccounts();
+	}
+    
     @Override
     public AccountSummaryDto getAccountSummary(Long userNo) {
-        AccountSummaryDto accountSummary = accountDao.selectAccountSummaryByUserNo(userNo);
+        AccountSummaryDto accountSummary =
+                accountDao.selectAccountSummaryByUserNo(userNo);
 
         if (accountSummary == null) {
             return null;
         }
 
         BigDecimal currentTotalAsset = accountSummary.getCurrentTotalAsset();
-        BigDecimal initialBalance = accountSummary.getInitialBalance();
 
-        BigDecimal profitAmount = currentTotalAsset.subtract(initialBalance);
+        BigDecimal previousTotalAsset = accountSummary.getPreviousTotalAsset();
 
-        BigDecimal profitRate = BigDecimal.ZERO;
+        BigDecimal dailyProfitAmount =
+                currentTotalAsset.subtract(previousTotalAsset);
 
-        if (initialBalance.compareTo(BigDecimal.ZERO) > 0) {
-            profitRate = profitAmount
-                    .divide(initialBalance, 4, RoundingMode.HALF_UP)
+        BigDecimal dailyProfitRate = BigDecimal.ZERO;
+
+        if (previousTotalAsset.compareTo(BigDecimal.ZERO) > 0) {
+            dailyProfitRate = dailyProfitAmount
+                    .divide(previousTotalAsset, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
 
-        accountSummary.setProfitAmount(profitAmount);
-        accountSummary.setProfitRate(profitRate);
-        accountSummary.setInitialProfitRate(profitRate);
+        BigDecimal baseProfitAmount =
+                currentTotalAsset.subtract(BASE_CAPITAL);
+
+        BigDecimal baseProfitRate = BigDecimal.ZERO;
+
+        if (BASE_CAPITAL.compareTo(BigDecimal.ZERO) > 0) {
+            baseProfitRate = baseProfitAmount
+                    .divide(BASE_CAPITAL, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+
+        accountSummary.setDailyProfitAmount(dailyProfitAmount);
+        accountSummary.setDailyProfitRate(dailyProfitRate);
+
+        accountSummary.setBaseCapital(BASE_CAPITAL);
+        accountSummary.setBaseProfitAmount(baseProfitAmount);
+        accountSummary.setBaseProfitRate(baseProfitRate);
 
         return accountSummary;
     }
+    
+    
 }

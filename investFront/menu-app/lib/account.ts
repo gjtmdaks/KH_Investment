@@ -2,12 +2,18 @@ import { apiClient } from "@/lib/api-client";
 
 export type AccountSummary = {
   currentTotalAsset: number;
-  profitAmount: number;
-  profitRate: number;
+
+  previousTotalAsset: number;
+  dailyProfitAmount: number;
+  dailyProfitRate: number;
+
   availableCash: number;
   stockValue: number;
-  initialBalance: number;
-  initialProfitRate: number;
+
+  baseCapital: number;
+  baseProfitAmount: number;
+  baseProfitRate: number;
+
   accountStatus: string;
   createdAt: string;
 };
