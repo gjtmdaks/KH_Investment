@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Header from "../components/header/Header";
 import MainSidebar from "../components/sidebar/MainSidebar";
@@ -28,11 +29,16 @@ async function fetchMainJson(): Promise<unknown> {
   return res.json();
 }
 
+const STOCK_DETAIL_PATH = /^\/main\/stock\/[^/]+$/;
+
 export default function MainLayoutClient({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isStockDetailViewport = STOCK_DETAIL_PATH.test(pathname ?? "");
+
   const [data, setData] = useState<unknown | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -60,14 +66,24 @@ export default function MainLayoutClient({
     };
   }, []);
 
+  const scrollRegionClassName = isStockDetailViewport
+    ? `${styles.scrollRegion} ${styles.scrollRegionStockDetail}`
+    : styles.scrollRegion;
+  const bodyRowClassName = isStockDetailViewport
+    ? `${styles.bodyRow} ${styles.bodyRowStockDetail}`
+    : styles.bodyRow;
+  const contentClassName = isStockDetailViewport
+    ? `${styles.content} ${styles.contentStockDetail}`
+    : styles.content;
+
   if (loadError) {
     return (
       <div className={styles.pageLayout}>
         <div className={styles.leftArea}>
           <p className={styles.loadError}>{loadError}</p>
-          <div className={styles.scrollRegion}>
-            <div className={styles.bodyRow}>
-              <main className={styles.content}>{children}</main>
+          <div className={scrollRegionClassName}>
+            <div className={bodyRowClassName}>
+              <main className={contentClassName}>{children}</main>
             </div>
           </div>
         </div>
@@ -80,9 +96,9 @@ export default function MainLayoutClient({
       <div className={styles.pageLayout}>
         <div className={styles.leftArea}>
           <p className={styles.loadingMessage}>헤더·사이드 정보를 불러오는 중…</p>
-          <div className={styles.scrollRegion}>
-            <div className={styles.bodyRow}>
-              <main className={styles.content}>{children}</main>
+          <div className={scrollRegionClassName}>
+            <div className={bodyRowClassName}>
+              <main className={contentClassName}>{children}</main>
             </div>
           </div>
         </div>
@@ -95,9 +111,9 @@ export default function MainLayoutClient({
       <div className={styles.leftArea}>
         <Header data={data} />
 
-        <div className={styles.scrollRegion}>
-          <div className={styles.bodyRow}>
-            <main className={styles.content}>{children}</main>
+        <div className={scrollRegionClassName}>
+          <div className={bodyRowClassName}>
+            <main className={contentClassName}>{children}</main>
           </div>
         </div>
       </div>
