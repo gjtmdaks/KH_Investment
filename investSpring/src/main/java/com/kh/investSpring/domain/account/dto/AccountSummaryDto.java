@@ -16,14 +16,16 @@ import lombok.Setter;
 @Builder
 public class AccountSummaryDto {
     
-    private BigDecimal currentTotalAsset;
-    private BigDecimal profitAmount;
-    private BigDecimal profitRate;
-    private BigDecimal availableCash;
-    private BigDecimal stockValue;
-    private BigDecimal initialBalance;
-    private BigDecimal initialProfitRate;
-    private String accountStatus;
-    private Date createdAt;
+	private BigDecimal currentTotalAsset;
+	private BigDecimal previousTotalAsset;
+	private BigDecimal dailyProfitAmount;
+	private BigDecimal dailyProfitRate;
+	private BigDecimal availableCash;
+	private BigDecimal stockValue;
+	private BigDecimal baseCapital; // 초기 자본 10,000,000
+	private BigDecimal baseProfitAmount;
+	private BigDecimal baseProfitRate;
+	private String accountStatus;
+	private Date createdAt;
 	
 }

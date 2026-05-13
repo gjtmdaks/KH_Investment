@@ -88,16 +88,16 @@ export default function AccountManagePanel({ user }: Props) {
         </article>
 
         <article className={styles.summaryCard}>
-          <span>평가 손익</span>
-          <strong className={getProfitClass(accountSummary.profitAmount)}>
-            {formatWon(accountSummary.profitAmount)}
+          <span>전일 대비 손익</span>
+          <strong className={getProfitClass(accountSummary.dailyProfitAmount)}>
+            {formatWon(accountSummary.dailyProfitAmount)}
           </strong>
         </article>
 
         <article className={styles.summaryCard}>
-          <span>평가 수익률</span>
-          <strong className={getProfitClass(accountSummary.profitRate)}>
-            {formatRate(accountSummary.profitRate)}
+          <span>전일 대비 수익률</span>
+          <strong className={getProfitClass(accountSummary.dailyProfitRate)}>
+            {formatRate(accountSummary.dailyProfitRate)}
           </strong>
         </article>
 
@@ -122,16 +122,21 @@ export default function AccountManagePanel({ user }: Props) {
           </div>
 
           <div className={styles.infoRow}>
-            <span>평가 손익</span>
-            <strong className={getProfitClass(accountSummary.profitAmount)}>
-              {formatWon(accountSummary.profitAmount)}
+            <span>전일 기준 금액</span>
+            <strong>{formatWon(accountSummary.previousTotalAsset)}</strong>
+          </div>
+
+          <div className={styles.infoRow}>
+            <span>전일 대비 손익</span>
+            <strong className={getProfitClass(accountSummary.dailyProfitAmount)}>
+              {formatWon(accountSummary.dailyProfitAmount)}
             </strong>
           </div>
 
           <div className={styles.infoRow}>
-            <span>평가 수익률</span>
-            <strong className={getProfitClass(accountSummary.profitRate)}>
-              {formatRate(accountSummary.profitRate)}
+            <span>전일 대비 수익률</span>
+            <strong className={getProfitClass(accountSummary.dailyProfitRate)}>
+              {formatRate(accountSummary.dailyProfitRate)}
             </strong>
           </div>
 
@@ -147,13 +152,20 @@ export default function AccountManagePanel({ user }: Props) {
 
           <div className={styles.infoRow}>
             <span>초기 자본</span>
-            <strong>{formatWon(accountSummary.initialBalance)}</strong>
+            <strong>{formatWon(accountSummary.baseCapital)}</strong>
+          </div>
+
+          <div className={styles.infoRow}>
+            <span>초기 자본 대비 손익</span>
+            <strong className={getProfitClass(accountSummary.baseProfitAmount)}>
+              {formatWon(accountSummary.baseProfitAmount)}
+            </strong>
           </div>
 
           <div className={styles.infoRow}>
             <span>초기 자본 대비 수익률</span>
-            <strong className={getProfitClass(accountSummary.initialProfitRate)}>
-              {formatRate(accountSummary.initialProfitRate)}
+            <strong className={getProfitClass(accountSummary.baseProfitRate)}>
+              {formatRate(accountSummary.baseProfitRate)}
             </strong>
           </div>
 

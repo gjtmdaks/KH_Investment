@@ -14,8 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountDaoImpl implements AccountDao {
 
 	private final SqlSessionTemplate session;
-	
-	
+
+	@Override
+	public int updatePreviousTotalAssetForAllActiveAccounts() {
+		// TODO Auto-generated method stub
+		return session.update("account.updatePreviousTotalAssetForAllActiveAccounts");
+	}
 	
 	@Override
 	public int insertAccount(int userNo) {
