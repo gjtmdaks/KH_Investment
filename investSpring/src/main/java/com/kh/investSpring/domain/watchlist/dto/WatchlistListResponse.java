@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WatchlistResponse {
+public class WatchlistListResponse {
 
-	private List<String> watchlist;
+    private List<String> watchlist;
 }

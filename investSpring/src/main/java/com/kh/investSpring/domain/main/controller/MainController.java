@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.domain.main.dto.MainResponse;
 import com.kh.investSpring.domain.main.service.MainService;
-import com.kh.investSpring.global.util.JwtUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 public class MainController {
 
     private final MainService mainService;
-    private final JwtUtil jwtUtil;
 
     @GetMapping
     public MainResponse getMain(HttpServletRequest request) {
@@ -31,7 +29,7 @@ public class MainController {
 
         // 무효·만료 JWT는 게스트처럼 응답 (프런트 localStorage 등에 남은 토큰 대응)
         try {
-            Long userNo = jwtUtil.getUserNo(token);
+            Long userNo = (Long) request.getAttribute("userNo");
             return mainService.getMain(userNo);
         } catch (Exception e) {
             return mainService.getMain(null);

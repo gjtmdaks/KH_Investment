@@ -1,7 +1,7 @@
 import styles from "./stock.module.css";
 import StockRow from "./StockRow";
 
-export default function StockList({ stocks }: any) {
+export default function StockList({stocks, watchlist, setWatchlist,}: any) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -20,6 +20,8 @@ export default function StockList({ stocks }: any) {
           key={stock.stockCode}
           stock={stock}
           rank={index + 1}
+          watchlist={watchlist}
+          setWatchlist={setWatchlist}
         />
       ))}
     </div>

@@ -2,18 +2,78 @@
 
 import Link from "next/link";
 import styles from "./stock.module.css";
+import { apiClient } from "@/lib/api-client";
+import { useEffect, useState } from "react";
 
 interface Props {
   stock: any;
   rank: number;
+  watchlist: string[];
+  setWatchlist: any;
 }
 
 export default function StockRow({
   stock,
   rank,
+  watchlist,
+  setWatchlist,
 }: Props) {
 
+  const liked = watchlist.includes(stock.stockCode);
   const isUp = stock.changeRate >= 0;
+  const [loading, setLoading] = useState(false);
+
+  async function toggleWatchlist(e: React.MouseEvent) {
+    e.preventDefault();
+
+    if (loading) return;
+    setLoading(true);
+
+    const stockCode = stock.stockCode;
+    const currentlyLiked  = watchlist.includes(stock.stockCode);
+    
+    try {
+      // optimistic update
+      if (currentlyLiked ) {
+        setWatchlist((prev: string[]) =>
+          prev.filter(code => code !== stockCode)
+        );
+      } else {
+        setWatchlist((prev: string[]) => [
+          ...prev,
+          stockCode,
+        ]);
+      }
+
+      try {
+        if (currentlyLiked) {
+          await apiClient.delete(
+            `/watchlist/${stockCode}`
+          );
+        } else {
+          await apiClient.post(
+            `/watchlist/${stockCode}`
+          );
+        }
+      } catch (e) {
+        console.error(e);
+
+        // rollback
+        if (currentlyLiked) {
+          setWatchlist((prev: string[]) => [
+            ...prev,
+            stockCode,
+          ]);
+        } else {
+          setWatchlist((prev: string[]) =>
+            prev.filter(code => code !== stockCode)
+          );
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <Link
@@ -22,13 +82,12 @@ export default function StockRow({
     >
       {/* 관심종목 */}
       <div
-        className={styles.favorite}
-        onClick={(e) => {
-          e.preventDefault();
-          // 관심종목 추가/삭제
-        }}
+        className={`${styles.favorite} ${
+          liked ? styles.favoriteActive : ""
+        }`}
+        onClick={toggleWatchlist}
       >
-        ♡{/* 클릭 시 ❤️로 변경 */}
+        {liked ? "❤️" : "♡"}
       </div>
 
       {/* 순위 */}

@@ -7,7 +7,6 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.kh.investSpring.domain.user.vo.LocalUser;
-import com.kh.investSpring.domain.user.vo.SocialUser;
 import com.kh.investSpring.domain.user.vo.User;
 
 import lombok.RequiredArgsConstructor;
