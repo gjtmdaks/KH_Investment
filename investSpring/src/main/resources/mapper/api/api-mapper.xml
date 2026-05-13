@@ -192,45 +192,36 @@
 	    )
 	</insert>
 	
-	<update id="mergeRealtimeCurrent">
-	    MERGE INTO stock_realtime_current c
-	
-	    USING (
-	        SELECT
-	            #{stockCode} AS stock_code,
-	            #{currentPrice} AS current_price,
-	            #{changeRate} AS change_rate,
-	            #{volume} AS volume,
-	            #{tradeTime} AS updated_at
-	        FROM dual
-	    ) t
-	
-	    ON (
-	        c.stock_code = t.stock_code
-	    )
-	
-	    WHEN MATCHED THEN
-	        UPDATE SET
-	            c.current_price = t.current_price,
-	            c.change_rate = t.change_rate,
-	            c.volume = t.volume,
-	            c.updated_at = t.updated_at
-	
-	    WHEN NOT MATCHED THEN
-	        INSERT (
-	            stock_code,
-	            current_price,
-	            change_rate,
-	            volume,
-	            updated_at
-	        )
-	        VALUES (
-	            t.stock_code,
-	            t.current_price,
-	            t.change_rate,
-	            t.volume,
-	            t.updated_at
-	        )
+	<update id="updateRealtimeCurrent">
+	    UPDATE stock_realtime_current
+	    SET
+	        current_price = #{currentPrice},
+	        change_rate = #{changeRate},
+	        volume = #{volume},
+	        updated_at = #{tradeTime}
+	    WHERE stock_code = #{stockCode}
 	</update>
+	
+	<insert id="insertRealtimeCurrent">
+	    INSERT INTO stock_realtime_current (
+	        stock_code,
+	        current_price,
+	        change_rate,
+	        volume,
+	        updated_at
+	    )
+	    VALUES (
+	        #{stockCode},
+	        #{currentPrice},
+	        #{changeRate},
+	        #{volume},
+	        #{tradeTime}
+	    )
+	</insert>
+	
+	<delete id="deleteOldTicks">
+		DELETE FROM stock_realtime_tick
+		WHERE trade_time <![CDATA[ < ]]> TRUNC(SYSDATE)
+	</delete>
 
 </mapper>

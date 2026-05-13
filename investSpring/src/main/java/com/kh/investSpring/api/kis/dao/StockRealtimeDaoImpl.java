@@ -21,8 +21,18 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 	}
 
 	@Override
-	public void mergeRealtimeCurrent(StockRealtimeTickDto dto) {
-		session.update("api.mergeRealtimeCurrent", dto);
+	public int updateRealtimeCurrent(StockRealtimeTickDto dto) {
+		return session.update("api.updateRealtimeCurrent", dto);
+	}
+
+	@Override
+	public void insertRealtimeCurrent(StockRealtimeTickDto dto) {
+		session.insert("api.insertRealtimeCurrent", dto);
+	}
+
+	@Override
+	public void deleteOldTicks() {
+		session.delete("api.deleteOldTicks");
 	}
 
 }

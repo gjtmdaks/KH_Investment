@@ -39,7 +39,6 @@ public class RealtimeQueueServiceImpl implements RealtimeQueueService {
             StockRealtimeTickDto dto = queue.poll();
 
             if (dto == null) {
-            	log.info("Queue Empty");
                 break;
             }
             list.add(dto);

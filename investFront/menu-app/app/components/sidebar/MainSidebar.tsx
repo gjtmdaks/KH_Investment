@@ -164,7 +164,7 @@ function InterestPanel({ data }: any) {
       )}
 
       <div className={styles.newsBox}>
-        <p className={styles.newsCategory}>토스증권 AI</p>
+        <p className={styles.newsCategory}>KH증권 AI</p>
         <p className={styles.newsTitle}>
           엔비디아 경쟁 심화와 투자심리 위축으로...
         </p>
