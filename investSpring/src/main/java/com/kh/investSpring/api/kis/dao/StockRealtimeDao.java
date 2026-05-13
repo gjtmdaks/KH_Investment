@@ -7,5 +7,7 @@ import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 public interface StockRealtimeDao {
 
 	void batchInsertTick(List<StockRealtimeTickDto> batch);
+	
+	void mergeRealtimeCurrent(StockRealtimeTickDto dto);
 
 }

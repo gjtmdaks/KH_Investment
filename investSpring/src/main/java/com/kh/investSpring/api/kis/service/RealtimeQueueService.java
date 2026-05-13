@@ -12,4 +12,8 @@ public interface RealtimeQueueService {
     public void add(StockRealtimeTickDto dto);
 
     public List<StockRealtimeTickDto> pollBatch(int size);
+    
+    public List<StockRealtimeTickDto> pollCurrentBatch();
+    
+    public int size();
 }
