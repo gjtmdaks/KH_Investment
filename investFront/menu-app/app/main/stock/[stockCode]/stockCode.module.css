@@ -16,10 +16,12 @@
 .hero {
   display: flex;
   flex-shrink: 0;
+  flex-wrap: nowrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 28px;
   min-width: 0;
+  overflow: hidden;
   padding: 26px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 24px;
@@ -27,41 +29,61 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
 
-.hero > div:first-of-type {
+.heroPrimary {
+  flex: 0 1 auto;
   min-width: 0;
 }
 
-.heroTitleRow {
+.heroNameRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 10px 12px;
+  min-width: 0;
 }
 
-.heroTitleRow h1 {
+.heroNameRow h1 {
   margin: 0;
-  font-size: 30px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 28px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.priceLine {
+.heroCode {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.heroPriceRow {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px 10px;
+  margin-top: 10px;
 }
 
-.priceLine strong {
+.heroPriceRow strong {
   font-size: 28px;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
-.stockMeta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.priceDot {
+  color: #64748b;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.yesterdayLabel {
   color: #94a3b8;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .marketBadge {
@@ -83,18 +105,22 @@
 }
 
 .heroStats {
-  display: grid;
+  display: flex;
   box-sizing: border-box;
   flex: 1 1 0%;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  flex-wrap: nowrap;
   gap: 10px;
   align-self: flex-start;
-  align-items: start;
+  align-items: flex-start;
+  justify-content: flex-end;
   min-width: 0;
-  max-width: 45%;
+  max-width: min(45%, 100%);
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .heroStats .stat {
+  flex: 0 0 auto;
   padding: 8px 12px;
 }
 
@@ -150,7 +176,7 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 24px;
+  gap: 12px;
   margin-top: 20px;
   align-items: stretch;
   flex: 1;
@@ -261,7 +287,7 @@
 
 .chartPlaceholder strong {
   color: #e2e8f0;
-  font-size: 22px;
+  font-size: 21px;
 }
 
 .orderbookGrid {
@@ -397,18 +423,8 @@
 }
 
 @media (max-width: 1024px) {
-  .hero,
   .orderbookGrid {
     grid-template-columns: 1fr;
-  }
-
-  .hero {
-    display: grid;
-  }
-
-  .heroStats {
-    justify-self: stretch;
-    width: 100%;
   }
 }
 
@@ -421,7 +437,8 @@
     grid-template-columns: 1fr;
   }
 
-  .priceLine {
+  .heroPriceRow {
     display: grid;
+    gap: 6px;
   }
 }
