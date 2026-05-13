@@ -7,6 +7,12 @@ import StockCandleChart, {
 import { API_BASE_URL } from "@/lib/api-base";
 import styles from "./stockCode.module.css";
 
+import {
+  createOrder,
+  type OrderKind,
+  type OrderType,
+} from "@/lib/order";
+
 type PriceResponse = {
   stockCode: string;
   stockName?: string | null;
@@ -87,6 +93,12 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [orderKind, setOrderKind] = useState<OrderKind>("BUY");
+  const [orderType, setOrderType] = useState<OrderType>("LIMIT");
+  const [quantity, setQuantity] = useState("");
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderMessage, setOrderMessage] = useState<string | null>(null);
+
   const fetchJson = useCallback(async <T,>(path: string): Promise<T> => {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       credentials: "include",
@@ -99,6 +111,46 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
     return response.json() as Promise<T>;
   }, []);
+
+  async function handleCreateOrder() {
+    setOrderMessage(null);
+
+    const currentPrice = Number(price?.currentPrice ?? 0);
+    const orderQuantity = Number(quantity);
+
+    if (!currentPrice || currentPrice <= 0) {
+      setOrderMessage("현재가를 불러온 뒤 주문할 수 있습니다.");
+      return;
+    }
+
+    if (!orderQuantity || orderQuantity <= 0) {
+      setOrderMessage("주문 수량을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setOrderLoading(true);
+
+      const response = await createOrder({
+        stockCode,
+        orderKind,
+        orderType,
+        price: currentPrice,
+        quantity: orderQuantity,
+      });
+
+      setOrderMessage(
+        `${response.orderKind === "BUY" ? "매수" : "매도"} 주문이 완료되었습니다.`
+      );
+
+      setQuantity("");
+    } catch (error) {
+      console.error(error);
+      setOrderMessage("주문 처리에 실패했습니다.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
 
   const loadSnapshot = useCallback(async () => {
     setError(null);
@@ -241,30 +293,69 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
         <aside className={styles.sidePanel}>
           <div className={styles.orderCard}>
             <div className={styles.orderTabs}>
-              <button type="button" className={styles.buyTab}>
+              <button
+                type="button"
+                className={`${styles.orderTab} ${
+                  orderKind === "BUY" ? styles.buyTab : ""
+                }`}
+                onClick={() => setOrderKind("BUY")}
+              >
                 구매
               </button>
-              <button type="button">판매</button>
-              <button type="button">대기</button>
+
+              <button
+                type="button"
+                className={`${styles.orderTab} ${
+                  orderKind === "SELL" ? styles.sellTab : ""
+                }`}
+                onClick={() => setOrderKind("SELL")}
+              >
+                판매
+              </button>
             </div>
+
             <label>
               주문 유형
-              <select defaultValue="LIMIT">
-                <option value="LIMIT">지정가</option>
+              <select
+                value={orderType}
+                onChange={(event) => setOrderType(event.target.value as OrderType)}
+              >
                 <option value="MARKET">시장가</option>
+                {/* <option value="LIMIT">지정가</option> */}
               </select>
             </label>
+
             <label>
-              구매 가격
+              {orderKind === "BUY" ? "구매 가격" : "판매 가격"}
               <input value={formatNumber(price?.currentPrice)} readOnly />
             </label>
+
             <label>
               수량
-              <input placeholder="수량 입력" />
+              <input
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+                placeholder="수량 입력"
+                inputMode="numeric"
+              />
             </label>
-            <button type="button" className={styles.buyButton}>
-              구매 기능 없음
+
+            <button
+              type="button"
+              className={orderKind === "BUY" ? styles.buyButton : styles.sellButton}
+              onClick={handleCreateOrder}
+              disabled={orderLoading}
+            >
+              {orderLoading
+                ? "처리 중..."
+                : orderKind === "BUY"
+                  ? "구매하기"
+                  : "판매하기"}
             </button>
+
+            {orderMessage ? (
+              <p className={styles.orderMessage}>{orderMessage}</p>
+            ) : null}
           </div>
 
           <div className={styles.snapshotCard}>

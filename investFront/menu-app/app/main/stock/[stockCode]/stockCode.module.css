@@ -442,3 +442,34 @@
     gap: 6px;
   }
 }
+
+.sellTab {
+  background: rgba(37, 99, 235, 0.18);
+  color: #7fa0ff;
+}
+
+.sellButton {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sellButton:disabled,
+.buyButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orderMessage {
+  margin: 12px 0 0;
+  color: #a5adbf;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
