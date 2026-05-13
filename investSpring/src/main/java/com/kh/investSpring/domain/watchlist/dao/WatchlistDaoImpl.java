@@ -7,6 +7,7 @@ import java.util.Map;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -50,5 +51,20 @@ public class WatchlistDaoImpl implements WatchlistDao {
         
         int count = session.selectOne("watchlist.existsWatchlist", param);
         return count > 0;
+	}
+
+	@Override
+	public List<SidebarWatchDto> getTopCurrentPriceStocks() {
+		return session.selectList("watchlist.getTopCurrentPriceStocks");
+	}
+
+	@Override
+	public List<SidebarWatchDto> getSidebarWatchStocks(Long userNo) {
+		return session.selectList("watchlist.getSidebarWatchStocks", userNo);
+	}
+	
+	@Override
+	public List<String> getWatchlistCodes(Long userNo) {
+	    return session.selectList("watchlist.getWatchlist", userNo);
 	}
 }
