@@ -8,6 +8,10 @@ public interface StockRealtimeDao {
 
 	void batchInsertTick(List<StockRealtimeTickDto> batch);
 	
-	void mergeRealtimeCurrent(StockRealtimeTickDto dto);
+	int updateRealtimeCurrent(StockRealtimeTickDto dto);
+	
+	void insertRealtimeCurrent(StockRealtimeTickDto dto);
+
+	void deleteOldTicks();
 
 }

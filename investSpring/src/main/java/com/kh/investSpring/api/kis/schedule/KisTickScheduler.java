@@ -2,6 +2,7 @@ package com.kh.investSpring.api.kis.schedule;
 
 import java.util.List;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,17 @@ public class KisTickScheduler {
     private final KisProperties kisProperties;
     private final RealtimeQueueService queueService;
     private final StockRealtimeDao stockRealtimeDao;
+    
+    /**
+     * 매 10시마다 실시간 시세 데이터 비우기
+     */
+    @Scheduled(cron = "0 0 10 * * *")
+    public void cleanupRealtimeTick() {
+
+        stockRealtimeDao.deleteOldTicks();
+
+        log.info("실시간 tick 데이터 정리 완료");
+    }
 
     /**
      * 1초마다 batch insert
@@ -30,11 +42,11 @@ public class KisTickScheduler {
         if (!kisProperties.isWebsocketEnabled()) {
             return;
         }
-    	log.info("스케줄 실행");
-
         List<StockRealtimeTickDto> batch = queueService.pollBatch(1000);
 
-        log.info("queue size={}", batch.size());
+        if (!batch.isEmpty()) {
+            log.info("tick save batch={}", batch.size());
+        }
 
         if (batch.isEmpty()) return;
 
@@ -56,7 +68,14 @@ public class KisTickScheduler {
         }
 
         for (StockRealtimeTickDto dto : batch) {
-            stockRealtimeDao.mergeRealtimeCurrent(dto);
+        	int updated = stockRealtimeDao.updateRealtimeCurrent(dto);
+
+        		if (updated == 0) {
+        		    try {
+        		        stockRealtimeDao.insertRealtimeCurrent(dto);
+        		    } catch (DuplicateKeyException ignored) {
+        		    }
+        		}
         }
 
         log.info("current 갱신 완료={}", batch.size());
