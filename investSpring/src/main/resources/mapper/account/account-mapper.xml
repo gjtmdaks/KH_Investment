@@ -3,5 +3,86 @@
 
 <mapper namespace="account">
 	
+	<insert id="insertAccount" parameterType="int">
+	    INSERT INTO ACCOUNTS (
+	        ACCOUNT_NO,
+	        USER_NO,
+	        INITIAL_BALANCE,
+	        CREATED_AT,
+	        STATUS
+	    ) VALUES (
+	        SEQ_ACCOUNTS.NEXTVAL,
+	        #{_parameter},
+	        10000000,
+	        SYSDATE,
+	        'ACTIVE'
+	    )
+	</insert>
+	
+	<insert id="insertAccountBalance" parameterType="int">
+	    INSERT INTO ACCOUNT_BALANCE (
+	        ACCOUNT_NO,
+	        AVAILABLE_CASH,
+	        LOCKED_CASH
+	    )
+	    SELECT
+	        a.ACCOUNT_NO,
+	        a.INITIAL_BALANCE,
+	        0
+	    FROM ACCOUNTS a
+	    WHERE a.USER_NO = #{_parameter}
+	      AND a.STATUS = 'ACTIVE'
+	</insert>
+	
+	<update id="updateAccountStatusDeleteByUserNo" parameterType="long">
+	    UPDATE ACCOUNTS
+	    SET STATUS = 'DELETED'
+	    WHERE USER_NO = #{_parameter}
+	      AND STATUS = 'ACTIVE'
+	</update>
+	
+	<select id="selectAccountSummaryByUserNo"
+	        parameterType="long"
+	        resultType="com.kh.investSpring.domain.account.dto.AccountSummaryDto">
+	
+	    SELECT
+	        NVL(ab.AVAILABLE_CASH, 0)
+	        + NVL(ab.LOCKED_CASH, 0)
+	        + NVL(stock_summary.STOCK_VALUE, 0) AS currentTotalAsset,
+	
+	        NVL(ab.AVAILABLE_CASH, 0) AS availableCash,
+	
+	        NVL(stock_summary.STOCK_VALUE, 0) AS stockValue,
+	
+	        NVL(a.INITIAL_BALANCE, 0) AS initialBalance,
+	
+	        CASE
+	            WHEN a.STATUS = 'ACTIVE' THEN '정상'
+	            WHEN a.STATUS = 'BANKRUPT' THEN '파산'
+	            WHEN a.STATUS = 'SUSPENDED' THEN '정지'
+	            WHEN a.STATUS = 'STOP' THEN '정지'
+	            ELSE a.STATUS
+	        END AS accountStatus,
+	
+	        a.CREATED_AT AS createdAt
+	
+	    FROM ACCOUNTS a
+	
+	    LEFT JOIN ACCOUNT_BALANCE ab
+	        ON a.ACCOUNT_NO = ab.ACCOUNT_NO
+	
+	    LEFT JOIN (
+	        SELECT
+	            ACCOUNT_NO,
+	            SUM(NVL(STOCK_RESERVES, 0) * NVL(AVG_PRICE, 0)) AS STOCK_VALUE
+	        FROM STOCKS_HELD
+	        GROUP BY ACCOUNT_NO
+	    ) stock_summary
+	        ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
+	
+	    WHERE a.USER_NO = #{userNo}
+	      AND a.STATUS = 'ACTIVE'
+	
+	</select>
 	
 </mapper>

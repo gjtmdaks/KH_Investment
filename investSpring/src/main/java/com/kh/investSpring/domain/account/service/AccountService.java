@@ -7,9 +7,5 @@ import com.kh.investSpring.domain.account.dto.HoldingDto;
 
 public interface AccountService {
 
-    // ✅ 계좌 요약 (잔액)
-    AccountSummaryDto getAccount(Long userNo);
-
-    // ✅ 보유 주식
-    List<HoldingDto> getHoldings(Long userNo);
+	AccountSummaryDto getAccountSummary(Long userNo);
 }

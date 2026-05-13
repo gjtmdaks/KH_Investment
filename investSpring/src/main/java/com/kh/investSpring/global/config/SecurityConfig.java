@@ -32,7 +32,8 @@ public class SecurityConfig {
 			@Value("${app.security.redirect-to-https:false}") boolean redirectToHttps,
 			@Value("${app.security.permit-actuator:true}") boolean permitActuator) throws Exception {
 		if (permitActuator) {
-			return securityFilterChainFactory.build(http, corsConfigurationSource, redirectToHttps, "/actuator/**");
+			return securityFilterChainFactory.build(
+					http, corsConfigurationSource, redirectToHttps, "/actuator/**");
 		}
 		return securityFilterChainFactory.build(http, corsConfigurationSource, redirectToHttps);
 	}

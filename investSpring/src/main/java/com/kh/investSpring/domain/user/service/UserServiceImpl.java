@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeAnswerRequest;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
+    private final AccountDao accountDao;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
@@ -82,7 +84,10 @@ public class UserServiceImpl implements UserService {
         );
 
         userDao.insertLocalUser(localUser);
-
+        
+        accountDao.insertAccount(user.getUserNo());
+        accountDao.insertAccountBalance(user.getUserNo());
+        
         return new UserSignUpResponse(
                 user.getUserNo(),
                 request.userId(),
@@ -160,12 +165,15 @@ public class UserServiceImpl implements UserService {
 	    if (user == null) {
 	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
 	    }
-
+	    
+	    
 	    int result = userDao.updateUserStatusDelete(userNo);
 
 	    if (result == 0) {
 	        throw new IllegalStateException("회원 탈퇴 처리에 실패했습니다.");
 	    }
+	    
+	    accountDao.updateAccountStatusDeleteByUserNo(userNo);
 		
 	}
 
