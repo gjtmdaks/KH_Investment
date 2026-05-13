@@ -2,6 +2,127 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="order">
+	<!-- 활성 계정 조회-->
+	<select id="selectActiveAccountNoByUserNo"
+	        parameterType="long"
+	        resultType="long">
+	    SELECT
+	        ACCOUNT_NO
+	    FROM ACCOUNTS
+	    WHERE USER_NO = #{_parameter}
+	      AND STATUS = 'ACTIVE'
+	</select>
 	
+	<!-- 주문 가능 금액 조회-->
+	<select id="selectAvailableCashByAccountNo"
+	        parameterType="long"
+	        resultType="java.math.BigDecimal">
+	    SELECT
+	        NVL(AVAILABLE_CASH, 0)
+	    FROM ACCOUNT_BALANCE
+	    WHERE ACCOUNT_NO = #{_parameter}
+	</select>
+	
+	
+	<!-- 보유 수량 조회-->
+	<select id="selectHoldingQuantityByAccountNoAndStockCode"
+	        parameterType="map"
+	        resultType="long">
+	    SELECT
+	        NVL(STOCK_RESERVES, 0)
+	    FROM STOCKS_HELD
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND STOCK_CODE = #{stockCode}
+	</select>
+	
+	<!-- 주문 저장 -->
+	<insert id="insertOrder" parameterType="map">
+	    INSERT INTO ORDERS (
+	        ORDER_ID,
+	        ORDER_KIND,
+	        ORDER_TYPE,
+	        PRICE,
+	        QUANTITY,
+	        STATUS,
+	        CREATED_AT,
+	        USER_NO,
+	        STOCK_CODE
+	    ) VALUES (
+	        SEQ_ORDERS.NEXTVAL,
+	        #{orderKind},
+	        #{orderType},
+	        #{price},
+	        #{quantity},
+	        #{status},
+	        SYSTIMESTAMP,
+	        #{userNo},
+	        #{stockCode}
+	    )
+	</insert>
+	
+	<!-- 매수 시 계좌 잔고 차감-->
+	<update id="updateAccountBalanceForBuy" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0) - #{orderAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND NVL(AVAILABLE_CASH, 0) >= #{orderAmount}
+	</update>
+	
+	<!-- 매도 시 계좌 잔고 증가 -->
+	<update id="updateAccountBalanceForSell" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0) + #{orderAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	</update>
+	
+	<!-- 매수 시 보유 주식 증가ㄴㅇ -->
+	<update id="updateHoldingForBuy" parameterType="map">
+	    MERGE INTO STOCKS_HELD sh
+	    USING (
+	        SELECT
+	            #{accountNo} AS ACCOUNT_NO,
+	            #{stockCode} AS STOCK_CODE,
+	            #{quantity} AS QUANTITY,
+	            #{price} AS PRICE
+	        FROM DUAL
+	    ) src
+	    ON (
+	        sh.ACCOUNT_NO = src.ACCOUNT_NO
+	        AND sh.STOCK_CODE = src.STOCK_CODE
+	    )
+	    WHEN MATCHED THEN
+	        UPDATE SET
+	            sh.AVG_PRICE =
+	                (
+	                    (NVL(sh.STOCK_RESERVES, 0) * NVL(sh.AVG_PRICE, 0))
+	                    + (src.QUANTITY * src.PRICE)
+	                )
+	                / (NVL(sh.STOCK_RESERVES, 0) + src.QUANTITY),
+	            sh.STOCK_RESERVES = NVL(sh.STOCK_RESERVES, 0) + src.QUANTITY
+	    WHEN NOT MATCHED THEN
+	        INSERT (
+	            STOCKS_HELD_NO,
+	            ACCOUNT_NO,
+	            STOCK_CODE,
+	            STOCK_RESERVES,
+	            AVG_PRICE
+	        )
+	        VALUES (
+	            SEQ_STOCKS_HELD.NEXTVAL,
+	            src.ACCOUNT_NO,
+	            src.STOCK_CODE,
+	            src.QUANTITY,
+	            src.PRICE
+	        )
+	</update>
+	
+	<!-- 매도시 보유 ㅈㅅ 감소-->
+	<update id="updateHoldingForSell" parameterType="map">
+	    UPDATE STOCKS_HELD
+	    SET STOCK_RESERVES = STOCK_RESERVES - #{quantity}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND STOCK_CODE = #{stockCode}
+	      AND STOCK_RESERVES >= #{quantity}
+	</update>
 	
 </mapper>
