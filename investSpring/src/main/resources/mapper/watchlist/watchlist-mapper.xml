@@ -37,4 +37,41 @@
 	    AND stock_code = #{stockCode}
 	</select>
 	
+	<select id="getTopCurrentPriceStocks" resultType="SidebarWatchDto">
+	    SELECT 
+		    stockCode,
+	        stockName,
+	        currentPrice,
+	        changeRate,
+	        volume,
+	        tradingValue
+	    FROM (
+	        SELECT
+	            stock_code     AS stockCode,
+	            stock_name     AS stockName,
+	            current_price  AS currentPrice,
+	            change_rate    AS changeRate,
+	            volume,
+	            trading_value  AS tradingValue
+	        FROM stock_realtime_current
+	        ORDER BY current_price DESC
+	    )
+	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	</select>
+	
+	<select id="getSidebarWatchStocks" parameterType="long" resultType="SidebarWatchDto">
+	    SELECT
+	        s.stock_code     AS stockCode,
+	        s.stock_name     AS stockName,
+	        s.current_price  AS currentPrice,
+	        s.change_rate    AS changeRate,
+	        s.volume,
+	        s.trading_value  AS tradingValue
+	    FROM watchlist w
+	    JOIN stock_realtime_current s
+	      ON w.stock_code = s.stock_code
+	    WHERE w.user_no = #{userNo}
+	    ORDER BY w.created_at DESC
+	</select>
+	
 </mapper>

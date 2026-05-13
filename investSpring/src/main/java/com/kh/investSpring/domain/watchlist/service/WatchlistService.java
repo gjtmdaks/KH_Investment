@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.watchlist.service;
 
+import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 
 public interface WatchlistService {
@@ -9,5 +10,7 @@ public interface WatchlistService {
     void deleteWatchlist(Long userNo, String stockCode);
 
     WatchlistResponse getWatchlist(Long userNo);
+
+	SidebarWatchResponse getSidebarWatch(Long userNo);
 
 }
