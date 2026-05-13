@@ -1,28 +1,46 @@
 package com.kh.investSpring.domain.account.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
+import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
-import com.kh.investSpring.domain.account.dto.HoldingDto;
-
 import lombok.RequiredArgsConstructor;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-	@Override
-	public AccountSummaryDto getAccount(Long userNo) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    private final AccountDao accountDao;
 
-	@Override
-	public List<HoldingDto> getHoldings(Long userNo) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+    @Override
+    public AccountSummaryDto getAccountSummary(Long userNo) {
+        AccountSummaryDto accountSummary = accountDao.selectAccountSummaryByUserNo(userNo);
+
+        if (accountSummary == null) {
+            return null;
+        }
+
+        BigDecimal currentTotalAsset = accountSummary.getCurrentTotalAsset();
+        BigDecimal initialBalance = accountSummary.getInitialBalance();
+
+        BigDecimal profitAmount = currentTotalAsset.subtract(initialBalance);
+
+        BigDecimal profitRate = BigDecimal.ZERO;
+
+        if (initialBalance.compareTo(BigDecimal.ZERO) > 0) {
+            profitRate = profitAmount
+                    .divide(initialBalance, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+
+        accountSummary.setProfitAmount(profitAmount);
+        accountSummary.setProfitRate(profitRate);
+        accountSummary.setInitialProfitRate(profitRate);
+
+        return accountSummary;
+    }
 }

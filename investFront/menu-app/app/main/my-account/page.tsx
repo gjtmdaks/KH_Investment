@@ -65,7 +65,12 @@ export default function MyAccountPage() {
       <section className={styles.content}>
         <div className={styles.pageTitleArea}>
           <p className={styles.pageLabel}>MY ACCOUNT</p>
-          <h1 className={styles.pageTitle}>내 계좌</h1>
+
+          <div className={styles.pageTitleRow}>
+            <h1 className={styles.pageTitle}>내 계좌</h1>
+            <strong className={styles.userName}>{user.userName}</strong>
+          </div>
+
           <p className={styles.pageDesc}>
             보유 자산, 주문 내역, 체결 내역을 확인할 수 있습니다.
           </p>
