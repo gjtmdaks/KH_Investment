@@ -1,7 +1,6 @@
 // domain/user/controller/UserController.java
 package com.kh.investSpring.domain.user.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,7 +41,7 @@ public class UserController {
         return ApiResponse.success(response, "회원가입 성공");
     }
     
-    // 로그인 (테스트용)
+    // 로그인
     @PostMapping("/signin")
     public ApiResponse<UserSignInResponse> login(
             @RequestBody UserSignInRequest request
@@ -66,7 +65,7 @@ public class UserController {
         return ApiResponse.success(logoutResponse, "로그아웃 성공");
     }
 
-    // 인증 테스트
+    // 내 정보
     @GetMapping("/me")
     public ApiResponse<?> me(HttpServletRequest request) {
     	Long userNo = (Long) request.getAttribute("userNo");

@@ -98,4 +98,8 @@ public class JwtTokenProvider {
 		}
 		return claims;
 	}
+	
+	public Long getAccessTokenUserNo(String token) {
+	    return parseAccessTokenUserNo(token);
+	}
 }
