@@ -1,8 +1,10 @@
 package com.kh.investSpring.api.naver;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -20,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NaverNewsApiClient {
 
+	private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(1);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(2);
+
 	private final RestClient restClient;
 	private final ObjectMapper objectMapper;
 
@@ -30,11 +35,19 @@ public class NaverNewsApiClient {
 		this.objectMapper = objectMapper;
 		this.restClient = RestClient.builder()
 				.baseUrl("https://openapi.naver.com")
+				.requestFactory(createRequestFactory())
 				.defaultHeader("X-Naver-Client-Id", clientId == null ? "" : clientId)
 				.defaultHeader("X-Naver-Client-Secret", clientSecret == null ? "" : clientSecret)
 				.build();
 	}
 
+	private static SimpleClientHttpRequestFactory createRequestFactory() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
+        return requestFactory;
+    }
+	
 	public List<NaverNewsItemDto> searchNews(String query, int display) {
 		if (query == null || query.isBlank()) {
 			return List.of();

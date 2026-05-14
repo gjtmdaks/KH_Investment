@@ -16,10 +16,26 @@ type AuthErrorBody = {
   message?: string;
 };
 
-function redirectToLogin() {
+const authDebugEnabled = process.env.NODE_ENV === "development";
+
+function redirectToLogin(payload?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   const path = window.location.pathname + window.location.search;
-    if (path.startsWith("/sign-in")) return;
+  if (path.startsWith("/sign-in")) {
+    if (authDebugEnabled) {
+      console.warn("[auth-debug] redirectToLogin skipped (already sign-in)", {
+        pathname: path,
+        ...payload,
+      });
+    }
+    return;
+  }
+  if (authDebugEnabled) {
+    console.warn("[auth-debug] redirect to /sign-in", {
+      fromPath: path,
+      ...payload,
+    });
+  }
   window.location.assign("/sign-in");
 }
 
@@ -44,7 +60,25 @@ apiClient.interceptors.response.use(
     const code = error.response?.data?.code;
 
     if (status === 401 && code === "AUTH_REQUIRED") {
-      redirectToLogin();
+      const cfg = error.config;
+      const reqUrl =
+        cfg != null ? `${cfg.baseURL ?? ""}${cfg.url ?? ""}` : "(unknown)";
+      redirectToLogin({
+        reason: "401_AUTH_REQUIRED",
+        requestMethod: cfg?.method?.toUpperCase(),
+        requestUrl: reqUrl,
+        responseStatus: status,
+        responseCode: code,
+        responseMessage: error.response?.data?.message,
+        responseBody: error.response?.data,
+      });
+    } else if (authDebugEnabled && status === 401) {
+      console.warn("[auth-debug] 401 without AUTH_REQUIRED (no redirect)", {
+        url: `${error.config?.baseURL ?? ""}${error.config?.url ?? ""}`,
+        method: error.config?.method?.toUpperCase(),
+        bodyCode: error.response?.data?.code,
+        body: error.response?.data,
+      });
     }
 
     return Promise.reject(error);

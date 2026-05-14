@@ -17,4 +17,5 @@ public interface corpInformationDao {
 
 	void updateMinorityShareholder(MinorityShareholderDto dto);
 
+	Map<String, Object> selectStaticProfileByStockCode(String stockCode);
 }

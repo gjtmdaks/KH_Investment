@@ -38,4 +38,8 @@ public class corpInformationDaoImpl implements corpInformationDao {
 		session.update("api.updateMinorityShareholder", dto);
 	}
 
+	@Override
+    public Map<String, Object> selectStaticProfileByStockCode(String stockCode) {
+        return session.selectOne("api.selectStaticProfileByStockCode", stockCode);
+    }
 }

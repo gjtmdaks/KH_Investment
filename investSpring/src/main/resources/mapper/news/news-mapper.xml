@@ -67,19 +67,21 @@
 	</insert>
 
 	<select id="selectRecentNewsInfo" resultMap="NewsInfoEntityMap">
-		SELECT NEWS_INFO_ID, ARTICLE_LINK, NEWS_TITLE, NEWS_DESCRIPTION, PUBLISHER, PRIMARY_LABEL, KEYWORD_KIND, PUBLISHED_AT, UPDATED_AT
-		FROM NEWS_INFO
-		ORDER BY PUBLISHED_AT DESC
-		FETCH FIRST #{limit} ROWS ONLY
+	        SELECT * FROM (
+            SELECT NEWS_INFO_ID, ARTICLE_LINK, NEWS_TITLE, NEWS_DESCRIPTION, PUBLISHER, PRIMARY_LABEL, KEYWORD_KIND, PUBLISHED_AT, UPDATED_AT
+            FROM NEWS_INFO
+            ORDER BY PUBLISHED_AT DESC
+        ) WHERE ROWNUM &lt;= #{limit}
 	</select>
 
 	<select id="selectNewsInfoByStockCode" resultMap="NewsInfoEntityMap">
-		SELECT ni.NEWS_INFO_ID, ni.ARTICLE_LINK, ni.NEWS_TITLE, ni.NEWS_DESCRIPTION, ni.PUBLISHER, ni.PRIMARY_LABEL, ni.KEYWORD_KIND, ni.PUBLISHED_AT, ni.UPDATED_AT
-		FROM NEWS_INFO ni
-		INNER JOIN NEWS_INFO_STOCK nis ON ni.NEWS_INFO_ID = nis.NEWS_INFO_ID
-		WHERE nis.STOCK_CODE = #{stockCode, jdbcType=VARCHAR}
-		ORDER BY ni.PUBLISHED_AT DESC
-		FETCH FIRST #{limit} ROWS ONLY
+		    SELECT * FROM (
+            SELECT ni.NEWS_INFO_ID, ni.ARTICLE_LINK, ni.NEWS_TITLE, ni.NEWS_DESCRIPTION, ni.PUBLISHER, ni.PRIMARY_LABEL, ni.KEYWORD_KIND, ni.PUBLISHED_AT, ni.UPDATED_AT
+            FROM NEWS_INFO ni
+            INNER JOIN NEWS_INFO_STOCK nis ON ni.NEWS_INFO_ID = nis.NEWS_INFO_ID
+            WHERE nis.STOCK_CODE = #{stockCode, jdbcType=VARCHAR}
+            ORDER BY ni.PUBLISHED_AT DESC
+        ) WHERE ROWNUM &lt;= #{limit}
 	</select>
 
 	<resultMap id="StockDictionaryEntryMap" type="com.kh.investSpring.domain.news.dto.StockDictionaryEntry">
