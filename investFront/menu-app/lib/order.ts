@@ -54,3 +54,12 @@ export async function getTradeHistory() {
   const response = await apiClient.get<TradeResponse[]>("/orders/trades");
   return response.data;
 }
+export async function cancelOrder(orderId: number) {
+  await apiClient.patch(`/orders/${orderId}/cancel`);
+}
+
+export async function updateOrderPrice(orderId: number, price: number) {
+  await apiClient.patch(`/orders/${orderId}/price`, {
+    price,
+  });
+}

@@ -5,12 +5,15 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
+import com.kh.investSpring.domain.order.dto.OrderPriceUpdateRequest;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.OrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
@@ -59,5 +62,30 @@ public class OrderController {
         List<OrderHistoryResponse> orders = orderQueryService.getOrderHistory(userNo);
 
         return ResponseEntity.ok(orders);
+    }
+    
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Long userNo = Long.valueOf(authentication.getName());
+
+        orderCommandService.cancelOrder(userNo, orderId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{orderId}/price")
+    public ResponseEntity<Void> updateOrderPrice(
+            Authentication authentication,
+            @PathVariable Long orderId,
+            @RequestBody OrderPriceUpdateRequest request
+    ) {
+        Long userNo = Long.valueOf(authentication.getName());
+
+        orderCommandService.updateOrderPrice(userNo, orderId, request);
+
+        return ResponseEntity.ok().build();
     }
 }

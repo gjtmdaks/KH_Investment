@@ -204,20 +204,22 @@
 	<select id="selectOrderHistoryByUserNo"
 	        parameterType="long"
 	        resultType="com.kh.investSpring.domain.order.dto.OrderHistoryResponse">
-	    SELECT
+		SELECT
 	        o.ORDER_ID AS orderId,
 	        o.ORDER_KIND AS orderKind,
 	        o.ORDER_TYPE AS orderType,
 	        o.STOCK_CODE AS stockCode,
-	        s.STOCK_NAME AS stockName,
+	        NVL(s.STOCK_NAME, o.STOCK_CODE) AS stockName,
 	        o.PRICE AS price,
 	        o.QUANTITY AS quantity,
 	        o.STATUS AS status,
 	        o.CREATED_AT AS createdAt
 	    FROM ORDERS o
-	    JOIN STOCKS s
+	    LEFT JOIN STOCKS s
 	        ON o.STOCK_CODE = s.STOCK_CODE
 	    WHERE o.USER_NO = #{_parameter}
+	      AND o.ORDER_TYPE = 'LIMIT'
+	      AND o.STATUS = 'PENDING'
 	    ORDER BY o.CREATED_AT DESC
 	</select>
 	
@@ -262,4 +264,64 @@
 	    WHERE ACCOUNT_NO = #{accountNo}
 	      AND NVL(LOCKED_CASH, 0) >= #{lockedAmount}
 	</update>
+	
+	<!-- 취소/수정-->
+	<select id="selectPendingOrderForManage"
+        parameterType="map"
+        resultType="com.kh.investSpring.domain.order.dto.PendingOrderManageDto">
+	    SELECT
+	        o.ORDER_ID AS orderId,
+	        o.USER_NO AS userNo,
+	        a.ACCOUNT_NO AS accountNo,
+	        o.ORDER_KIND AS orderKind,
+	        o.ORDER_TYPE AS orderType,
+	        o.STOCK_CODE AS stockCode,
+	        o.STATUS AS status,
+	        o.PRICE AS price,
+	        o.QUANTITY AS quantity
+	    FROM ORDERS o
+	    JOIN ACCOUNTS a
+	        ON o.USER_NO = a.USER_NO
+	       AND a.STATUS = 'ACTIVE'
+	    WHERE o.ORDER_ID = #{orderId}
+	      AND o.USER_NO = #{userNo}
+	      AND o.ORDER_TYPE = 'LIMIT'
+	      AND o.STATUS = 'PENDING'
+	</select>
+	<update id="updateOrderStatusCanceledByOrderId" parameterType="long">
+	    UPDATE ORDERS
+	    SET STATUS = 'CANCELED'
+	    WHERE ORDER_ID = #{_parameter}
+	      AND STATUS = 'PENDING'
+	</update>
+	<!--취소시 돈 밚-->
+	<update id="updateAccountBalanceForCancelPendingBuy" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0) + #{orderAmount},
+	        LOCKED_CASH = NVL(LOCKED_CASH, 0) - #{orderAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND NVL(LOCKED_CASH, 0) &gt;= #{orderAmount}
+	</update>
+	
+	<update id="updateOrderPriceByOrderId" parameterType="map">
+	    UPDATE ORDERS
+	    SET PRICE = #{price}
+	    WHERE ORDER_ID = #{orderId}
+	      AND STATUS = 'PENDING'
+	      AND ORDER_TYPE = 'LIMIT'
+	</update>
+	
+	<update id="updateAccountBalanceForUpdatePendingBuyPrice" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0)
+	                         + #{oldOrderAmount}
+	                         - #{newOrderAmount},
+	        LOCKED_CASH = NVL(LOCKED_CASH, 0)
+	                      - #{oldOrderAmount}
+	                      + #{newOrderAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND NVL(LOCKED_CASH, 0) &gt;= #{oldOrderAmount}
+	      AND NVL(AVAILABLE_CASH, 0) + #{oldOrderAmount} &gt;= #{newOrderAmount}
+	</update>
+	
 </mapper>
