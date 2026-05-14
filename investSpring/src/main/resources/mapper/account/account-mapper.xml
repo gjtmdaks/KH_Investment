@@ -15,11 +15,16 @@
 	        ), 0)
 	        +
 	        NVL((
-	            SELECT
-	                SUM(NVL(sh.STOCK_RESERVES, 0) * NVL(sh.AVG_PRICE, 0))
-	            FROM STOCKS_HELD sh
-	            WHERE sh.ACCOUNT_NO = a.ACCOUNT_NO
-	        ), 0)
+			    SELECT
+			        SUM(
+			            NVL(sh.STOCK_RESERVES, 0)
+			            * NVL(src.CURRENT_PRICE, sh.AVG_PRICE)
+			        )
+			    FROM STOCKS_HELD sh
+			    LEFT JOIN STOCK_REALTIME_CURRENT src
+			        ON sh.STOCK_CODE = src.STOCK_CODE
+			    WHERE sh.ACCOUNT_NO = a.ACCOUNT_NO
+			), 0)
 	    WHERE a.STATUS = 'ACTIVE'
 	</update>
 	
@@ -92,17 +97,23 @@
 	        ON a.ACCOUNT_NO = ab.ACCOUNT_NO
 	
 	    LEFT JOIN (
-	        SELECT
-	            ACCOUNT_NO,
-	            SUM(NVL(STOCK_RESERVES, 0) * NVL(AVG_PRICE, 0)) AS STOCK_VALUE
-	        FROM STOCKS_HELD
-	        GROUP BY ACCOUNT_NO
-	    ) stock_summary
-	        ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
+		    SELECT
+		        sh.ACCOUNT_NO,
+		        SUM(
+		            NVL(sh.STOCK_RESERVES, 0)
+		            * NVL(src.CURRENT_PRICE, sh.AVG_PRICE)
+		        ) AS STOCK_VALUE
+		    FROM STOCKS_HELD sh
+		    LEFT JOIN STOCK_REALTIME_CURRENT src
+		        ON sh.STOCK_CODE = src.STOCK_CODE
+		    GROUP BY sh.ACCOUNT_NO
+		) stock_summary
+		    ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
 	
 	    WHERE a.USER_NO = #{userNo}
 	      AND a.STATUS = 'ACTIVE'
 	
 	</select>
+	
 	
 </mapper>

@@ -1,8 +1,10 @@
 package com.kh.investSpring.domain.order.dao;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.kh.investSpring.domain.order.dto.OrderRequest;
+import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 public interface OrderDao {
 	
@@ -21,4 +23,10 @@ public interface OrderDao {
 	int updateHoldingForBuy(Long accountNo, String stockCode, Long quantity, BigDecimal price);
 
 	int updateHoldingForSell(Long accountNo, String stockCode, Long quantity);
+	
+	Long selectNextOrderId();
+	int insertTrade(Long orderId, BigDecimal price, Long quantity);
+	int insertOrder(Long orderId, Long userNo, Long accountNo, OrderRequest request, String status);
+
+	List<TradeResponse> selectTradeHistoryByUserNo(Long userNo);
 }	
