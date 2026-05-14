@@ -16,6 +16,7 @@ export function useStockDetailOrderForm(
   const [orderKind, setOrderKind] = useState<OrderKind>("BUY");
   const [orderType, setOrderType] = useState<OrderType>("LIMIT");
   const [quantity, setQuantity] = useState("");
+  const [orderPrice, setOrderPrice] = useState("");
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
 
@@ -23,10 +24,16 @@ export function useStockDetailOrderForm(
     setOrderMessage(null);
 
     const currentPrice = Number(price?.currentPrice ?? 0);
+
+    const requestPrice =
+      orderType === "MARKET"
+        ? currentPrice
+        : Number(orderPrice.replaceAll(",", ""));
+
     const orderQuantity = Number(quantity);
 
-    if (!currentPrice || currentPrice <= 0) {
-      setOrderMessage("현재가를 불러온 뒤 주문할 수 있습니다.");
+    if (!requestPrice || requestPrice <= 0) {
+      setOrderMessage("주문 가격을 입력해주세요.");
       return;
     }
 
@@ -42,22 +49,35 @@ export function useStockDetailOrderForm(
         stockCode,
         orderKind,
         orderType,
-        price: currentPrice,
+        price: requestPrice,
         quantity: orderQuantity,
       });
 
       setOrderMessage(
-        `${response.orderKind === "BUY" ? "매수" : "매도"} 주문이 완료되었습니다.`
+        response.status === "PENDING"
+          ? `${response.orderKind === "BUY" ? "매수" : "매도"} 예약이 완료되었습니다.`
+          : `${response.orderKind === "BUY" ? "매수" : "매도"} 주문이 완료되었습니다.`
       );
 
       setQuantity("");
+
+      if (orderType === "LIMIT") {
+        setOrderPrice("");
+      }
     } catch (error) {
       console.error(error);
       setOrderMessage("주문 처리에 실패했습니다.");
     } finally {
       setOrderLoading(false);
     }
-  }, [orderKind, orderType, price?.currentPrice, quantity, stockCode]);
+  }, [
+    orderKind,
+    orderType,
+    orderPrice,
+    price?.currentPrice,
+    quantity,
+    stockCode,
+  ]);
 
   return {
     orderKind,
@@ -66,6 +86,8 @@ export function useStockDetailOrderForm(
     setOrderType,
     quantity,
     setQuantity,
+    orderPrice,
+    setOrderPrice,
     orderLoading,
     orderMessage,
     handleCreateOrder,

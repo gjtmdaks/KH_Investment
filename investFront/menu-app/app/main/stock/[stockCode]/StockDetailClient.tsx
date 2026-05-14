@@ -18,7 +18,6 @@ import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>("chart");
-
   const {
     price,
     orderbook,
@@ -38,6 +37,8 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     setOrderType,
     quantity,
     setQuantity,
+    orderPrice,
+    setOrderPrice,
     orderLoading,
     orderMessage,
     handleCreateOrder,
@@ -124,6 +125,8 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
             setOrderType={setOrderType}
             quantity={quantity}
             setQuantity={setQuantity}
+            orderPrice={orderPrice}
+            setOrderPrice={setOrderPrice}
             orderLoading={orderLoading}
             orderMessage={orderMessage}
             handleCreateOrder={handleCreateOrder}

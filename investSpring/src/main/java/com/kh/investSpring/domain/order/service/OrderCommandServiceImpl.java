@@ -20,7 +20,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
 
     @Override
     @Transactional
-    public OrderResponse createOrder(Long userNo, OrderRequest request) {
+    public OrderResponse createOrder(Long userNo, OrderRequest request) { // 매수인지 매도인지 구분
         validateOrderRequest(userNo, request);
 
         if ("BUY".equalsIgnoreCase(request.getOrderKind())) {
@@ -64,7 +64,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         }
     }
 
-	
+	// 매수 영역
     private OrderResponse createBuyOrder(Long userNo, OrderRequest request) {
         Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
 
@@ -81,6 +81,23 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             throw new IllegalArgumentException("주문 가능 금액이 부족합니다.");
         }
 
+        if ("MARKET".equalsIgnoreCase(request.getOrderType())) {
+            return createFilledBuyOrder(userNo, accountNo, request, orderAmount);
+        }
+
+        if ("LIMIT".equalsIgnoreCase(request.getOrderType())) {
+            return createPendingBuyOrder(userNo, accountNo, request, orderAmount);
+        }
+
+        throw new IllegalArgumentException("주문 유형이 올바르지 않습니다.");
+    }
+    // 즉시 매수
+    private OrderResponse createFilledBuyOrder(
+            Long userNo,
+            Long accountNo,
+            OrderRequest request,
+            BigDecimal orderAmount
+    ) {
         Long orderId = orderDao.selectNextOrderId();
 
         int orderResult = orderDao.insertOrder(
@@ -132,7 +149,49 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 .createdAt(new Date())
                 .build();
     }
-	
+    // 지정가 매수
+    private OrderResponse createPendingBuyOrder(
+            Long userNo,
+            Long accountNo,
+            OrderRequest request,
+            BigDecimal orderAmount
+    ) {
+        Long orderId = orderDao.selectNextOrderId();
+
+        int orderResult = orderDao.insertOrder(
+                orderId,
+                userNo,
+                accountNo,
+                request,
+                "PENDING"
+        );
+
+        if (orderResult == 0) {
+            throw new IllegalStateException("주문 예약 등록에 실패했습니다.");
+        }
+
+        int balanceResult = orderDao.updateAccountBalanceForPendingBuy(
+                accountNo,
+                orderAmount
+        );
+
+        if (balanceResult == 0) {
+            throw new IllegalStateException("주문 예약금 처리에 실패했습니다.");
+        }
+
+        return OrderResponse.builder()
+                .stockCode(request.getStockCode())
+                .orderKind(request.getOrderKind())
+                .orderType(request.getOrderType())
+                .price(request.getPrice())
+                .quantity(request.getQuantity())
+                .status("PENDING")
+                .createdAt(new Date())
+                .build();
+    }
+    
+    
+	//매도 영역
     private OrderResponse createSellOrder(Long userNo, OrderRequest request) {
         Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
 
@@ -140,19 +199,36 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             throw new IllegalArgumentException("활성 계좌가 없습니다.");
         }
 
-        Long holdingQuantity =
-                orderDao.selectHoldingQuantityByAccountNoAndStockCode(
+        Long sellableQuantity =
+                orderDao.selectSellableQuantityByAccountNoAndStockCode(
                         accountNo,
                         request.getStockCode()
                 );
 
-        if (holdingQuantity == null || holdingQuantity < request.getQuantity()) {
-            throw new IllegalArgumentException("보유 수량이 부족합니다.");
+        if (sellableQuantity == null || sellableQuantity < request.getQuantity()) {
+            throw new IllegalArgumentException("매도 가능 수량이 부족합니다.");
         }
 
         BigDecimal orderAmount =
                 request.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
 
+        if ("MARKET".equalsIgnoreCase(request.getOrderType())) {
+            return createFilledSellOrder(userNo, accountNo, request, orderAmount);
+        }
+
+        if ("LIMIT".equalsIgnoreCase(request.getOrderType())) {
+            return createPendingSellOrder(userNo, accountNo, request);
+        }
+
+        throw new IllegalArgumentException("주문 유형이 올바르지 않습니다.");
+    }
+    // 즉시 매도
+    private OrderResponse createFilledSellOrder(
+            Long userNo,
+            Long accountNo,
+            OrderRequest request,
+            BigDecimal orderAmount
+    ) {
         Long orderId = orderDao.selectNextOrderId();
 
         int orderResult = orderDao.insertOrder(
@@ -203,4 +279,36 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 .createdAt(new Date())
                 .build();
     }
+    
+    // 지정가 매도 예약
+    private OrderResponse createPendingSellOrder(
+            Long userNo,
+            Long accountNo,
+            OrderRequest request
+    ) {
+        Long orderId = orderDao.selectNextOrderId();
+
+        int orderResult = orderDao.insertOrder(
+                orderId,
+                userNo,
+                accountNo,
+                request,
+                "PENDING"
+        );
+
+        if (orderResult == 0) {
+            throw new IllegalStateException("매도 예약 등록에 실패했습니다.");
+        }
+
+        return OrderResponse.builder()
+                .stockCode(request.getStockCode())
+                .orderKind(request.getOrderKind())
+                .orderType(request.getOrderType())
+                .price(request.getPrice())
+                .quantity(request.getQuantity())
+                .status("PENDING")
+                .createdAt(new Date())
+                .build();
+    }
+    
 }

@@ -29,4 +29,8 @@ public interface OrderDao {
 	int insertOrder(Long orderId, Long userNo, Long accountNo, OrderRequest request, String status);
 
 	List<TradeResponse> selectTradeHistoryByUserNo(Long userNo);
+
+	int updateAccountBalanceForPendingBuy(Long accountNo, BigDecimal orderAmount);
+
+	Long selectSellableQuantityByAccountNoAndStockCode(Long accountNo, String stockCode);
 }	
