@@ -30,7 +30,22 @@ export type TradeResponse = {
   quantity: number;
   executedAt: string;
 };
+export type OrderHistoryResponse = {
+  orderId: number;
+  orderKind: OrderKind;
+  orderType: OrderType;
+  stockCode: string;
+  stockName: string;
+  price: number;
+  quantity: number;
+  status: string;
+  createdAt: string;
+};
 
+export async function getOrderHistory() {
+  const response = await apiClient.get<OrderHistoryResponse[]>("/orders/history");
+  return response.data;
+}
 export async function createOrder(request: OrderRequest) {
   const response = await apiClient.post<OrderResponse>("/orders", request);
   return response.data;

@@ -1,5 +1,9 @@
 package com.kh.investSpring.domain.account.dao;
 
+import java.util.List;
+
+import com.kh.investSpring.domain.account.dto.AccountAssetResponse.HoldingStock;
+import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
 
 public interface AccountDao {
@@ -13,5 +17,9 @@ public interface AccountDao {
 	int updateAccountStatusDeleteByUserNo(Long userNo);
 	
 	AccountSummaryDto selectAccountSummaryByUserNo(Long userNo);
+
+	AccountAssetSummaryDto selectAccountAssetByUserNo(Long userNo);
+
+	List<HoldingStock> selectHoldingStocksByUserNo(Long userNo);
 
 }

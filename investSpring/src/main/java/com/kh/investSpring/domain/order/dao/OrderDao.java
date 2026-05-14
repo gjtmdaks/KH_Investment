@@ -3,7 +3,9 @@ package com.kh.investSpring.domain.order.dao;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
+import com.kh.investSpring.domain.order.dto.PendingOrderDto;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 public interface OrderDao {
@@ -33,4 +35,17 @@ public interface OrderDao {
 	int updateAccountBalanceForPendingBuy(Long accountNo, BigDecimal orderAmount);
 
 	Long selectSellableQuantityByAccountNoAndStockCode(Long accountNo, String stockCode);
+
+	List<OrderHistoryResponse> selectOrderHistoryByUserNo(Long userNo);
+	
+	// 자동 구매
+	List<PendingOrderDto> selectExecutablePendingOrders();
+
+	int updateOrderStatusFilledByOrderId(Long orderId);
+
+	int updateAccountBalanceForPendingBuyFilled(
+	        Long accountNo,
+	        BigDecimal lockedAmount,
+	        BigDecimal refundAmount
+	);
 }	

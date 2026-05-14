@@ -200,4 +200,66 @@
 	    WHERE sh.ACCOUNT_NO = #{accountNo}
 	      AND sh.STOCK_CODE = #{stockCode}
 	</select>
+	
+	<select id="selectOrderHistoryByUserNo"
+	        parameterType="long"
+	        resultType="com.kh.investSpring.domain.order.dto.OrderHistoryResponse">
+	    SELECT
+	        o.ORDER_ID AS orderId,
+	        o.ORDER_KIND AS orderKind,
+	        o.ORDER_TYPE AS orderType,
+	        o.STOCK_CODE AS stockCode,
+	        s.STOCK_NAME AS stockName,
+	        o.PRICE AS price,
+	        o.QUANTITY AS quantity,
+	        o.STATUS AS status,
+	        o.CREATED_AT AS createdAt
+	    FROM ORDERS o
+	    JOIN STOCKS s
+	        ON o.STOCK_CODE = s.STOCK_CODE
+	    WHERE o.USER_NO = #{_parameter}
+	    ORDER BY o.CREATED_AT DESC
+	</select>
+	
+	<select id="selectExecutablePendingOrders"
+        resultType="com.kh.investSpring.domain.order.dto.PendingOrderDto">
+	    SELECT
+	        o.ORDER_ID AS orderId,
+	        o.USER_NO AS userNo,
+	        a.ACCOUNT_NO AS accountNo,
+	        o.STOCK_CODE AS stockCode,
+	        o.ORDER_KIND AS orderKind,
+	        o.ORDER_TYPE AS orderType,
+	        o.PRICE AS orderPrice,
+	        o.QUANTITY AS quantity,
+	        src.CURRENT_PRICE AS currentPrice
+	    FROM ORDERS o
+	    JOIN ACCOUNTS a
+	        ON o.USER_NO = a.USER_NO
+	       AND a.STATUS = 'ACTIVE'
+	    JOIN STOCK_REALTIME_CURRENT src
+	        ON o.STOCK_CODE = src.STOCK_CODE
+	    WHERE o.STATUS = 'PENDING'
+	      AND o.ORDER_TYPE = 'LIMIT'
+	      AND (
+	            (o.ORDER_KIND = 'BUY'  AND src.CURRENT_PRICE &lt;= o.PRICE)
+	         OR (o.ORDER_KIND = 'SELL' AND src.CURRENT_PRICE &gt;= o.PRICE)
+	      )
+	    ORDER BY o.CREATED_AT ASC
+	</select>
+	
+	<update id="updateOrderStatusFilledByOrderId" parameterType="long">
+	    UPDATE ORDERS
+	    SET STATUS = 'FILLED'
+	    WHERE ORDER_ID = #{_parameter}
+	      AND STATUS = 'PENDING'
+	</update>
+	
+	<update id="updateAccountBalanceForPendingBuyFilled" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET LOCKED_CASH = NVL(LOCKED_CASH, 0) - #{lockedAmount},
+	        AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0) + #{refundAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND NVL(LOCKED_CASH, 0) >= #{lockedAmount}
+	</update>
 </mapper>
