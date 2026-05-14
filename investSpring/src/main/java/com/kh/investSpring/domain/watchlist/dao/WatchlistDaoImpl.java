@@ -67,4 +67,10 @@ public class WatchlistDaoImpl implements WatchlistDao {
 	public List<String> getWatchlistCodes(Long userNo) {
 	    return session.selectList("watchlist.getWatchlist", userNo);
 	}
+
+	@Override
+	public int countWatchlist(Long userNo) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
