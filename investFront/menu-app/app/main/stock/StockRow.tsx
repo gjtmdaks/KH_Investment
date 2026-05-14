@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import styles from "./stock.module.css";
-import { apiClient } from "@/lib/api-client";
-import { useState } from "react";
+
+import useToggleWatchlist
+from "@/app/hooks/useToggleWatchlist";
 
 interface Props {
   stock: any;
+
   rank: number;
+
   watchlist: string[];
-  setWatchlist: any;
+
+  setWatchlist: React.Dispatch<
+    React.SetStateAction<string[]>
+  >;
 }
 
 export default function StockRow({
@@ -19,79 +25,43 @@ export default function StockRow({
   setWatchlist,
 }: Props) {
 
-  const liked = watchlist.includes(stock.stockCode);
-  const isUp = stock.changeRate >= 0;
-  const [loading, setLoading] = useState(false);
+  const liked =
+    watchlist.includes(
+      stock.stockCode
+    );
 
-  async function toggleWatchlist(e: React.MouseEvent) {
-    e.preventDefault();
+  const isUp =
+    stock.changeRate >= 0;
 
-    if (loading) return;
-
-    const stockCode = stock.stockCode;
-    const currentlyLiked  = watchlist.includes(stock.stockCode);
-
-    if (!liked && watchlist.length >= 50) {
-      alert("관심종목은 최대 50개까지 가능합니다.");
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      // optimistic update
-      if (currentlyLiked ) {
-        setWatchlist((prev: string[]) =>
-          prev.filter(code => code !== stockCode)
-        );
-      } else {
-        setWatchlist((prev: string[]) => [
-          ...prev,
-          stockCode,
-        ]);
-      }
-
-      try {
-        if (currentlyLiked) {
-          await apiClient.delete(
-            `/watchlist/${stockCode}`
-          );
-        } else {
-          await apiClient.post(
-            `/watchlist/${stockCode}`
-          );
-        }
-      } catch (e) {
-        console.error(e);
-
-        // rollback
-        if (currentlyLiked) {
-          setWatchlist((prev: string[]) => [
-            ...prev,
-            stockCode,
-          ]);
-        } else {
-          setWatchlist((prev: string[]) =>
-            prev.filter(code => code !== stockCode)
-          );
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+  const {
+    toggleWatchlist,
+  } = useToggleWatchlist();
 
   return (
     <Link
       href={`/main/stock/${stock.stockCode}`}
       className={styles.row}
     >
+
       {/* 관심종목 */}
       <div
         className={`${styles.favorite} ${
-          liked ? styles.favoriteActive : ""
+          liked
+            ? styles.favoriteActive
+            : ""
         }`}
-        onClick={toggleWatchlist}
+        onClick={(e) =>
+          toggleWatchlist(e, {
+            stockCode:
+              stock.stockCode,
+
+            liked,
+
+            watchlist,
+
+            setWatchlist,
+          })
+        }
       >
         {liked ? "❤️" : "♡"}
       </div>
@@ -135,10 +105,12 @@ export default function StockRow({
 
       {/* 버튼 */}
       <div className={styles.actions}>
+
         <button
           className={styles.buyBtn}
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
           }}
         >
           매수
@@ -148,10 +120,12 @@ export default function StockRow({
           className={styles.sellBtn}
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
           }}
         >
           매도
         </button>
+
       </div>
 
     </Link>

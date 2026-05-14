@@ -26,7 +26,7 @@ public class KisTickScheduler {
     /**
      * 매 10시마다 실시간 시세 데이터 비우기
      */
-    @Scheduled(cron = "0 10 10 * * *")
+    @Scheduled(cron = "0 0 10 * * *")
     public void cleanupRealtimeTick() {
 
         stockRealtimeDao.deleteOldTicks();
