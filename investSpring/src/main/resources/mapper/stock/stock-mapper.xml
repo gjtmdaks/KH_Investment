@@ -7,39 +7,6 @@
          메인 종목 리스트
     ========================== -->
 	<select id="getStockList" resultType="StockDto">
-	    <!--SELECT *
-	    FROM (
-	        SELECT
-	            s.stock_code,
-	            s.stock_name,
-	            t.current_price AS price,
-	            t.change_rate AS changeRate,
-	            t.volume AS volume,
-	            (t.current_price * t.volume) AS tradingValue
-	        FROM stocks s
-	
-	        INNER JOIN (
-	            SELECT
-	                stock_code,
-	                current_price,
-	                change_rate,
-	                volume,
-	                ROW_NUMBER() OVER (
-	                    PARTITION BY stock_code
-	                    ORDER BY trade_time DESC
-	                ) rn
-	            FROM stock_realtime_tick
-	        ) t
-	            ON s.stock_code = t.stock_code
-	           AND t.rn = 1
-	
-	        WHERE s.status = 'ACTIVE'
-			AND t.current_price IS NOT NULL
-			
-	        ORDER BY t.current_price DESC
-	    )
-	    WHERE ROWNUM <![CDATA[ <= ]]> 50-->
-	    
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -58,7 +25,7 @@
 	        WHERE s.status = 'ACTIVE'
 	          AND c.current_price IS NOT NULL
 	
-	        ORDER BY <!--c.current_price--> tradingValue DESC
+	        ORDER BY tradingValue DESC
 	    )
 	    WHERE ROWNUM <![CDATA[ <= ]]> 50
 	</select>

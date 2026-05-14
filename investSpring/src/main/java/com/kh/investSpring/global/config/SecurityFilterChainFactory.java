@@ -56,7 +56,7 @@ public class SecurityFilterChainFactory {
 			http.redirectToHttps(Customizer.withDefaults());
 		}
 
-		http
+		http/* .csrf(AbstractHttpConfigurer::disable) csrf 사이트요청 인증제외가 많아지면 차라리 이걸 쓰도록*/
 				.csrf(csrf -> {
 					csrf.csrfTokenRepository(csrfRepo)
 							.ignoringRequestMatchers(
@@ -74,6 +74,7 @@ public class SecurityFilterChainFactory {
                                     "/users/me/withdraw",
                                     "/watchlist/**",
                                     "/orders/**",
+                                    "/recent-view/**",
 						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);

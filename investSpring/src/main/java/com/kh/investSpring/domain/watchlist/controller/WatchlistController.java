@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
@@ -75,11 +74,11 @@ public class WatchlistController {
     }
     
     @GetMapping("/recent")
-    public ApiResponse<List<RecentViewDto>> getRecentViews(HttpServletRequest request) {
+    public ApiResponse<List<SidebarWatchDto>> getRecentViews(HttpServletRequest request) {
 
     	    Long userNo = (Long) request.getAttribute("userNo");
 
-    	    List<RecentViewDto> list = service.getRecentViews(userNo);
+    	    List<SidebarWatchDto> list = service.getRecentViews(userNo);
 
     	    return ApiResponse.success(
     	        list,

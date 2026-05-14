@@ -101,7 +101,7 @@
 	    WHERE ROWNUM <![CDATA[ <= ]]> 10
 	</select>
 	
-	<select id="getRecentViews" parameterType="long" resultType="RecentViewDto">
+	<select id="getRecentViews" parameterType="long" resultType="SidebarWatchDto">
 	    SELECT
 	        s.stock_code AS stockCode,
 	        s.stock_name AS stockName,
