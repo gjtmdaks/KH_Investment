@@ -23,16 +23,11 @@ public class PendingOrderScheduler {
     @Scheduled(fixedDelay = 2000)
     @Transactional
     public void executePendingOrders() {
-    	log.info("예약 주문 체결 스케줄러 실행");
-        List<PendingOrderDto> pendingOrders =
-                orderDao.selectExecutablePendingOrders();
+        List<PendingOrderDto> pendingOrders = orderDao.selectExecutablePendingOrders();
 
         if (pendingOrders == null || pendingOrders.isEmpty()) {
-        	log.info("체결 가능한 예약 주문 없음");
             return;
         }
-        
-        log.info("체결 가능한 예약 주문 수: {}", pendingOrders.size());
         
         for (PendingOrderDto order : pendingOrders) {
             executeOne(order);
@@ -46,8 +41,7 @@ public class PendingOrderScheduler {
             return;
         }
 
-        int statusResult =
-                orderDao.updateOrderStatusFilledByOrderId(order.getOrderId());
+        int statusResult = orderDao.updateOrderStatusFilledByOrderId(order.getOrderId());
 
         if (statusResult == 0) {
             return;

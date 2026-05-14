@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import { StockDetailChartShell } from "@/app/components/stock/detail/StockDetailChartShell";
 import { StockDetailEmptyState } from "@/app/components/stock/detail/StockDetailEmptyState";
@@ -10,6 +10,7 @@ import { StockDetailOrderbookPanel } from "@/app/components/stock/detail/StockDe
 import { StockDetailOrderCard } from "@/app/components/stock/detail/StockDetailOrderCard";
 import { StockDetailSummaryPanel } from "@/app/components/stock/detail/StockDetailSummaryPanel";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
+import { apiClient } from "@/lib/api-client";
 import { stockDetailTabs } from "@/lib/stock/stockDetailConstants";
 import { parseNumeric } from "@/lib/stock/stockDetailFormat";
 import type { TabKey } from "@/lib/stock/stockDetailTypes";
@@ -17,6 +18,19 @@ import { useStockDetailData } from "./useStockDetailData";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
+    useEffect(() => {
+    async function saveRecentView() {
+      try {
+        await apiClient.post(
+          `/recent-view/${stockCode}`
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    saveRecentView();
+  }, [stockCode]);
+
   const [activeTab, setActiveTab] = useState<TabKey>("chart");
   const {
     price,

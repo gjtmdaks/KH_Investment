@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="recentView">
+	<insert id="upsertRecentView">
+	    MERGE INTO recent_view rv
+	    
+	    USING (
+	        SELECT
+	            #{userNo} AS user_no,
+	            #{stockCode} AS stock_code
+	        FROM dual
+	    ) src
+	
+	    ON (
+	        rv.user_no = src.user_no
+	        AND rv.stock_code = src.stock_code
+	    )
+	
+	    WHEN MATCHED THEN
+	        UPDATE SET rv.viewed_at = SYSTIMESTAMP
+	        WHERE rv.viewed_at <![CDATA[ < ]]> SYSTIMESTAMP - INTERVAL '10' SECOND
+	
+	    WHEN NOT MATCHED THEN
+	        INSERT
+	        (
+	            user_no,
+	            stock_code,
+	            viewed_at
+	        )
+	        VALUES
+	        (
+	            src.user_no,
+	            src.stock_code,
+	            SYSTIMESTAMP
+	        )
+	</insert>
+	
+	<delete id="deleteOverflowRecentViews">
+	    DELETE FROM recent_view
+	    WHERE (user_no, stock_code) IN (
+	        SELECT user_no, stock_code
+	        FROM (
+	            SELECT
+	                user_no,
+	                stock_code,
+	                ROW_NUMBER() OVER (ORDER BY viewed_at DESC) rn
+	            FROM recent_view
+	            WHERE user_no = #{userNo}
+	        )
+	        WHERE rn > 20
+	    )
+	</delete>
+
+</mapper>

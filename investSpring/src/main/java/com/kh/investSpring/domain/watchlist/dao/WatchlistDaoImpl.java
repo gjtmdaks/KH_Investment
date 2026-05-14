@@ -7,7 +7,6 @@ import java.util.Map;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 
@@ -65,7 +64,7 @@ public class WatchlistDaoImpl implements WatchlistDao {
 	}
 
 	@Override
-	public List<RecentViewDto> getRecentViews(Long userNo) {
+	public List<SidebarWatchDto> getRecentViews(Long userNo) {
 		return session.selectList("watchlist.getRecentViews", userNo);
 	}
 }

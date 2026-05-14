@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.watchlist.dao.WatchlistDao;
-import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
@@ -98,7 +97,7 @@ public class WatchlistServiceImpl implements WatchlistService {
 	}
 
 	@Override
-	public List<RecentViewDto> getRecentViews(Long userNo) {
+	public List<SidebarWatchDto> getRecentViews(Long userNo) {
 	    if (userNo == null) {
 	        return List.of();
 	    }
