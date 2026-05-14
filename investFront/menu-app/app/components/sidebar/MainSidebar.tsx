@@ -126,7 +126,7 @@ export default function MainSidebar({
           )}
 
           {activeMenu === "recent" && (
-            <RecentPanel data={data} />
+            <RecentPanel isLogin={isLogin} />
           )}
 
           {activeMenu === "liveTime" && (

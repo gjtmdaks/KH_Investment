@@ -18,7 +18,14 @@ import { useStockDetailData } from "./useStockDetailData";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
-    useEffect(() => {
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+
+    // 비로그인
+    if (!user) {
+      return;
+    }
+
     async function saveRecentView() {
       try {
         await apiClient.post(
