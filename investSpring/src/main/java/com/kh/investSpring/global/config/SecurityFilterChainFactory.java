@@ -88,6 +88,7 @@ public class SecurityFilterChainFactory {
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthenticationEntryPoint))
 				.authorizeHttpRequests(auth -> {
 					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+					auth.requestMatchers(HttpMethod.GET, "/users/me").permitAll();
 					auth.requestMatchers(SecurityPathPatterns.AUTH_WHITELIST).permitAll();
 					auth.requestMatchers(SecurityPathPatterns.PUBLIC_WHITELIST).permitAll();
 					if (extraPermitAllPathPatterns.length > 0) {

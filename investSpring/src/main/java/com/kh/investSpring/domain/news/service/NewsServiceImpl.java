@@ -48,6 +48,8 @@ public class NewsServiceImpl implements NewsService {
 
 	/** 뉴스 1건당 관련 종목 칩 최대 노출 개수 */
 	private static final int RELATED_STOCKS_MAX = 5;
+	private static final int STOCK_NEWS_FETCH_MULTIPLIER = 2;
+    private static final int STOCK_NEWS_MIN_FETCH_SIZE = 12;
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
 			"EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -132,8 +134,15 @@ public class NewsServiceImpl implements NewsService {
 			return cached;
 		}
 
+		List<NewsResponse> fallback = mapEntities(newsDao.selectNewsInfoByStockCode(code, n));
+        if (!fallback.isEmpty()) {
+            cacheList(cacheKey, fallback, Duration.ofMinutes(3));
+            return fallback;
+        }
+
+
 		String queryKeyword = resolveStockSearchKeyword(code);
-		int fetchSize = Math.min(100, Math.max(n * 4, 40));
+		int fetchSize = Math.min(100, Math.max(n * STOCK_NEWS_FETCH_MULTIPLIER, STOCK_NEWS_MIN_FETCH_SIZE));
 		List<NaverNewsItemDto> items = naverNewsApiClient.searchNews(queryKeyword.trim(), fetchSize)
 				.stream()
 				.filter(FinanceNewsTopicFilter::passesNaverItem)
@@ -144,7 +153,6 @@ public class NewsServiceImpl implements NewsService {
 			return fresh;
 		}
 
-		List<NewsResponse> fallback = mapEntities(newsDao.selectNewsInfoByStockCode(code, n));
 		cacheList(cacheKey, fallback, Duration.ofMinutes(3));
 		return fallback;
 	}

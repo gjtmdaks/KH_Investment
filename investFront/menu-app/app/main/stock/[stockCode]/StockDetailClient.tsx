@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import StockCandleChart, {
   type ChartCandle,
 } from "@/app/components/stock/StockCandleChart";
@@ -43,20 +43,26 @@ type OrderbookResponse = {
   expectedQuantity?: string | null;
 };
 
-type SummaryResponse = {
-  stockCode: string;
+type StaticProfileResponse = {
+  stockCode?: string | null;
   stockName?: string | null;
-  marketId?: string | null;
-  stockGroup?: string | null;
-  stockKind?: string | null;
-  listedShares?: string | null;
-  capital?: string | null;
-  parValue?: string | null;
+  marketType?: string | null;
+  sector?: string | null;
   listedDate?: string | null;
-  fiscalMonth?: string | null;
-  isKospi200?: string | null;
-  standardCode?: string | null;
-  listingAbolitionDate?: string | null;
+  status?: string | null;
+  corpCode?: string | null;
+  coName?: string | null;
+  issuedStock?: string | null;
+  declinedStock?: string | null;
+  treasuryStock?: string | null;
+  outstandingShares?: string | null;
+  shareholdingRatio?: string | null;
+  ownershipPercentage?: string | null;
+};
+
+type StockDetailResponse = {
+  price: PriceResponse;
+  profile: StaticProfileResponse | null;
 };
 
 type NewsResponse = {
@@ -74,6 +80,7 @@ type ChartPeriodLabel = "일" | "주" | "월" | "년";
 type TabKey = "chart" | "orderbook" | "summary" | "news";
 
 const QUOTE_REFRESH_INTERVAL_MS = 30_000;
+const STOCK_NEWS_PAGE_SIZE = 5;
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: "chart", label: "차트" },
@@ -84,14 +91,22 @@ const tabs: Array<{ key: TabKey; label: string }> = [
 
 const chartPeriods: ChartPeriodLabel[] = ["일", "주", "월", "년"];
 
+type NewsLoadPhase = "idle" | "loading" | "done";
+
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>("chart");
   const [price, setPrice] = useState<PriceResponse | null>(null);
   const [orderbook, setOrderbook] = useState<OrderbookResponse | null>(null);
-  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [profile, setProfile] = useState<StaticProfileResponse | null>(null);
   const [news, setNews] = useState<NewsResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(true);
+  const [orderbookLoading, setOrderbookLoading] = useState(true);
+  const [newsPhase, setNewsPhase] = useState<NewsLoadPhase>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  const snapshotSessionRef = useRef(0);
+  const newsFetchInFlightRef = useRef(false);
+  const newsDoneSessionRef = useRef<number | null>(null);
 
   const [orderKind, setOrderKind] = useState<OrderKind>("BUY");
   const [orderType, setOrderType] = useState<OrderType>("LIMIT");
@@ -111,6 +126,52 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
     return response.json() as Promise<T>;
   }, []);
+
+  const runNewsFetch = useCallback(
+    async (session: number) => {
+      if (session !== snapshotSessionRef.current) {
+        return;
+      }
+
+      if (newsFetchInFlightRef.current) {
+        return;
+      }
+
+      if (newsDoneSessionRef.current === session) {
+        return;
+      }
+
+      newsFetchInFlightRef.current = true;
+      setNewsPhase("loading");
+
+      try {
+        const newsData = await fetchJson<NewsResponse[]>(
+          `/api/public/news/stock/${stockCode}?size=${STOCK_NEWS_PAGE_SIZE}`
+        );
+
+        if (session !== snapshotSessionRef.current) {
+          return;
+        }
+
+        setNews(Array.isArray(newsData) ? newsData : []);
+        newsDoneSessionRef.current = session;
+      } catch {
+        if (session !== snapshotSessionRef.current) {
+          return;
+        }
+
+        setNews([]);
+        newsDoneSessionRef.current = session;
+      } finally {
+        newsFetchInFlightRef.current = false;
+
+        if (session === snapshotSessionRef.current) {
+          setNewsPhase("done");
+        }
+      }
+    },
+    [fetchJson, stockCode]
+  );
 
   async function handleCreateOrder() {
     setOrderMessage(null);
@@ -155,48 +216,107 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   const loadSnapshot = useCallback(async () => {
     setError(null);
 
-    try {
-      const detail = await fetchJson<{ price: PriceResponse; summary: SummaryResponse }>(
-        `/api/stocks/${stockCode}/detail`
-      );
-      const orderbookData = await fetchJson<OrderbookResponse>(
-        `/api/stocks/${stockCode}/orderbook`
-      );
-      const newsData = await fetchJson<NewsResponse[]>(
-        `/api/public/news/stock/${stockCode}?size=8`
-      );
+    snapshotSessionRef.current += 1;
+    const session = snapshotSessionRef.current;
 
-      setPrice(detail.price);
-      setSummary(detail.summary);
-      setOrderbook(normalizeOrderbookResponse(orderbookData));
-      setNews(Array.isArray(newsData) ? newsData : []);
-    } catch {
+    newsDoneSessionRef.current = null;
+    setNewsPhase("idle");
+    setNews([]);
+    setPrice(null);
+    setProfile(null);
+    setOrderbook(null);
+
+    setDetailLoading(true);
+    setOrderbookLoading(true);
+
+    let detailOk = false;
+    let orderbookOk = false;
+
+    await Promise.all([
+      (async () => {
+        try {
+          const detail = await fetchJson<StockDetailResponse>(
+            `/api/stocks/${stockCode}/detail`
+          );
+
+          if (session !== snapshotSessionRef.current) {
+            return;
+          }
+
+          setPrice(detail.price);
+          setProfile(detail.profile);
+          detailOk = true;
+        } catch {
+          if (session !== snapshotSessionRef.current) {
+            return;
+          }
+
+          setPrice(null);
+          setProfile(null);
+        } finally {
+          if (session === snapshotSessionRef.current) {
+            setDetailLoading(false);
+          }
+        }
+      })(),
+      (async () => {
+        try {
+          const orderbookData = await fetchJson<OrderbookResponse>(
+            `/api/stocks/${stockCode}/orderbook`
+          );
+
+          if (session !== snapshotSessionRef.current) {
+            return;
+          }
+
+          setOrderbook(normalizeOrderbookResponse(orderbookData));
+          orderbookOk = true;
+        } catch {
+          if (session !== snapshotSessionRef.current) {
+            return;
+          }
+
+          setOrderbook(null);
+        } finally {
+          if (session === snapshotSessionRef.current) {
+            setOrderbookLoading(false);
+          }
+        }
+      })(),
+    ]);
+
+    if (session !== snapshotSessionRef.current) {
+      return;
+    }
+
+    if (!detailOk && !orderbookOk) {
       setError("종목 정보를 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
     }
   }, [fetchJson, stockCode]);
 
   const refreshQuote = useCallback(async () => {
-    try {
-      const priceData = await fetchJson<PriceResponse>(
-        `/api/stocks/${stockCode}/price`
-      );
-      const orderbookData = await fetchJson<OrderbookResponse>(
-        `/api/stocks/${stockCode}/orderbook`
-      );
+    const [priceResult, orderbookResult] = await Promise.allSettled([
+      fetchJson<PriceResponse>(`/api/stocks/${stockCode}/price`),
+      fetchJson<OrderbookResponse>(`/api/stocks/${stockCode}/orderbook`),
+    ]);
+    if (priceResult.status === "fulfilled") {
+      setPrice(priceResult.value);
+    }
 
-      setPrice(priceData);
-      setOrderbook(normalizeOrderbookResponse(orderbookData));
-    } catch {
+    if (orderbookResult.status === "fulfilled") {
+      setOrderbook(normalizeOrderbookResponse(orderbookResult.value));
+    }
+
+    if (
+      priceResult.status === "rejected" &&
+      orderbookResult.status === "rejected"
+    ) {
       setError("시세 갱신에 실패했습니다.");
     }
   }, [fetchJson, stockCode]);
 
   useEffect(() => {
-    const timer = window.setTimeout(loadSnapshot, 0);
-
-    return () => window.clearTimeout(timer);
+    void loadSnapshot();
   }, [loadSnapshot]);
 
   useEffect(() => {
@@ -205,6 +325,18 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     return () => window.clearInterval(timer);
   }, [refreshQuote]);
 
+  useEffect(() => {
+    if (activeTab !== "news") {
+      return;
+    }
+
+    if (detailLoading || orderbookLoading) {
+      return;
+    }
+
+    void runNewsFetch(snapshotSessionRef.current);
+  }, [activeTab, runNewsFetch, detailLoading, orderbookLoading]);
+
   const isUp = useMemo(() => {
     const rate = Number(price?.changeRate ?? 0);
     const change = Number(price?.changePrice ?? 0);
@@ -212,17 +344,17 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     return rate >= 0 && change >= 0;
   }, [price]);
 
-  const displayName = price?.stockName || summary?.stockName || stockCode;
+  const displayName = price?.stockName || profile?.stockName || stockCode;
   const marketCap = useMemo(() => {
     const currentPrice = parseNumeric(price?.currentPrice);
-    const listedShares = parseNumeric(summary?.listedShares);
+    const outstandingShares = parseNumeric(profile?.outstandingShares ?? null);
 
-    if (currentPrice === null || listedShares === null) {
+    if (currentPrice === null || outstandingShares === null) {
       return null;
     }
 
-    return currentPrice * listedShares;
-  }, [price?.currentPrice, summary?.listedShares]);
+    return currentPrice * outstandingShares;
+  }, [price?.currentPrice, profile?.outstandingShares]);
 
   return (
     <main className={styles.page}>
@@ -230,7 +362,7 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
         <div className={styles.heroPrimary}>
           <div className={styles.heroNameRow}>
             <span className={styles.marketBadge}>
-              {summary?.marketId || "KIS"}
+              {profile?.marketType || "VTS"}
             </span>
             <h1>{displayName}</h1>
             <span className={styles.heroCode}>{stockCode}</span>
@@ -274,19 +406,27 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
           </nav>
 
           <div className={styles.panelBody}>
-            {loading && activeTab !== "chart" ? (
-              <EmptyState title="종목 데이터를 불러오는 중입니다." />
-            ) : null}
             {activeTab === "chart" ? (
               <ChartShell stockCode={stockCode} fetchJson={fetchJson} />
             ) : null}
-            {!loading && activeTab === "orderbook" ? (
+            {orderbookLoading && activeTab === "orderbook" ? (
+              <EmptyState title="호가 정보를 불러오는 중입니다." />
+            ) : null}
+            {!orderbookLoading && activeTab === "orderbook" ? (
               <OrderbookPanel orderbook={orderbook} />
             ) : null}
-            {!loading && activeTab === "summary" ? (
-              <SummaryPanel summary={summary} price={price} />
+            {detailLoading && activeTab === "summary" ? (
+              <EmptyState title="종목 정보를 불러오는 중입니다." />
             ) : null}
-            {!loading && activeTab === "news" ? <NewsPanel news={news} /> : null}
+            {!detailLoading && activeTab === "summary" ? (
+              <SummaryPanel profile={profile} price={price} />
+            ) : null}
+            {activeTab === "news" && newsPhase !== "done" ? (
+              <EmptyState title="뉴스를 불러오는 중입니다." />
+            ) : null}
+            {activeTab === "news" && newsPhase === "done" ? (
+              <NewsPanel news={news} />
+            ) : null}
           </div>
         </section>
 
@@ -295,9 +435,8 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
             <div className={styles.orderTabs}>
               <button
                 type="button"
-                className={`${styles.orderTab} ${
-                  orderKind === "BUY" ? styles.buyTab : ""
-                }`}
+                className={`${styles.orderTab} ${orderKind === "BUY" ? styles.buyTab : ""
+                  }`}
                 onClick={() => setOrderKind("BUY")}
               >
                 구매
@@ -305,9 +444,8 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
               <button
                 type="button"
-                className={`${styles.orderTab} ${
-                  orderKind === "SELL" ? styles.sellTab : ""
-                }`}
+                className={`${styles.orderTab} ${orderKind === "SELL" ? styles.sellTab : ""
+                  }`}
                 onClick={() => setOrderKind("SELL")}
               >
                 판매
@@ -491,24 +629,56 @@ function OrderbookRow({
 }
 
 function SummaryPanel({
-  summary,
+  profile,
   price,
 }: {
-  summary: SummaryResponse | null;
+  profile: StaticProfileResponse | null;
   price: PriceResponse | null;
 }) {
-  if (!summary && !price) {
+  if (!profile && !price) {
     return <EmptyState title="종목 요약 정보가 없습니다." />;
   }
 
   return (
     <div className={styles.summaryGrid}>
-      <Stat label="시장" value={summary?.marketId || "-"} />
-      <Stat label="표준코드" value={summary?.standardCode || "-"} />
-      <Stat label="상장주식수" value={formatNumber(summary?.listedShares)} />
-      <Stat label="자본금" value={formatWon(summary?.capital)} />
-      <Stat label="액면가" value={formatWon(summary?.parValue)} />
-      <Stat label="결산월" value={summary?.fiscalMonth || "-"} />
+      <Stat label="시장" value={profile?.marketType || "-"} />
+      <Stat label="상장일" value={profile?.listedDate || "-"} />
+      <Stat label="업종" value={profile?.sector || "-"} />
+      <Stat label="회사명" value={profile?.coName || "-"} />
+      <Stat label="공시 코드" value={profile?.corpCode || "-"} />
+      <Stat label="상태" value={profile?.status || "-"} />
+      <Stat
+        label="발행주식수"
+        value={formatNumber(
+          profile?.issuedStock === null || profile?.issuedStock === undefined
+            ? null
+            : String(profile.issuedStock)
+        )}
+      />
+      <Stat
+        label="유통주식수"
+        value={formatNumber(
+          profile?.outstandingShares === null || profile?.outstandingShares === undefined
+            ? null
+            : String(profile.outstandingShares)
+        )}
+      />
+      <Stat
+        label="자기주식수"
+        value={formatNumber(
+          profile?.treasuryStock === null || profile?.treasuryStock === undefined
+            ? null
+            : String(profile.treasuryStock)
+        )}
+      />
+      <Stat
+        label="소액주주 지분율"
+        value={formatPlainPercent(profile?.shareholdingRatio)}
+      />
+      <Stat
+        label="소액주주 소유율"
+        value={formatPlainPercent(profile?.ownershipPercentage)}
+      />
       <Stat label="시가" value={formatWon(price?.openPrice)} />
       <Stat label="고가 / 저가" value={`${formatWon(price?.highPrice)} / ${formatWon(price?.lowPrice)}`} />
     </div>
@@ -655,6 +825,16 @@ function formatPercent(value?: string | null) {
   }
 
   return `${numeric > 0 ? "+" : ""}${numeric.toFixed(2)}%`;
+}
+
+function formatPlainPercent(value?: string | null) {
+  const numeric = Number(String(value ?? "").replaceAll(",", ""));
+
+  if (!Number.isFinite(numeric) || value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  return `${numeric.toFixed(2)}%`;
 }
 
 function formatChange(value?: string | null) {
