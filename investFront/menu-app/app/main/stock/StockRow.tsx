@@ -3,7 +3,7 @@
 import Link from "next/link";
 import styles from "./stock.module.css";
 import { apiClient } from "@/lib/api-client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Props {
   stock: any;
@@ -27,10 +27,16 @@ export default function StockRow({
     e.preventDefault();
 
     if (loading) return;
-    setLoading(true);
 
     const stockCode = stock.stockCode;
     const currentlyLiked  = watchlist.includes(stock.stockCode);
+
+    if (!liked && watchlist.length >= 50) {
+      alert("관심종목은 최대 50개까지 가능합니다.");
+      return;
+    }
+
+    setLoading(true);
     
     try {
       // optimistic update

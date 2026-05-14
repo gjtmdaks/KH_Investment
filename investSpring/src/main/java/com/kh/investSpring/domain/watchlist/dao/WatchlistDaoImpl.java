@@ -18,6 +18,11 @@ public class WatchlistDaoImpl implements WatchlistDao {
 
     private final SqlSessionTemplate session;
 
+	@Override
+	public int countWatchlist(Long userNo) {
+		return session.selectOne("watchlist.countWatchlist", userNo);
+	}
+
     @Override
     public int insertWatchlist(Long userNo, String stockCode) {
         Map<String, Object> param = new HashMap<>();
@@ -44,16 +49,6 @@ public class WatchlistDaoImpl implements WatchlistDao {
     }
 
 	@Override
-	public boolean existsWatchlist(Long userNo, String stockCode) {
-        Map<String, Object> param = new HashMap<>();
-        param.put("userNo", userNo);
-        param.put("stockCode", stockCode);
-        
-        int count = session.selectOne("watchlist.existsWatchlist", param);
-        return count > 0;
-	}
-
-	@Override
 	public List<SidebarWatchDto> getTopCurrentPriceStocks() {
 		return session.selectList("watchlist.getTopCurrentPriceStocks");
 	}
@@ -61,16 +56,5 @@ public class WatchlistDaoImpl implements WatchlistDao {
 	@Override
 	public List<SidebarWatchDto> getSidebarWatchStocks(Long userNo) {
 		return session.selectList("watchlist.getSidebarWatchStocks", userNo);
-	}
-	
-	@Override
-	public List<String> getWatchlistCodes(Long userNo) {
-	    return session.selectList("watchlist.getWatchlist", userNo);
-	}
-
-	@Override
-	public int countWatchlist(Long userNo) {
-		// TODO Auto-generated method stub
-		return 0;
 	}
 }
