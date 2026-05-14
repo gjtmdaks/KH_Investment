@@ -21,7 +21,11 @@
 // 위
 
 function normalizeFinalUrl(raw: string): string {
-  const cleaned = raw.replace(/\/$/, "").trim();
+  let cleaned = raw.replace(/\/$/, "").trim();
+  cleaned = cleaned.replace(
+    /^(https?:\/\/)(localhost)(\d{4})(?=\/|$)/i,
+    (_, proto, _host, port) => `${proto}localhost:${port}`
+  );
 
   if (cleaned.endsWith("/final")) {
     return cleaned;
@@ -32,6 +36,16 @@ function normalizeFinalUrl(raw: string): string {
   }
 
   return cleaned;
+}
+
+export function getPublicApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!raw) {
+    return "http://localhost:8081/final";
+  }
+
+  return normalizeFinalUrl(raw);
 }
 
 function resolveApiBase(): string {
