@@ -37,20 +37,43 @@ export default function AccountManagePanel({ user }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  async function fetchAccountSummary() {
-    try {
-      const data = await getAccountSummary(user.userNo);
-      setAccountSummary(data);
-    } catch (error) {
-      console.error(error);
-      setAccountSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  }
+    let isMounted = true;
 
-  fetchAccountSummary();
-}, [user.userNo]);
+    async function fetchAccountSummary(showLoading = false) {
+      try {
+        if (showLoading) {
+          setLoading(true);
+        }
+
+        const data = await getAccountSummary(user.userNo);
+
+        if (!isMounted) return;
+
+        setAccountSummary(data);
+      } catch (error) {
+        console.error(error);
+
+        if (!isMounted) return;
+
+        setAccountSummary(null);
+      } finally {
+        if (!isMounted) return;
+
+        setLoading(false);
+      }
+    }
+
+    fetchAccountSummary(true);
+
+    const intervalId = window.setInterval(() => {
+      fetchAccountSummary(false);
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [user.userNo]);
     
 
   if (loading) {

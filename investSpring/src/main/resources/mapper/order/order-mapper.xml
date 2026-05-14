@@ -48,7 +48,7 @@
 	        USER_NO,
 	        STOCK_CODE
 	    ) VALUES (
-	        SEQ_ORDERS.NEXTVAL,
+	        #{orderId},
 	        #{orderKind},
 	        #{orderType},
 	        #{price},
@@ -124,5 +124,49 @@
 	      AND STOCK_CODE = #{stockCode}
 	      AND STOCK_RESERVES >= #{quantity}
 	</update>
+	
+	
+	<select id="selectNextOrderId" resultType="long">
+	    SELECT SEQ_ORDERS.NEXTVAL
+	    FROM DUAL
+	</select>
+	
+	
+	
+	<insert id="insertTrade" parameterType="map">
+	    INSERT INTO TRADES (
+	        TRADE_ID,
+	        ORDER_ID,
+	        PRICE,
+	        QUANTITY,
+	        EXECUTED_AT
+	    ) VALUES (
+	        SEQ_TRADES.NEXTVAL,
+	        #{orderId},
+	        #{price},
+	        #{quantity},
+	        SYSTIMESTAMP
+	    )
+	</insert>
+	
+	<select id="selectTradeHistoryByUserNo"
+	        parameterType="long"
+	        resultType="com.kh.investSpring.domain.order.dto.TradeResponse">
+	    SELECT
+	        t.TRADE_ID AS tradeId,
+	        o.ORDER_KIND AS orderKind,
+	        o.STOCK_CODE AS stockCode,
+	        s.STOCK_NAME AS stockName,
+	        t.PRICE AS price,
+	        t.QUANTITY AS quantity,
+	        t.EXECUTED_AT AS executedAt
+	    FROM TRADES t
+	    JOIN ORDERS o
+	        ON t.ORDER_ID = o.ORDER_ID
+	    JOIN STOCKS s
+	        ON o.STOCK_CODE = s.STOCK_CODE
+	    WHERE o.USER_NO = #{_parameter}
+	    ORDER BY t.EXECUTED_AT DESC
+	</select>
 	
 </mapper>

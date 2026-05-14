@@ -65,108 +65,142 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     }
 
 	
-	private OrderResponse createBuyOrder(Long userNo, OrderRequest request) {
-	    Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
+    private OrderResponse createBuyOrder(Long userNo, OrderRequest request) {
+        Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
 
-	    if (accountNo == null) {
-	        throw new IllegalArgumentException("활성 계좌가 없습니다.");
-	    }
+        if (accountNo == null) {
+            throw new IllegalArgumentException("활성 계좌가 없습니다.");
+        }
 
-	    BigDecimal orderAmount =
-	            request.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
+        BigDecimal orderAmount =
+                request.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
 
-	    BigDecimal availableCash = orderDao.selectAvailableCashByAccountNo(accountNo);
+        BigDecimal availableCash = orderDao.selectAvailableCashByAccountNo(accountNo);
 
-	    if (availableCash == null || availableCash.compareTo(orderAmount) < 0) {
-	        throw new IllegalArgumentException("주문 가능 금액이 부족합니다.");
-	    }
+        if (availableCash == null || availableCash.compareTo(orderAmount) < 0) {
+            throw new IllegalArgumentException("주문 가능 금액이 부족합니다.");
+        }
 
-	    
-	    int orderResult = orderDao.insertOrder(userNo, accountNo, request, "FILLED");
+        Long orderId = orderDao.selectNextOrderId();
 
-	    if (orderResult == 0) {
-	        throw new IllegalStateException("주문 등록에 실패했습니다.");
-	    }
+        int orderResult = orderDao.insertOrder(
+                orderId,
+                userNo,
+                accountNo,
+                request,
+                "FILLED"
+        );
 
-	    int balanceResult = orderDao.updateAccountBalanceForBuy(accountNo, orderAmount);
+        if (orderResult == 0) {
+            throw new IllegalStateException("주문 등록에 실패했습니다.");
+        }
 
-	    if (balanceResult == 0) {
-	        throw new IllegalStateException("계좌 잔고 차감에 실패했습니다.");
-	    }
+        int tradeResult = orderDao.insertTrade(
+                orderId,
+                request.getPrice(),
+                request.getQuantity()
+        );
 
-	    int holdingResult = orderDao.updateHoldingForBuy(
-	            accountNo,
-	            request.getStockCode(),
-	            request.getQuantity(),
-	            request.getPrice()
-	    );
+        if (tradeResult == 0) {
+            throw new IllegalStateException("체결 내역 등록에 실패했습니다.");
+        }
 
-	    if (holdingResult == 0) {
-	        throw new IllegalStateException("보유 주식 반영에 실패했습니다.");
-	    }
+        int balanceResult = orderDao.updateAccountBalanceForBuy(accountNo, orderAmount);
 
-	    return OrderResponse.builder()
-	            .stockCode(request.getStockCode())
-	            .orderKind(request.getOrderKind())
-	            .orderType(request.getOrderType())
-	            .price(request.getPrice())
-	            .quantity(request.getQuantity())
-	            .status("FILLED")
-	            .createdAt(new Date())
-	            .build();
-	}
+        if (balanceResult == 0) {
+            throw new IllegalStateException("계좌 잔고 차감에 실패했습니다.");
+        }
+
+        int holdingResult = orderDao.updateHoldingForBuy(
+                accountNo,
+                request.getStockCode(),
+                request.getQuantity(),
+                request.getPrice()
+        );
+
+        if (holdingResult == 0) {
+            throw new IllegalStateException("보유 주식 반영에 실패했습니다.");
+        }
+
+        return OrderResponse.builder()
+                .stockCode(request.getStockCode())
+                .orderKind(request.getOrderKind())
+                .orderType(request.getOrderType())
+                .price(request.getPrice())
+                .quantity(request.getQuantity())
+                .status("FILLED")
+                .createdAt(new Date())
+                .build();
+    }
 	
-	private OrderResponse createSellOrder(Long userNo, OrderRequest request) {
-	    Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
+    private OrderResponse createSellOrder(Long userNo, OrderRequest request) {
+        Long accountNo = orderDao.selectActiveAccountNoByUserNo(userNo);
 
-	    if (accountNo == null) {
-	        throw new IllegalArgumentException("활성 계좌가 없습니다.");
-	    }
+        if (accountNo == null) {
+            throw new IllegalArgumentException("활성 계좌가 없습니다.");
+        }
 
-	    Long holdingQuantity =
-	            orderDao.selectHoldingQuantityByAccountNoAndStockCode(
-	                    accountNo,
-	                    request.getStockCode()
-	            );
+        Long holdingQuantity =
+                orderDao.selectHoldingQuantityByAccountNoAndStockCode(
+                        accountNo,
+                        request.getStockCode()
+                );
 
-	    if (holdingQuantity == null || holdingQuantity < request.getQuantity()) {
-	        throw new IllegalArgumentException("보유 수량이 부족합니다.");
-	    }
+        if (holdingQuantity == null || holdingQuantity < request.getQuantity()) {
+            throw new IllegalArgumentException("보유 수량이 부족합니다.");
+        }
 
-	    BigDecimal orderAmount =
-	            request.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
+        BigDecimal orderAmount =
+                request.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
 
-	    
-	    int orderResult = orderDao.insertOrder(userNo, accountNo, request, "FILLED");
+        Long orderId = orderDao.selectNextOrderId();
 
-	    if (orderResult == 0) {
-	        throw new IllegalStateException("주문 등록에 실패했습니다.");
-	    }
+        int orderResult = orderDao.insertOrder(
+                orderId,
+                userNo,
+                accountNo,
+                request,
+                "FILLED"
+        );
 
-	    int holdingResult = orderDao.updateHoldingForSell(
-	            accountNo,
-	            request.getStockCode(),
-	            request.getQuantity()
-	    );
+        if (orderResult == 0) {
+            throw new IllegalStateException("주문 등록에 실패했습니다.");
+        }
 
-	    if (holdingResult == 0) {
-	        throw new IllegalStateException("보유 주식 차감에 실패했습니다.");
-	    }
+        int tradeResult = orderDao.insertTrade(
+                orderId,
+                request.getPrice(),
+                request.getQuantity()
+        );
 
-	    int balanceResult = orderDao.updateAccountBalanceForSell(accountNo, orderAmount);
+        if (tradeResult == 0) {
+            throw new IllegalStateException("체결 내역 등록에 실패했습니다.");
+        }
 
-	    if (balanceResult == 0) {
-	        throw new IllegalStateException("계좌 잔고 증가에 실패했습니다.");
-	    }
+        int holdingResult = orderDao.updateHoldingForSell(
+                accountNo,
+                request.getStockCode(),
+                request.getQuantity()
+        );
 
-	    return OrderResponse.builder()
-	            .stockCode(request.getStockCode())
-	            .orderKind(request.getOrderKind())
-	            .orderType(request.getOrderType())
-	            .price(request.getPrice())
-	            .quantity(request.getQuantity())
-	            .status("FILLED")
-	            .createdAt(new Date())
-	            .build();
-	}
+        if (holdingResult == 0) {
+            throw new IllegalStateException("보유 주식 차감에 실패했습니다.");
+        }
+
+        int balanceResult = orderDao.updateAccountBalanceForSell(accountNo, orderAmount);
+
+        if (balanceResult == 0) {
+            throw new IllegalStateException("계좌 잔고 증가에 실패했습니다.");
+        }
+
+        return OrderResponse.builder()
+                .stockCode(request.getStockCode())
+                .orderKind(request.getOrderKind())
+                .orderType(request.getOrderType())
+                .price(request.getPrice())
+                .quantity(request.getQuantity())
+                .status("FILLED")
+                .createdAt(new Date())
+                .build();
+    }
 }
