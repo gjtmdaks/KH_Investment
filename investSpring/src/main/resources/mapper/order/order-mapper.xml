@@ -169,4 +169,35 @@
 	    ORDER BY t.EXECUTED_AT DESC
 	</select>
 	
+	<!-- 예약 주문 -->
+	<update id="updateAccountBalanceForPendingBuy" parameterType="map">
+	    UPDATE ACCOUNT_BALANCE
+	    SET AVAILABLE_CASH = NVL(AVAILABLE_CASH, 0) - #{orderAmount},
+	        LOCKED_CASH = NVL(LOCKED_CASH, 0) + #{orderAmount}
+	    WHERE ACCOUNT_NO = #{accountNo}
+	      AND NVL(AVAILABLE_CASH, 0) >= #{orderAmount}
+	</update>
+	
+	<!-- 예약 판매 -->
+	<select id="selectSellableQuantityByAccountNoAndStockCode"
+	        parameterType="map"
+	        resultType="long">
+	    SELECT
+	        NVL(sh.STOCK_RESERVES, 0)
+	        -
+	        NVL((
+	            SELECT
+	                SUM(o.QUANTITY)
+	            FROM ORDERS o
+	            JOIN ACCOUNTS a
+	                ON o.USER_NO = a.USER_NO
+	            WHERE a.ACCOUNT_NO = #{accountNo}
+	              AND o.STOCK_CODE = #{stockCode}
+	              AND o.ORDER_KIND = 'SELL'
+	              AND o.STATUS = 'PENDING'
+	        ), 0) AS SELLABLE_QUANTITY
+	    FROM STOCKS_HELD sh
+	    WHERE sh.ACCOUNT_NO = #{accountNo}
+	      AND sh.STOCK_CODE = #{stockCode}
+	</select>
 </mapper>

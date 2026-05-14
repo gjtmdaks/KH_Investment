@@ -13,6 +13,8 @@ export function StockDetailOrderCard({
   setOrderType,
   quantity,
   setQuantity,
+  orderPrice,
+  setOrderPrice,
   orderLoading,
   orderMessage,
   handleCreateOrder,
@@ -24,6 +26,8 @@ export function StockDetailOrderCard({
   setOrderType: (value: OrderType) => void;
   quantity: string;
   setQuantity: (value: string) => void;
+  orderPrice: string;
+  setOrderPrice: (value: string) => void;
   orderLoading: boolean;
   orderMessage: string | null;
   handleCreateOrder: () => void | Promise<void>;
@@ -53,16 +57,41 @@ export function StockDetailOrderCard({
         주문 유형
         <select
           value={orderType}
-          onChange={(event) => setOrderType(event.target.value as OrderType)}
+          onChange={(event) => {
+            const nextOrderType = event.target.value as OrderType;
+
+            setOrderType(nextOrderType);
+
+            if (nextOrderType === "LIMIT") {
+              setOrderPrice(String(price?.currentPrice ?? ""));
+            } else {
+              setOrderPrice("");
+            }
+          }}
         >
           <option value="MARKET">시장가</option>
-          {/* <option value="LIMIT">지정가</option> */}
+          <option value="LIMIT">지정가</option>
         </select>
       </label>
 
       <label>
-        {orderKind === "BUY" ? "구매 가격" : "판매 가격"}
-        <input value={formatNumber(price?.currentPrice)} readOnly />
+        {orderType === "MARKET"
+          ? "예상 체결가"
+          : orderKind === "BUY"
+            ? "구매 예약 가격"
+            : "판매 예약 가격"}
+
+        <input
+          value={
+            orderType === "MARKET"
+              ? formatNumber(price?.currentPrice)
+              : orderPrice
+          }
+          onChange={(event) => setOrderPrice(event.target.value)}
+          readOnly={orderType === "MARKET"}
+          placeholder="가격 입력"
+          inputMode="numeric"
+        />
       </label>
 
       <label>
@@ -83,9 +112,13 @@ export function StockDetailOrderCard({
       >
         {orderLoading
           ? "처리 중..."
-          : orderKind === "BUY"
-            ? "구매하기"
-            : "판매하기"}
+          : orderType === "LIMIT"
+            ? orderKind === "BUY"
+              ? "구매 예약하기"
+              : "판매 예약하기"
+            : orderKind === "BUY"
+              ? "구매하기"
+              : "판매하기"}
       </button>
 
       {orderMessage ? (

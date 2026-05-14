@@ -162,4 +162,31 @@ public class OrderDaoImpl implements OrderDao{
 		// TODO Auto-generated method stub
 		return session.selectList("order.selectTradeHistoryByUserNo", userNo);
 	}
+
+	@Override
+	public int updateAccountBalanceForPendingBuy(
+	        Long accountNo,
+	        BigDecimal orderAmount
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("accountNo", accountNo);
+	    param.put("orderAmount", orderAmount);
+
+	    return session.update("order.updateAccountBalanceForPendingBuy", param);
+	}
+
+	@Override
+	public Long selectSellableQuantityByAccountNoAndStockCode(
+	        Long accountNo,
+	        String stockCode
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("accountNo", accountNo);
+	    param.put("stockCode", stockCode);
+
+	    return session.selectOne(
+	            "order.selectSellableQuantityByAccountNoAndStockCode",
+	            param
+	    );
+	}
 }
