@@ -2,6 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="watchlist">
+	<select id="countWatchlist" resultType="int">
+	    SELECT COUNT(*)
+	    FROM watchlist
+	    WHERE user_no = #{userNo}
+	</select>
     <!-- 관심종목 추가 -->
     <insert id="insertWatchlist">
         INSERT INTO watchlist
@@ -29,49 +34,49 @@
         FROM watchlist
         WHERE user_no = #{userNo}
     </select>
-    
-	<select id="existsWatchlist" resultType="int">
-	    SELECT COUNT(*)
-	    FROM watchlist
-	    WHERE user_no = #{userNo}
-	    AND stock_code = #{stockCode}
-	</select>
 	
+	<!-- 비로그인 or 관심종목 없음 -->
 	<select id="getTopCurrentPriceStocks" resultType="SidebarWatchDto">
-	    SELECT 
-		    stockCode,
-	        stockName,
-	        currentPrice,
-	        changeRate,
-	        volume,
-	        tradingValue
+	    SELECT *
 	    FROM (
 	        SELECT
-	            stock_code     AS stockCode,
-	            stock_name     AS stockName,
-	            current_price  AS currentPrice,
-	            change_rate    AS changeRate,
-	            volume,
-	            trading_value  AS tradingValue
-	        FROM stock_realtime_current
-	        ORDER BY current_price DESC
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume,
+	            NVL(r.current_price * r.volume, 0) AS tradingValue
+	        FROM stocks s
+	        JOIN stock_realtime_current r
+	          ON s.stock_code = r.stock_code
+	
+	        WHERE s.status = 'ACTIVE'
+	        ORDER BY r.current_price DESC
 	    )
 	    WHERE ROWNUM <![CDATA[ <= ]]> 10
 	</select>
 	
+	<!-- 관심종목 존재 -->
 	<select id="getSidebarWatchStocks" parameterType="long" resultType="SidebarWatchDto">
 	    SELECT
-	        s.stock_code     AS stockCode,
-	        s.stock_name     AS stockName,
-	        s.current_price  AS currentPrice,
-	        s.change_rate    AS changeRate,
-	        s.volume,
-	        s.trading_value  AS tradingValue
+	        s.stock_code AS stockCode,
+	        s.stock_name AS stockName,
+	        r.current_price AS currentPrice,
+	        r.change_rate AS changeRate,
+	        r.volume AS volume,
+	        NVL(r.current_price * r.volume, 0) AS tradingValue
 	    FROM watchlist w
-	    JOIN stock_realtime_current s
+	
+	    JOIN stocks s
 	      ON w.stock_code = s.stock_code
+	
+	    JOIN stock_realtime_current r
+	      ON s.stock_code = r.stock_code
+	
 	    WHERE w.user_no = #{userNo}
-	    ORDER BY w.created_at DESC
+	    AND s.status = 'ACTIVE'
+	    
+	    ORDER BY s.stock_name
 	</select>
 	
 </mapper>

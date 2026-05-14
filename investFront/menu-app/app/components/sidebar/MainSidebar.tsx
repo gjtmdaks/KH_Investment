@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./MainSidebar.module.css";
+import { apiClient } from "@/lib/api-client";
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const apiBase = rawBase.trim() || "http://localhost:8081/final";
@@ -89,7 +90,7 @@ export default function MainSidebar({ data }: any) {
           {activeMenu === "myInvestment" && (
             <MyInvestmentPanel data={data} isLogin={isLogin} />
           )}
-          {activeMenu === "interest" && <InterestPanel data={data} />}
+          {activeMenu === "interest" && <InterestPanel />}
           {activeMenu === "recent" && <RecentPanel data={data} />}
           {activeMenu === "liveTime" && <LiveTimePanel />}
           {activeMenu === "admin" && isAdmin && <AdminPanel />}
@@ -143,44 +144,101 @@ function getPanelTitle(activeMenu: SidebarMenu) {
   }
 }
 
-function InterestPanel({ data }: any) {
-  const list = data?.sidebar?.watchlist || [];
+function InterestPanel() {
+  const [loading, setLoading] = useState(true);
+
+  const [sidebarData, setSidebarData] = useState<{
+    loggedIn: boolean;
+    hasWatchlist: boolean;
+    stockList: any[];
+  }>({
+    loggedIn: false,
+    hasWatchlist: false,
+    stockList: [],
+  });
+
+  useEffect(() => {
+    async function fetchSidebarStocks() {
+      try {
+        const response = await apiClient.get(
+          "/watchlist/sidebar/stocks"
+        );
+        console.log(response.data);
+
+        setSidebarData(response.data.data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSidebarStocks();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className={styles.panelContent}>
+        로딩중...
+      </div>
+    );
+  }
+
+  const {
+    loggedIn,
+    hasWatchlist,
+    stockList,
+  } = sidebarData ?? {
+    loggedIn: false,
+    hasWatchlist: false,
+    stockList: [],
+  };
 
   return (
     <div className={styles.panelContent}>
-      <h3>관심 종목</h3>
 
-      {list.length === 0 ? (
-        <div>데이터 없음</div>
-        ) : (
-          list.map((s: any) => (
+      {/* 제목 */}
+      <div className={styles.sectionTitle}>
+        <h3>
+          {hasWatchlist
+            ? "관심 종목"
+            : "실시간 현재가 TOP 10"}
+        </h3>
+
+        <p>
+          {hasWatchlist
+            ? "등록한 관심종목"
+            : "관심종목이 없어요"}
+        </p>
+      </div>
+
+      {/* 리스트 */}
+      {stockList.length === 0 ? (
+        <div>표시할 종목이 없습니다.</div>
+      ) : (
+        stockList.map((s: any) => (
           <StockItem
             key={s.stockCode}
             name={s.stockName}
-            price={`${s.price}`}
+            price={`${Number(
+              s.currentPrice
+            ).toLocaleString()}원`}
             rate={`${s.changeRate}%`}
           />
         ))
       )}
 
-      <div className={styles.newsBox}>
-        <p className={styles.newsCategory}>KH증권 AI</p>
-        <p className={styles.newsTitle}>
-          엔비디아 경쟁 심화와 투자심리 위축으로...
-        </p>
-      </div>
+      {/* 비로그인 안내 */}
+      {!loggedIn && (
+        <div className={styles.newsBox}>
+          <p className={styles.newsCategory}>
+            로그인 안내
+          </p>
 
-      <div className={styles.sectionTitle}>
-        <h3>관심 주식 TOP 10</h3>
-        <p>관심 그룹에 담아보세요</p>
-      </div>
-
-      <StockItem name="대한전선" price="68,900원" rate="+8,200원 (13.50%)" />
-      <StockItem name="삼성전자" price="260,000원" rate="+27,500원 (11.82%)" />
-      <StockItem name="SK하이닉스" price="1,593,000원" rate="+146,000원 (10.08%)" />
-      <StockItem name="두산퓨얼셀" price="77,800원" rate="+17,200원 (28.38%)" />
-
-      <button className={styles.addButton}>＋ 추가하기</button>
+          <p className={styles.newsTitle}>
+            로그인하면 관심종목을 저장할 수 있어요.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -262,20 +320,34 @@ function StockItem({
   price: string;
   rate: string;
 }) {
-  const isUp = rate.startsWith("+");
+  const numericRate = parseFloat(rate);
+  const isUp = numericRate >= 0;
 
   return (
     <div className={styles.stockItem}>
-      <div className={styles.stockLogo}>{name.slice(0, 1)}</div>
+      <div className={styles.stockLogo}>
+        {name.slice(0, 1)}
+      </div>
 
-      <div className={styles.stockName}>{name}</div>
+      <div className={styles.stockName}>
+        {name}
+      </div>
 
       <div className={styles.stockPrice}>
         <strong>{price}</strong>
-        <span className={isUp ? styles.up : styles.down}>{rate}</span>
+        <span className={
+          isUp
+            ? styles.up
+            : styles.down
+        }>
+          {isUp ? "+" : ""}
+          {rate}
+        </span>
       </div>
 
-      <button className={styles.heartButton}>♥</button>
+      <button className={styles.heartButton}>
+        ♥
+      </button>
     </div>
   );
 }

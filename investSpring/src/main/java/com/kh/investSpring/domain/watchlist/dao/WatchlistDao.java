@@ -15,12 +15,8 @@ public interface WatchlistDao {
 
     WatchlistResponse getWatchlist(Long userNo);
 
-	boolean existsWatchlist(Long userNo, String stockCode);
-
 	List<SidebarWatchDto> getTopCurrentPriceStocks();
 
 	List<SidebarWatchDto> getSidebarWatchStocks(Long userNo);
-	
-	List<String> getWatchlistCodes(Long userNo);
 
 }

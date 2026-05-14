@@ -2,10 +2,12 @@ package com.kh.investSpring.domain.watchlist.service;
 
 import java.util.List;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.watchlist.dao.WatchlistDao;
+import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 
@@ -20,11 +22,22 @@ public class WatchlistServiceImpl implements WatchlistService {
 
     @Override
     public void insertWatchlist(Long userNo, String stockCode) {
-    	if (dao.existsWatchlist(userNo, stockCode)) {
+
+        int count = dao.countWatchlist(userNo);
+
+        if (count >= 50) {
+            throw new IllegalStateException(
+                "관심종목은 최대 50개까지 가능합니다."
+            );
+        }
+
+        try {
+            dao.insertWatchlist(userNo, stockCode);
+
+        } catch (DuplicateKeyException e) {
+            // 이미 존재하면 무시
             return;
         }
-    	
-        dao.insertWatchlist(userNo, stockCode);
     }
 
     @Override
@@ -48,7 +61,7 @@ public class WatchlistServiceImpl implements WatchlistService {
                     .build();
         }
 
-        List<String> watchlist = dao.getWatchlistCodes(userNo);
+        List<SidebarWatchDto> watchlist = dao.getSidebarWatchStocks(userNo);
 
         // 관심종목 없음
         if (watchlist == null || watchlist.isEmpty()) {
@@ -63,7 +76,7 @@ public class WatchlistServiceImpl implements WatchlistService {
         return SidebarWatchResponse.builder()
                 .loggedIn(true)
                 .hasWatchlist(true)
-                .stockList(dao.getSidebarWatchStocks(userNo))
+                .stockList(watchlist)
                 .build();
 	}
 }
