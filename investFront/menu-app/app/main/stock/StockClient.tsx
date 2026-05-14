@@ -72,7 +72,7 @@ export default function StockClient({
     const rankingInterval = setInterval(() => {
       setStocks((prev: Stock[]) => {
         return [...prev].sort(
-          (a, b) => b.changeRate - a.changeRate
+          (a, b) => b.tradingValue - a.tradingValue
         );
       });
     }, 10000);

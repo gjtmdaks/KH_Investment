@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import styles from "./stock.module.css";
-
-import useToggleWatchlist
-from "@/app/hooks/useToggleWatchlist";
+import useToggleWatchlist from "@/app/hooks/useToggleWatchlist";
 
 interface Props {
   stock: any;
-
   rank: number;
-
   watchlist: string[];
-
   setWatchlist: React.Dispatch<
     React.SetStateAction<string[]>
   >;
@@ -24,25 +19,15 @@ export default function StockRow({
   watchlist,
   setWatchlist,
 }: Props) {
-
-  const liked =
-    watchlist.includes(
-      stock.stockCode
-    );
-
-  const isUp =
-    stock.changeRate >= 0;
-
-  const {
-    toggleWatchlist,
-  } = useToggleWatchlist();
+  const liked = watchlist.includes(stock.stockCode);
+  const isUp = stock.changeRate >= 0;
+  const {toggleWatchlist,} = useToggleWatchlist();
 
   return (
     <Link
       href={`/main/stock/${stock.stockCode}`}
       className={styles.row}
     >
-
       {/* 관심종목 */}
       <div
         className={`${styles.favorite} ${
@@ -52,13 +37,9 @@ export default function StockRow({
         }`}
         onClick={(e) =>
           toggleWatchlist(e, {
-            stockCode:
-              stock.stockCode,
-
+            stockCode: stock.stockCode,
             liked,
-
             watchlist,
-
             setWatchlist,
           })
         }
@@ -69,6 +50,11 @@ export default function StockRow({
       {/* 순위 */}
       <div className={styles.rank}>
         {rank}
+      </div>
+
+      {/* 로고 */}
+      <div className={styles.stockLogo}>
+        {stock.stockName.slice(0, 1)}
       </div>
 
       {/* 종목명 */}

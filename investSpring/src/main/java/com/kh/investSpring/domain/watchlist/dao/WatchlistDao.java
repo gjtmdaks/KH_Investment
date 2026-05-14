@@ -2,6 +2,7 @@ package com.kh.investSpring.domain.watchlist.dao;
 
 import java.util.List;
 
+import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 
@@ -18,5 +19,9 @@ public interface WatchlistDao {
 	List<SidebarWatchDto> getTopCurrentPriceStocks();
 
 	List<SidebarWatchDto> getSidebarWatchStocks(Long userNo);
+
+	List<SidebarWatchDto> getRealtimeStocks();
+	
+	List<RecentViewDto> getRecentViews(Long userNo);
 
 }

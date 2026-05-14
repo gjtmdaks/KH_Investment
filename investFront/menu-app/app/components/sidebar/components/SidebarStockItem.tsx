@@ -2,18 +2,12 @@
 
 import Link from "next/link";
 import styles from "../MainSidebar.module.css";
-
-import { SidebarStock }
-from "../types";
-
-import useToggleWatchlist
-from "@/app/hooks/useToggleWatchlist";
+import { SidebarStock } from "../types";
+import useToggleWatchlist from "@/app/hooks/useToggleWatchlist";
 
 interface Props {
   stock: SidebarStock;
-
   watchlist: string[];
-
   setWatchlist: React.Dispatch<
     React.SetStateAction<string[]>
   >;
@@ -24,25 +18,15 @@ export default function SidebarStockItem({
   watchlist,
   setWatchlist,
 }: Props) {
-
-  const liked =
-    watchlist.includes(
-      stock.stockCode
-    );
-
-  const isUp =
-    stock.changeRate >= 0;
-
-  const {
-    toggleWatchlist,
-  } = useToggleWatchlist();
+  const liked = watchlist.includes(stock.stockCode);
+  const isUp = stock.changeRate >= 0;
+  const {toggleWatchlist,} = useToggleWatchlist();
 
   return (
     <Link
       href={`/main/stock/${stock.stockCode}`}
       className={styles.stockItem}
     >
-
       <div className={styles.stockLogo}>
         {stock.stockName.slice(0, 1)}
       </div>
@@ -52,7 +36,6 @@ export default function SidebarStockItem({
       </div>
 
       <div className={styles.stockPrice}>
-
         <strong>
           {Number(
             stock.currentPrice
@@ -69,7 +52,6 @@ export default function SidebarStockItem({
           {isUp ? "+" : ""}
           {stock.changeRate}%
         </span>
-
       </div>
 
       <button
@@ -77,20 +59,15 @@ export default function SidebarStockItem({
         className={styles.heartButton}
         onClick={(e) =>
           toggleWatchlist(e, {
-            stockCode:
-              stock.stockCode,
-
+            stockCode: stock.stockCode,
             liked,
-
             watchlist,
-
             setWatchlist,
           })
         }
       >
         {liked ? "❤️" : "♡"}
       </button>
-
     </Link>
   );
 }

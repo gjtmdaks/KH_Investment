@@ -21,9 +21,7 @@ export default function useSidebarWatchlist() {
     });
 
   async function fetchSidebarStocks() {
-
     try {
-
       const response = await apiClient.get(
         "/watchlist/sidebar/stocks"
       );
@@ -36,19 +34,14 @@ export default function useSidebarWatchlist() {
       setWatchlist(
         data.watchlistCodes ?? []
       );
-
     } catch (e) {
-
       console.error(e);
-
     } finally {
-
       setLoading(false);
     }
   }
 
   useEffect(() => {
-
     fetchSidebarStocks();
 
     // 3초마다 갱신
@@ -58,7 +51,6 @@ export default function useSidebarWatchlist() {
     );
 
     return () => clearInterval(interval);
-
   }, []);
 
   return {

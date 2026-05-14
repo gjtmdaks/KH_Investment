@@ -41,7 +41,8 @@
   grid-template-columns:
     40px
     50px
-    minmax(220px, 1.5fr)
+    50px
+    minmax(220px, 1.2fr)
     1fr
     1fr
     1.2fr
@@ -101,6 +102,24 @@
   text-align: center;
 }
 
+/* 로고 */
+.stockLogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #2563eb;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+
+  flex-shrink: 0;
+}
+
 /* 종목 영역 */
 .stockInfo {
   display: flex;
@@ -108,20 +127,6 @@
   gap: 12px;
 
   overflow: hidden;
-}
-
-/* 로고 */
-.logo {
-  width: 36px;
-  height: 36px;
-
-  border-radius: 50%;
-
-  object-fit: cover;
-
-  flex-shrink: 0;
-
-  background: #f3f4f6;
 }
 
 /* 종목명 */
