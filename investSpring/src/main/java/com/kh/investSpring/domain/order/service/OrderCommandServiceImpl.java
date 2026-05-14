@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.order.dao.OrderDao;
+import com.kh.investSpring.domain.order.dto.OrderPriceUpdateRequest;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.OrderResponse;
+import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -309,6 +311,101 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 .status("PENDING")
                 .createdAt(new Date())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void cancelOrder(Long userNo, Long orderId) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        if (orderId == null) {
+            throw new IllegalArgumentException("주문번호가 필요합니다.");
+        }
+
+        PendingOrderManageDto order =
+                orderDao.selectPendingOrderForManage(userNo, orderId);
+
+        if (order == null) {
+            throw new IllegalArgumentException("취소 가능한 주문을 찾을 수 없습니다.");
+        }
+
+        BigDecimal orderAmount =
+                order.getPrice().multiply(BigDecimal.valueOf(order.getQuantity()));
+
+        if ("BUY".equalsIgnoreCase(order.getOrderKind())) {
+            int balanceResult = orderDao.updateAccountBalanceForCancelPendingBuy(
+                    order.getAccountNo(),
+                    orderAmount
+            );
+
+            if (balanceResult == 0) {
+                throw new IllegalStateException("예약 매수금 반환에 실패했습니다.");
+            }
+        }
+
+        int cancelResult = orderDao.updateOrderStatusCanceledByOrderId(orderId);
+
+        if (cancelResult == 0) {
+            throw new IllegalStateException("주문 취소에 실패했습니다.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateOrderPrice(
+            Long userNo,
+            Long orderId,
+            OrderPriceUpdateRequest request
+    ) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        if (orderId == null) {
+            throw new IllegalArgumentException("주문번호가 필요합니다.");
+        }
+
+        if (request == null || request.getPrice() == null
+                || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("변경할 주문 가격은 0보다 커야 합니다.");
+        }
+
+        PendingOrderManageDto order =
+                orderDao.selectPendingOrderForManage(userNo, orderId);
+
+        if (order == null) {
+            throw new IllegalArgumentException("가격 변경 가능한 주문을 찾을 수 없습니다.");
+        }
+
+        BigDecimal oldOrderAmount =
+                order.getPrice().multiply(BigDecimal.valueOf(order.getQuantity()));
+
+        BigDecimal newOrderAmount =
+                request.getPrice().multiply(BigDecimal.valueOf(order.getQuantity()));
+
+        if ("BUY".equalsIgnoreCase(order.getOrderKind())) {
+            int balanceResult =
+                    orderDao.updateAccountBalanceForUpdatePendingBuyPrice(
+                            order.getAccountNo(),
+                            oldOrderAmount,
+                            newOrderAmount
+                    );
+
+            if (balanceResult == 0) {
+                throw new IllegalStateException("주문 가격 변경에 필요한 주문 가능 금액이 부족합니다.");
+            }
+        }
+
+        int updateResult = orderDao.updateOrderPriceByOrderId(
+                orderId,
+                request.getPrice()
+        );
+
+        if (updateResult == 0) {
+            throw new IllegalStateException("주문 가격 변경에 실패했습니다.");
+        }
     }
     
 }

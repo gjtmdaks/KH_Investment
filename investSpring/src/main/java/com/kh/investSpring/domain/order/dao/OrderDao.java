@@ -6,6 +6,7 @@ import java.util.List;
 import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.PendingOrderDto;
+import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 public interface OrderDao {
@@ -47,5 +48,22 @@ public interface OrderDao {
 	        Long accountNo,
 	        BigDecimal lockedAmount,
 	        BigDecimal refundAmount
+	);
+	
+	PendingOrderManageDto selectPendingOrderForManage(Long userNo, Long orderId);
+
+	int updateOrderStatusCanceledByOrderId(Long orderId);
+
+	int updateAccountBalanceForCancelPendingBuy(
+	        Long accountNo,
+	        BigDecimal orderAmount
+	);
+
+	int updateOrderPriceByOrderId(Long orderId, BigDecimal price);
+
+	int updateAccountBalanceForUpdatePendingBuyPrice(
+	        Long accountNo,
+	        BigDecimal oldOrderAmount,
+	        BigDecimal newOrderAmount
 	);
 }	

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.PendingOrderDto;
+import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -220,5 +221,57 @@ public class OrderDaoImpl implements OrderDao{
 	    param.put("refundAmount", refundAmount);
 
 	    return session.update("order.updateAccountBalanceForPendingBuyFilled", param);
+	}
+
+	@Override
+	public PendingOrderManageDto selectPendingOrderForManage(
+	        Long userNo,
+	        Long orderId
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("userNo", userNo);
+	    param.put("orderId", orderId);
+
+	    return session.selectOne("order.selectPendingOrderForManage", param);
+	}
+
+	@Override
+	public int updateOrderStatusCanceledByOrderId(Long orderId) {
+	    return session.update("order.updateOrderStatusCanceledByOrderId", orderId);
+	}
+
+	@Override
+	public int updateAccountBalanceForCancelPendingBuy(
+	        Long accountNo,
+	        BigDecimal orderAmount
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("accountNo", accountNo);
+	    param.put("orderAmount", orderAmount);
+
+	    return session.update("order.updateAccountBalanceForCancelPendingBuy", param);
+	}
+
+	@Override
+	public int updateOrderPriceByOrderId(Long orderId, BigDecimal price) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("orderId", orderId);
+	    param.put("price", price);
+
+	    return session.update("order.updateOrderPriceByOrderId", param);
+	}
+
+	@Override
+	public int updateAccountBalanceForUpdatePendingBuyPrice(
+	        Long accountNo,
+	        BigDecimal oldOrderAmount,
+	        BigDecimal newOrderAmount
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("accountNo", accountNo);
+	    param.put("oldOrderAmount", oldOrderAmount);
+	    param.put("newOrderAmount", newOrderAmount);
+
+	    return session.update("order.updateAccountBalanceForUpdatePendingBuyPrice", param);
 	}
 }
