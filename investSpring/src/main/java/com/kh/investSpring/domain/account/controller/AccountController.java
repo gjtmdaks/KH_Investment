@@ -5,7 +5,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
+import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
 import com.kh.investSpring.domain.account.service.AccountService;
 
@@ -19,10 +21,23 @@ public class AccountController {
 
     @GetMapping("/summary")
     public ResponseEntity<AccountSummaryDto> getAccountSummary(
-            @RequestParam Long userNo
+    		Authentication authentication
     ) {
+    	Long userNo = Long.valueOf(authentication.getName());
+    	
         AccountSummaryDto accountSummary = accountService.getAccountSummary(userNo);
 
         return ResponseEntity.ok(accountSummary);
+    }
+    
+    @GetMapping("/assets")
+    public ResponseEntity<AccountAssetResponse> getAccountAssets(
+            Authentication authentication
+    ) {
+        Long userNo = Long.valueOf(authentication.getName());
+
+        AccountAssetResponse response = accountService.getAccountAssets(userNo);
+
+        return ResponseEntity.ok(response);
     }
 }

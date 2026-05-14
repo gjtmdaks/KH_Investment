@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.OrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
@@ -47,5 +48,16 @@ public class OrderController {
         List<TradeResponse> trades = orderQueryService.getTradeHistory(userNo);
 
         return ResponseEntity.ok(trades);
+    }
+    
+    @GetMapping("/history")
+    public ResponseEntity<List<OrderHistoryResponse>> getOrderHistory(
+            Authentication authentication
+    ) {
+        Long userNo = Long.valueOf(authentication.getName());
+
+        List<OrderHistoryResponse> orders = orderQueryService.getOrderHistory(userNo);
+
+        return ResponseEntity.ok(orders);
     }
 }

@@ -3,11 +3,14 @@ package com.kh.investSpring.domain.account.service;
 import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.domain.account.dao.AccountDao;
+import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
+import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 
 @Service
@@ -68,6 +71,36 @@ public class AccountServiceImpl implements AccountService {
 
         return accountSummary;
     }
-    
+
+    @Override
+    public AccountAssetResponse getAccountAssets(Long userNo) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        AccountAssetSummaryDto asset =
+                accountDao.selectAccountAssetByUserNo(userNo);
+
+        if (asset == null) {
+            return AccountAssetResponse.builder()
+                    .totalAsset(BigDecimal.ZERO)
+                    .availableCash(BigDecimal.ZERO)
+                    .lockedCash(BigDecimal.ZERO)
+                    .totalStockValue(BigDecimal.ZERO)
+                    .holdings(List.of())
+                    .build();
+        }
+
+        List<AccountAssetResponse.HoldingStock> holdings =
+                accountDao.selectHoldingStocksByUserNo(userNo);
+
+        return AccountAssetResponse.builder()
+                .totalAsset(asset.getTotalAsset())
+                .availableCash(asset.getAvailableCash())
+                .lockedCash(asset.getLockedCash())
+                .totalStockValue(asset.getTotalStockValue())
+                .holdings(holdings != null ? holdings : List.of())
+                .build();
+    }
     
 }

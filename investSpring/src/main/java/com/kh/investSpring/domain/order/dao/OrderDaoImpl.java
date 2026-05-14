@@ -8,7 +8,9 @@ import java.util.Map;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
+import com.kh.investSpring.domain.order.dto.PendingOrderDto;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -188,5 +190,35 @@ public class OrderDaoImpl implements OrderDao{
 	            "order.selectSellableQuantityByAccountNoAndStockCode",
 	            param
 	    );
+	}
+
+	@Override
+	public List<OrderHistoryResponse> selectOrderHistoryByUserNo(Long userNo) {
+		// TODO Auto-generated method stub
+		return session.selectList("order.selectOrderHistoryByUserNo", userNo);
+	}
+	
+	@Override
+	public List<PendingOrderDto> selectExecutablePendingOrders() {
+	    return session.selectList("order.selectExecutablePendingOrders");
+	}
+
+	@Override
+	public int updateOrderStatusFilledByOrderId(Long orderId) {
+	    return session.update("order.updateOrderStatusFilledByOrderId", orderId);
+	}
+
+	@Override
+	public int updateAccountBalanceForPendingBuyFilled(
+	        Long accountNo,
+	        BigDecimal lockedAmount,
+	        BigDecimal refundAmount
+	) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("accountNo", accountNo);
+	    param.put("lockedAmount", lockedAmount);
+	    param.put("refundAmount", refundAmount);
+
+	    return session.update("order.updateAccountBalanceForPendingBuyFilled", param);
 	}
 }

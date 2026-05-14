@@ -115,5 +115,76 @@
 	
 	</select>
 	
+	<select id="selectAccountAssetByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto">
+	    SELECT
+	        NVL(ab.AVAILABLE_CASH, 0)
+	        + NVL(ab.LOCKED_CASH, 0)
+	        + NVL(stock_summary.TOTAL_STOCK_VALUE, 0) AS totalAsset,
 	
+	        NVL(ab.AVAILABLE_CASH, 0) AS availableCash,
+	
+	        NVL(ab.LOCKED_CASH, 0) AS lockedCash,
+	
+	        NVL(stock_summary.TOTAL_STOCK_VALUE, 0) AS totalStockValue
+	
+	    FROM ACCOUNTS a
+	
+	    LEFT JOIN ACCOUNT_BALANCE ab
+	        ON a.ACCOUNT_NO = ab.ACCOUNT_NO
+	
+	    LEFT JOIN (
+	        SELECT
+	            sh.ACCOUNT_NO,
+	            SUM(
+	                NVL(sh.STOCK_RESERVES, 0)
+	                * NVL(src.CURRENT_PRICE, sh.AVG_PRICE)
+	            ) AS TOTAL_STOCK_VALUE
+	        FROM STOCKS_HELD sh
+	        LEFT JOIN STOCK_REALTIME_CURRENT src
+	            ON sh.STOCK_CODE = src.STOCK_CODE
+	        GROUP BY sh.ACCOUNT_NO
+	    ) stock_summary
+	        ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
+	
+	    WHERE a.USER_NO = #{_parameter}
+	      AND a.STATUS = 'ACTIVE'
+	</select>
+	
+	<!--보유주식 목록-->
+	<select id="selectHoldingStocksByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.account.dto.AccountAssetResponse$HoldingStock">
+	    SELECT
+	        sh.STOCK_CODE AS stockCode,
+	
+	        NVL(s.STOCK_NAME, sh.STOCK_CODE) AS stockName,
+	
+	        NVL(sh.STOCK_RESERVES, 0) AS quantity,
+	
+	        NVL(sh.AVG_PRICE, 0) AS avgPrice,
+	
+	        NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS currentPrice,
+	
+	        NVL(sh.STOCK_RESERVES, 0)
+	        * NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS stockValue
+	
+	    FROM ACCOUNTS a
+	
+	    JOIN STOCKS_HELD sh
+	        ON a.ACCOUNT_NO = sh.ACCOUNT_NO
+	
+	    LEFT JOIN STOCKS s
+	        ON sh.STOCK_CODE = s.STOCK_CODE
+	
+	    LEFT JOIN STOCK_REALTIME_CURRENT src
+	        ON sh.STOCK_CODE = src.STOCK_CODE
+	
+	    WHERE a.USER_NO = #{_parameter}
+	      AND a.STATUS = 'ACTIVE'
+	      AND NVL(sh.STOCK_RESERVES, 0) > 0
+	
+	    ORDER BY sh.STOCK_CODE
+	</select>
 </mapper>
