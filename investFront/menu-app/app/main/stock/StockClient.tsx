@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import StockList from "./StockList";
 import { useWatchlist } from "@/app/context/WatchlistContext";
-
-const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-const apiBase = rawBase.trim() || "http://localhost:8081/final";
+import { getPublicApiBase } from "@/lib/api-base";
 
 type Stock = {
   stockCode: string;
@@ -26,7 +24,7 @@ export default function StockClient({
   useEffect(() => {
     // 1초마다 실시간 값 갱신
     const realtimeInterval = setInterval(() => {
-      fetch(`${apiBase}/api/main`)
+      fetch(`${getPublicApiBase()}/api/main`)
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -44,9 +42,12 @@ export default function StockClient({
             ])
           );
 
-        setStocks((prev: Stock[]) =>
-          prev.map((oldStock) => {
+        setStocks((prev: Stock[]) => {
+          if (prev.length === 0 && newList.length > 0) {
+            return newList;
+          }
 
+          return prev.map((oldStock) => {
             const updated = realtimeMap.get(oldStock.stockCode);
 
             if (!updated) {
@@ -61,8 +62,8 @@ export default function StockClient({
               volume: updated.volume,
               tradingValue: updated.tradingValue,
             };
-          })
-        );
+          });
+        });
       })
       .catch(() => { });
     }, 1000);

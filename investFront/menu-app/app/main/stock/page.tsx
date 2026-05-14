@@ -1,8 +1,9 @@
-import Link from "next/link";
 import StockClient from "./StockClient";
+import { getPublicApiBase } from "@/lib/api-base";
 
 async function getInitialData() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/main`, {
+  const apiBase = getPublicApiBase();
+  const res = await fetch(`${apiBase}/api/main`, {
     cache: "no-store",
   });
   const json = await res.json();
