@@ -50,25 +50,35 @@ public class WatchlistServiceImpl implements WatchlistService {
         return dao.getWatchlist(userNo);
     }
 
-	@Override
-	public SidebarWatchResponse getSidebarWatch(Long userNo) {
+    @Override
+    public SidebarWatchResponse getSidebarWatch(Long userNo) {
         // 비로그인
         if (userNo == null) {
             return SidebarWatchResponse.builder()
                     .loggedIn(false)
                     .hasWatchlist(false)
-                    .stockList(dao.getTopCurrentPriceStocks())
+                    .watchlistCodes(List.of())
+                    .stockList(
+                        dao.getTopCurrentPriceStocks()
+                    )
                     .build();
         }
 
+        // 실제 관심종목 코드
+        List<String> watchlistCodes = dao.getWatchlist(userNo).getWatchlist();
+
+        // 관심종목 상세
         List<SidebarWatchDto> watchlist = dao.getSidebarWatchStocks(userNo);
 
         // 관심종목 없음
-        if (watchlist == null || watchlist.isEmpty()) {
+        if (watchlistCodes.isEmpty()) {
             return SidebarWatchResponse.builder()
                     .loggedIn(true)
                     .hasWatchlist(false)
-                    .stockList(dao.getTopCurrentPriceStocks())
+                    .watchlistCodes(List.of())
+                    .stockList(
+                        dao.getTopCurrentPriceStocks()
+                    )
                     .build();
         }
 
@@ -76,7 +86,8 @@ public class WatchlistServiceImpl implements WatchlistService {
         return SidebarWatchResponse.builder()
                 .loggedIn(true)
                 .hasWatchlist(true)
+                .watchlistCodes(watchlistCodes)
                 .stockList(watchlist)
                 .build();
-	}
+    }
 }

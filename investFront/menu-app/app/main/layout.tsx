@@ -5,5 +5,7 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <MainLayoutClient>{children}</MainLayoutClient>;
+  return (
+    <MainLayoutClient>{children}</MainLayoutClient>
+  );
 }
