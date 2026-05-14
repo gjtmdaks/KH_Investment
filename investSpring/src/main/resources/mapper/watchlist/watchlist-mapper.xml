@@ -79,4 +79,48 @@
 	    ORDER BY s.stock_name
 	</select>
 	
+	<select id="getRealtimeStocks" resultType="SidebarWatchDto">
+	    SELECT *
+	    FROM (
+	        SELECT
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume,
+	            NVL(r.current_price * r.volume, 0) AS tradingValue
+	        FROM stocks s
+	
+	        JOIN stock_realtime_current r
+	          ON s.stock_code = r.stock_code
+	
+	        WHERE s.status = 'ACTIVE'
+	
+	        ORDER BY r.change_rate DESC
+	    )
+	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	</select>
+	
+	<select id="getRecentViews" parameterType="long" resultType="RecentViewDto">
+	    SELECT
+	        s.stock_code AS stockCode,
+	        s.stock_name AS stockName,
+	        r.current_price AS currentPrice,
+	        r.change_rate AS changeRate,
+	        r.volume AS volume,
+	        NVL(r.current_price * r.volume, 0) AS tradingValue
+	    FROM recent_view rv
+	
+	    JOIN stocks s
+	      ON rv.stock_code = s.stock_code
+	
+	    JOIN stock_realtime_current r
+	      ON s.stock_code = r.stock_code
+	
+	    WHERE rv.user_no = #{userNo}
+	    AND s.status = 'ACTIVE'
+	
+	    ORDER BY rv.viewed_at DESC
+	</select>
+	
 </mapper>

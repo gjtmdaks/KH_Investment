@@ -1,22 +1,48 @@
+"use client";
+
 import styles from "../MainSidebar.module.css";
+import SidebarStockItem from "../components/SidebarStockItem";
+import SidebarSectionTitle from "../components/SidebarSectionTitle";
+import useRecentStocks from "../hooks/useRecentStocks";
+import { useWatchlist } from "@/app/context/WatchlistContext";
 
-export default function RecentPanel({
-  data,
-}: any) {
+export default function RecentPanel() {
+  const {
+    loading,
+    stocks,
+  } = useRecentStocks();
 
-  const list = data?.sidebar?.recentView || [];
+  const {
+    watchlist,
+    setWatchlist,
+  } = useWatchlist();
+
+  if (loading) {
+    return (
+      <div className={styles.panelContent}>
+        로딩중...
+      </div>
+    );
+  }
 
   return (
     <div className={styles.panelContent}>
-      {list.length === 0 ? (
+      <SidebarSectionTitle
+        title="최근 본 종목"
+        description="최근 조회한 종목"
+      />
+      {stocks.length === 0 ? (
         <div>
-          최근 본 종목 없음
+          최근 본 종목이 없습니다.
         </div>
       ) : (
-        list.map((s: any) => (
-          <div key={s.stockCode}>
-            {s.stockName}
-          </div>
+        stocks.map(stock => (
+          <SidebarStockItem
+            key={stock.stockCode}
+            stock={stock}
+            watchlist={watchlist}
+            setWatchlist={setWatchlist}
+          />
         ))
       )}
     </div>

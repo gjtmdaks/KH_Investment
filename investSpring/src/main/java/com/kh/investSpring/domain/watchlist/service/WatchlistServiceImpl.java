@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.watchlist.dao.WatchlistDao;
+import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
@@ -90,4 +91,17 @@ public class WatchlistServiceImpl implements WatchlistService {
                 .stockList(watchlist)
                 .build();
     }
+
+	@Override
+	public List<SidebarWatchDto> getRealtimeStocks() {
+		return dao.getRealtimeStocks();
+	}
+
+	@Override
+	public List<RecentViewDto> getRecentViews(Long userNo) {
+	    if (userNo == null) {
+	        return List.of();
+	    }
+		return dao.getRecentViews(userNo);
+	}
 }

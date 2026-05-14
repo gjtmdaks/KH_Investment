@@ -1,5 +1,7 @@
 package com.kh.investSpring.domain.watchlist.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,6 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.watchlist.dto.RecentViewDto;
+import com.kh.investSpring.domain.watchlist.dto.SidebarWatchDto;
 import com.kh.investSpring.domain.watchlist.dto.SidebarWatchResponse;
 import com.kh.investSpring.domain.watchlist.dto.WatchlistResponse;
 import com.kh.investSpring.domain.watchlist.service.WatchlistService;
@@ -59,5 +63,28 @@ public class WatchlistController {
 
 		return ApiResponse.success(response, "사이드바 종목 조회 성공");
 	}
+    
+    @GetMapping("/realtime")
+    public ApiResponse<List<SidebarWatchDto>> getRealtimeStocks() {
+    	List<SidebarWatchDto> response = service.getRealtimeStocks();
+    	
+    	return ApiResponse.success(
+    	        response,
+    	        "실시간 종목 조회 성공"
+    	    );
+    }
+    
+    @GetMapping("/recent")
+    public ApiResponse<List<RecentViewDto>> getRecentViews(HttpServletRequest request) {
+
+    	    Long userNo = (Long) request.getAttribute("userNo");
+
+    	    List<RecentViewDto> list = service.getRecentViews(userNo);
+
+    	    return ApiResponse.success(
+    	        list,
+    	        "최근 본 종목 조회 성공"
+    	    );
+    	}
     
 }
