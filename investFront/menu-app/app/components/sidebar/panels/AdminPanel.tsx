@@ -9,6 +9,7 @@ const apiBase = rawBase.trim() || "http://localhost:8081/final";
 export default function AdminPanel() {
   const [companyLoading, setCompanyLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyStop, setHistoryStop] = useState(false);
 
   async function requestCompanySync() {
     try {
@@ -70,6 +71,36 @@ export default function AdminPanel() {
     }
   }
 
+  async function requestHistorySyncStop() {
+    try {
+      setHistoryStop(true);
+
+      const response = await fetch(
+        `${apiBase}/admin/api/kis/historysyncstop`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "과거 시세 동기화 중지 실패"
+        );
+      }
+
+      alert(
+        "과거 시세 동기화 중지 시작"
+      );
+    } catch (e) {
+      console.error(e);
+      alert(
+        "과거 시세 동기화 중지 실패"
+      );
+    } finally {
+      setHistoryStop(false);
+    }
+  }
+
   return (
     <div className={styles.panelContent}>
       <button
@@ -86,6 +117,14 @@ export default function AdminPanel() {
         disabled={historyLoading}
       >
         과거 시세 동기화
+      </button>
+
+      <button
+        className={styles.addButton}
+        onClick={requestHistorySyncStop}
+        disabled={historyStop}
+      >
+        과거 시세 동기화 중지
       </button>
     </div>
   );

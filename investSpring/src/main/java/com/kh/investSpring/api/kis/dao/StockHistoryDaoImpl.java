@@ -43,4 +43,23 @@ public class StockHistoryDaoImpl implements StockHistoryDao {
 
         return session.selectList("api.selectHistoryByRange", params);
     }
+    
+    @Override
+    public void mergeFetchState(String stockCode, String periodType) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("stockCode", stockCode);
+        params.put("periodType", periodType);
+
+        session.update("api.mergeFetchState", params);
+    }
+
+    @Override
+    public Map<String, Object> selectFetchState() {
+        return session.selectOne("api.selectFetchState");
+    }
+
+    @Override
+    public void clearFetchState() {
+        session.delete("api.clearFetchState");
+    }
 }

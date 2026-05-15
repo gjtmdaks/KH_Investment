@@ -23,6 +23,7 @@ public class AdminController {
     
     private final AtomicBoolean companySyncRunning = new AtomicBoolean(false);
     private final AtomicBoolean historySyncRunning = new AtomicBoolean(false);
+    private final AtomicBoolean historySyncStopRunning = new AtomicBoolean(false);
 
     /**
      * 회사 정보 전체 동기화
@@ -44,6 +45,20 @@ public class AdminController {
 
         } catch (Exception e) {
             log.error("과거 시세 동기화 실패", e);
+        }
+    }
+
+    /**
+     * 과거 시세 동기화 중지
+     */
+    @PostMapping("/api/kis/historysyncstop")
+    public void syncHistoryStop() {
+        try {
+            log.info("과거 시세 동기화 중지 시작");
+            kisHistoryService.syncHistoryStop(historySyncStopRunning);
+
+        } catch (Exception e) {
+            log.error("과거 시세 동기화 중지 실패", e);
         }
     }
 }
