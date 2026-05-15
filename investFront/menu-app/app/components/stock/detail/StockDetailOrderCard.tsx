@@ -4,7 +4,7 @@ import type { OrderKind, OrderType } from "@/lib/order";
 import type { PriceResponse } from "@/lib/stock/stockDetailTypes";
 import { formatNumber } from "@/lib/stock/stockDetailFormat";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailOrderCard.module.css";
 
 export function StockDetailOrderCard({
   orderKind,

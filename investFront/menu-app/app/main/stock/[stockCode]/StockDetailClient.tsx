@@ -9,12 +9,12 @@ import { StockDetailNewsPanel } from "@/app/components/stock/detail/StockDetailN
 import { StockDetailOrderbookPanel } from "@/app/components/stock/detail/StockDetailOrderbookPanel";
 import { StockDetailOrderCard } from "@/app/components/stock/detail/StockDetailOrderCard";
 import { StockDetailSummaryPanel } from "@/app/components/stock/detail/StockDetailSummaryPanel";
-import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { apiClient } from "@/lib/api-client";
 import { stockDetailTabs } from "@/lib/stock/stockDetailConstants";
 import { parseNumeric } from "@/lib/stock/stockDetailFormat";
 import type { TabKey } from "@/lib/stock/stockDetailTypes";
 import { useStockDetailData } from "./useStockDetailData";
+import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {

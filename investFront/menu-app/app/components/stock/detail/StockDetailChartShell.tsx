@@ -13,7 +13,8 @@ import {
   normalizeCandlePayload,
 } from "@/lib/stock/stockChartCandles";
 
-import styles from "./stockDetail.module.css";
+// import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailChartShell.module.css";
 
 export function StockDetailChartShell({
   stockCode,

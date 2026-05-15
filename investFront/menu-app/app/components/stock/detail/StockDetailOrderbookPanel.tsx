@@ -10,7 +10,7 @@ import type {
   OrderbookResponse,
 } from "@/lib/stock/stockDetailTypes";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailOrderbookPanel.module.css";
 import { StockDetailEmptyState } from "./StockDetailEmptyState";
 
 function OrderbookRow({
@@ -46,7 +46,7 @@ export function StockDetailOrderbookPanel({
 
   return (
     <div className={styles.orderbookGrid}>
-      <div>
+      <div className={styles.orderbookSide}>
         <h3>매도 호가</h3>
         {[...asks].reverse().map((level) => (
           <OrderbookRow key={`ask-${level.level}`} level={level} side="ask" />
@@ -56,7 +56,7 @@ export function StockDetailOrderbookPanel({
         </div>
       </div>
 
-      <div>
+      <div className={styles.orderbookSide}>
         <h3>매수 호가</h3>
         {bids.map((level) => (
           <OrderbookRow key={`bid-${level.level}`} level={level} side="bid" />

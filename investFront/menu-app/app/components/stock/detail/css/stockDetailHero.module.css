@@ -1,0 +1,180 @@
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+
+  padding: 30px 32px;
+  border: 1px solid var(--stock-border);
+  border-radius: var(--stock-radius-xl);
+
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(11, 18, 32, 0.96));
+
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
+}
+
+.heroPrimary {
+  min-width: 0;
+}
+
+.heroNameRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  min-width: 0;
+}
+
+.marketBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+
+  background: var(--stock-blue-bg);
+  color: var(--stock-text-blue);
+
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.heroNameRow h1 {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--stock-text-main);
+  font-size: clamp(30px, 2.5vw, 42px);
+  font-weight: 950;
+  line-height: 1.1;
+  letter-spacing: -0.06em;
+}
+
+.heroCode {
+  flex-shrink: 0;
+
+  color: #9db6da;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.heroPriceRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.heroPriceRow strong {
+  color: #ffffff;
+  font-size: clamp(34px, 3vw, 48px);
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: -0.07em;
+}
+
+.priceDot {
+  color: var(--stock-text-muted);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.yesterdayLabel {
+  color: #9db6da;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.up {
+  color: var(--stock-red);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.down {
+  color: var(--stock-blue);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.heroStats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(92px, auto));
+  gap: 10px;
+
+  min-width: 0;
+  justify-content: end;
+  align-items: center;
+}
+
+@media (max-width: 1280px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .heroStats {
+    width: 100%;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+}
+
+@media (max-width: 860px) {
+  .hero {
+    padding: 24px 22px;
+    border-radius: 22px;
+  }
+
+  .heroStats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding: 22px 18px;
+  }
+
+  .heroNameRow h1 {
+    width: 100%;
+  }
+
+  .heroPriceRow {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    gap: 6px 8px;
+  }
+
+  .priceDot {
+    display: none;
+  }
+
+  .yesterdayLabel {
+    grid-column: 1 / 2;
+  }
+
+  .heroStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

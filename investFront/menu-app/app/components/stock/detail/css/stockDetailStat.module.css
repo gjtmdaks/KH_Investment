@@ -1,0 +1,58 @@
+.stat {
+  min-width: 92px;
+  padding: 11px 14px;
+
+  border: 1px solid var(--stock-border);
+  border-radius: var(--stock-radius-md);
+  background: rgba(2, 6, 23, 0.36);
+
+  overflow: hidden;
+}
+
+.stat span {
+  display: block;
+  margin-bottom: 5px;
+
+  color: #9db6da;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat strong {
+  display: block;
+
+  color: var(--stock-text-main);
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.25;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  .stat {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .stat {
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .stat span {
+    font-size: 11px;
+  }
+
+  .stat strong {
+    font-size: 14px;
+  }
+}

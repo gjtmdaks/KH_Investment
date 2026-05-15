@@ -9,7 +9,7 @@ import {
   formatWon,
 } from "@/lib/stock/stockDetailFormat";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailHero.module.css";
 import { StockDetailStat } from "./StockDetailStat";
 
 export function StockDetailHero({
