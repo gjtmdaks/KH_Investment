@@ -1,5 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
+import { formatPercent, parseNumeric } from "@/lib/stock/stockDetailFormat";
+
 import type { RelatedStock } from "./newsTypes";
 import styles from "./RelatedStockChips.module.css";
 
@@ -11,6 +15,8 @@ type Props = {
   size?: Size;
   ariaLabel?: string;
   variant?: Variant;
+  /** `/api/stocks/{code}/price` 등으로 조회한 등락률 문자열(KIS). 종목코드 키 */
+  liveChangeRateByCode?: Record<string, string | null | undefined> | null;
 };
 
 export default function RelatedStockChips({
@@ -18,6 +24,7 @@ export default function RelatedStockChips({
   size = "compact",
   ariaLabel = "관련 종목",
   variant = "default",
+  liveChangeRateByCode,
 }: Props) {
   if (!items || items.length === 0) {
     return null;
@@ -40,8 +47,17 @@ export default function RelatedStockChips({
       onClick={stopBubble}
       onMouseDown={stopBubble}
     >
-      {items.map((it) => {
-        const rate = typeof it.changeRate === "number" ? it.changeRate : null;
+      {items.map((it, idx) => {
+        const code = it.stockCode?.trim();
+        const rate = resolveNumericChangeRate(it, liveChangeRateByCode);
+        const toneClass =
+          rate == null
+            ? styles.chipToneMuted
+            : rate > 0
+              ? styles.chipTonePositive
+              : rate < 0
+                ? styles.chipToneNegative
+                : styles.chipToneFlat;
         const rateClass =
           rate == null
             ? styles.rateFlat
@@ -50,19 +66,47 @@ export default function RelatedStockChips({
               : rate < 0
                 ? styles.rateNegative
                 : styles.rateFlat;
-        const rateText = rate == null ? null : formatRate(rate);
-        return (
-          <span
-            key={`${it.stockCode}-${it.stockName}`}
-            className={chipClass}
-            role="listitem"
-          >
+        const rateText =
+          rate == null ? null : formatPercentDisplay(rate);
+
+        const chipInner = (
+          <>
             <span className={styles.chipName}>{it.stockName}</span>
             {rateText ? (
               <span className={`${styles.chipRate} ${rateClass}`}>
                 {rateText}
               </span>
             ) : null}
+          </>
+        );
+
+        const stopChipBubble: React.MouseEventHandler = (e) => {
+          e.stopPropagation();
+        };
+
+        if (code) {
+          return (
+            <Link
+              key={`${code}-${it.stockName}`}
+              href={`/main/stock/${encodeURIComponent(code)}`}
+              className={`${chipClass} ${toneClass} ${styles.chipLink}`}
+              role="listitem"
+              aria-label={`${it.stockName} 종목 상세`}
+              onClick={stopChipBubble}
+              onMouseDown={stopChipBubble}
+            >
+              {chipInner}
+            </Link>
+          );
+        }
+
+        return (
+          <span
+            key={`n-${idx}-${it.stockName}`}
+            className={`${chipClass} ${toneClass}`}
+            role="listitem"
+          >
+            {chipInner}
           </span>
         );
       })}
@@ -70,10 +114,31 @@ export default function RelatedStockChips({
   );
 }
 
-/** 0.0% / +1.91% / -1.40% 처럼 부호와 소수 둘째 자리까지 고정 */
-function formatRate(rate: number): string {
+function resolveNumericChangeRate(
+  it: RelatedStock,
+  live?: Record<string, string | null | undefined> | null,
+): number | null {
+  const code = it.stockCode?.trim();
+  if (code && live) {
+    const raw = live[code];
+    if (raw != null && String(raw).trim() !== "") {
+      const n = parseNumeric(String(raw));
+      if (n !== null && Number.isFinite(n)) return n;
+    }
+  }
+
+  const cr = it.changeRate;
+  if (cr == null) return null;
+  if (typeof cr === "number") {
+    return Number.isFinite(cr) ? cr : null;
+  }
+  const n = parseNumeric(String(cr));
+  return n !== null && Number.isFinite(n) ? n : null;
+}
+
+/** StockDetailHero의 formatPercent와 동일 규칙(+/-, 소수 둘째 자리) */
+function formatPercentDisplay(rate: number): string {
   if (!Number.isFinite(rate)) return "";
-  if (rate === 0) return "0.00%";
-  const sign = rate > 0 ? "+" : "";
-  return `${sign}${rate.toFixed(2)}%`;
+  const s = formatPercent(String(rate));
+  return s === "-" ? "" : s;
 }

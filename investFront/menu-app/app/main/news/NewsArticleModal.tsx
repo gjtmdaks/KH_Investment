@@ -9,6 +9,7 @@ import styles from "./NewsArticleModal.module.css";
 type Props = {
   item: NewsItem | null;
   onClose: () => void;
+  liveChangeRateByCode?: Record<string, string | null | undefined> | null;
 };
 
 function badgeClassFor(
@@ -28,7 +29,11 @@ function badgeClassFor(
   return "badgeNeutral";
 }
 
-export default function NewsArticleModal({ item, onClose }: Props) {
+export default function NewsArticleModal({
+  item,
+  onClose,
+  liveChangeRateByCode,
+}: Props) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const open = Boolean(item);
@@ -113,13 +118,14 @@ export default function NewsArticleModal({ item, onClose }: Props) {
           <div className={styles.modalChips}>
             <RelatedStockChips
               items={item.relatedStocks}
+              liveChangeRateByCode={liveChangeRateByCode ?? null}
               size="comfortable"
             />
           </div>
         ) : null}
 
         <div className={styles.scroll}>
-          <p className={styles.previewLabel}>미리보기</p>
+          <p className={styles.previewLabel}>원문 미리보기</p>
           {item.description?.trim() ? (
             <p className={styles.desc}>
               {ensurePreviewTrailingEllipsis(item.description)}
