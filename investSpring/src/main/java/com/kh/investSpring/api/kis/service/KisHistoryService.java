@@ -35,6 +35,7 @@ public class KisHistoryService {
     private final StockHistoryDao stockHistoryDao;
 
     private volatile boolean bulkSyncInProgress = false;
+    private volatile boolean stopRequested = false;
 
     public boolean isBulkSyncInProgress() {
         return bulkSyncInProgress;
@@ -48,41 +49,116 @@ public class KisHistoryService {
         }
 
         bulkSyncInProgress = true;
+        stopRequested = false;
 
         try {
             List<String> stockCodes = stockHistoryDao.selectAllStockCodes();
+            Map<String, Object> state = stockHistoryDao.selectFetchState();
+            
+            String lastStockCode = null;
+            String lastPeriodType = null;
+
+            if (state != null) {
+                lastStockCode = (String) state.get("LAST_STOCK_CODE");
+                lastPeriodType = (String) state.get("LAST_PERIOD_TYPE");
+            }
+            
+            boolean resumeMode = lastStockCode != null;
 
             for (String stockCode : stockCodes) {
+                if (stopRequested) {
+                    log.info("중지 요청 감지 stockCode={}", stockCode);
+                    break;
+                }
+                
+                // resume skip
+                if (resumeMode) {
+                    if (!stockCode.equals(lastStockCode)) {
+                        continue;
+                    }
+                    resumeMode = false;
+                }
+                
                 try {
-                    syncHistory(stockCode, "D");
-                    Thread.sleep(1500);
+                	processPeriod(
+                            stockCode,
+                            "D",
+                            lastStockCode,
+                            lastPeriodType
+                    );
 
-                    syncHistory(stockCode, "W");
-                    Thread.sleep(1500);
+                    processPeriod(
+                            stockCode,
+                            "W",
+                            lastStockCode,
+                            lastPeriodType
+                    );
 
-                    syncHistory(stockCode, "M");
-                    Thread.sleep(1500);
+                    processPeriod(
+                            stockCode,
+                            "M",
+                            lastStockCode,
+                            lastPeriodType
+                    );
                 } catch (Exception e) {
                     log.error("과거시세 저장 실패 stockCode={}",
                             stockCode, e
                     );
+                    stockHistoryDao.mergeFetchState(stockCode, "D");
                 }
             }
 
-            log.info("과거 시세 저장 완료");
+            if (!stopRequested) {
+                stockHistoryDao.clearFetchState();
+                log.info("전체 종목 저장 완료");
+            }
         } finally {
             bulkSyncInProgress = false;
             running.set(false);
-            log.info("과거 시세 동기화 락 해제");
+            log.info("과거 시세 동기화 종료");
         }
     }
-
-    public void syncHistory(
+    
+    private void processPeriod(
             String stockCode,
-            String periodType
-    ) throws IOException, InterruptedException {
+            String periodType,
+            String lastStockCode,
+            String lastPeriodType
+    ) throws Exception {
+        if (stopRequested) {
+            stockHistoryDao.mergeFetchState(stockCode, periodType);
+
+            throw new InterruptedException("중지 요청");
+        }
+
+        // resume period skip
+        if (stockCode.equals(lastStockCode) && lastPeriodType != null) {
+            if (lastPeriodType.equals("W") && periodType.equals("D")) {
+                return;
+            }
+
+            if (lastPeriodType.equals("M") 
+            		&& (periodType.equals("D")
+            				|| periodType.equals("W"))) {
+                return;
+            }
+        }
+
+        syncHistory(stockCode, periodType);
+        Thread.sleep(3000);
+
+        // 다음 시작 위치 저장
+        String nextPeriod = switch (periodType) {
+            case "D" -> "W";
+            case "W" -> "M";
+            default -> "D";
+        };
+
+        stockHistoryDao.mergeFetchState(stockCode, nextPeriod);
+    }
+
+    public void syncHistory(String stockCode, String periodType) throws IOException, InterruptedException {
         String token = kisTokenService.getAccessToken();
-        
         String url =
                 properties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-daily-price"
@@ -94,148 +170,121 @@ public class KisHistoryService {
         HttpRequest request =
                 HttpRequest.newBuilder()
                         .uri(URI.create(url))
-                        .header(
-                                "content-type",
-                                "application/json; charset=utf-8"
-                        )
-                        .header(
-                                "authorization",
-                                "Bearer " + token
-                        )
-                        .header(
-                                "appkey",
-                                properties.getAppKey()
-                        )
-                        .header(
-                                "appsecret",
-                                properties.getAppSecret()
-                        )
-                        .header(
-                                "tr_id",
-                                "FHKST01010400"
-                        )
+                        .header("content-type", "application/json; charset=utf-8")
+                        .header("authorization", "Bearer " + token)
+                        .header("appkey", properties.getAppKey())
+                        .header("appsecret", properties.getAppSecret())
+                        .header("tr_id", "FHKST01010400")
                         .GET()
                         .build();
 
         int retry = 0;
-        HttpResponse<String> response = null;
 
-        while (retry < 5) {
-            response = httpClient.send(
-	                            request,
-	                            HttpResponse.BodyHandlers.ofString()
-	                    );
+        while (true) {
+            HttpResponse<String> response = httpClient.send(
+						                            request,
+						                            HttpResponse.BodyHandlers.ofString()
+						                    );
+            String bodyText = response.body();
 
-            if (response.body().contains("EGW00201")) {
+            // HTTP 실패
+            if (response.statusCode() != 200) {
                 retry++;
-
-                log.warn("Rate Limit 발생 stockCode={} period={} retry={}",
+                log.warn("HTTP 실패 stockCode={} period={} status={} retry={}",
                         stockCode,
                         periodType,
+                        response.statusCode(),
                         retry
                 );
-                Thread.sleep(5000);
 
+                Thread.sleep(10000);
                 continue;
             }
 
-            if (response.statusCode() != 200) {
-                log.warn("KIS 응답 실패 stockCode={} status={} body={}",
+            // Rate Limit
+            if (bodyText.contains("EGW00201")) {
+                retry++;
+                long wait = Math.min(60000, retry * 10000L);
+
+                log.warn("Rate Limit stockCode={} period={} retry={} wait={}ms",
                         stockCode,
-                        response.statusCode(),
-                        response.body()
+                        periodType,
+                        retry,
+                        wait
                 );
+
+                Thread.sleep(wait);
+                continue;
+            }
+
+            Map<String, Object> body = objectMapper.readValue(
+					                            bodyText,
+					                            new TypeReference<Map<String, Object>>() {}
+					                    );
+            String rtCd = String.valueOf(body.get("rt_cd"));
+
+            // API 실패
+            if (!"0".equals(rtCd)) {
+                retry++;
+                log.warn("KIS API 실패 stockCode={} period={} rt_cd={} msg_cd={} msg={} retry={}",
+                        stockCode,
+                        periodType,
+                        body.get("rt_cd"),
+                        body.get("msg_cd"),
+                        body.get("msg1"),
+                        retry
+                );
+
+                Thread.sleep(10000);
+                continue;
+            }
+
+            List<Map<String, Object>> output = (List<Map<String, Object>>) body.get("output");
+
+            if (output == null || output.isEmpty()) {
+                log.warn("데이터 없음 stockCode={} period={}",
+                        stockCode,
+                        periodType
+                );
+
                 return;
             }
-            break;
-        }
-        if (retry >= 5) {
-            log.warn("Rate Limit 최대 재시도 초과 stockCode={} period={}",
+
+            log.info("KIS 성공 stockCode={} period={} size={}",
                     stockCode,
-                    periodType
+                    periodType,
+                    output.size()
             );
-            return;
-        }
-        if (response == null) {
-            return;
-        }
 
-        Map<String, Object> body = objectMapper.readValue(
-					                        response.body(),
-					                        new TypeReference<Map<String, Object>>() {}
-					                );
-
-        if (!"0".equals(String.valueOf(body.get("rt_cd")))) {
-            log.warn("KIS API 실패 stockCode={} msg={}",
-                    stockCode,
-                    body.get("msg1")
-            );
-            return;
-        }
-
-        List<Map<String, Object>> output = (List<Map<String, Object>>) body.get("output");
-
-        if (output == null || output.isEmpty()) {
-            return;
-        }
-
-        for (Map<String, Object> item : output) {
-            try {
+            for (Map<String, Object> item : output) {
                 StockHistoryCacheDto dto = new StockHistoryCacheDto();
 
                 dto.setStockCode(stockCode);
                 dto.setPeriodType(periodType);
                 dto.setBaseDate(
                         LocalDate.parse(
-                                String.valueOf(
-                                        item.get("stck_bsop_date")
-                                ),
+                                String.valueOf(item.get("stck_bsop_date")),
                                 DateTimeFormatter.BASIC_ISO_DATE
                         )
                 );
-                dto.setOpenPrice(
-                        parseLong(item.get("stck_oprc"))
-                );
-
-                dto.setHighPrice(
-                        parseLong(item.get("stck_hgpr"))
-                );
-
-                dto.setLowPrice(
-                        parseLong(item.get("stck_lwpr"))
-                );
-
-                dto.setClosePrice(
-                        parseLong(item.get("stck_clpr"))
-                );
-
-                dto.setVolume(
-                        parseLong(item.get("acml_vol"))
-                );
-
-                dto.setChangePrice(
-                        parseLong(item.get("prdy_vrss"))
-                );
-
-                dto.setChangeRate(
-                        parseDouble(item.get("prdy_ctrt"))
-                );
+                dto.setOpenPrice(parseLong(item.get("stck_oprc")));
+                dto.setHighPrice(parseLong(item.get("stck_hgpr")));
+                dto.setLowPrice(parseLong(item.get("stck_lwpr")));
+                dto.setClosePrice(parseLong(item.get("stck_clpr")));
+                dto.setVolume(parseLong(item.get("acml_vol")));
+                dto.setChangePrice(parseLong(item.get("prdy_vrss")));
+                dto.setChangeRate(parseDouble(item.get("prdy_ctrt")));
 
                 stockHistoryDao.mergeHistory(dto);
-
-            } catch (Exception e) {
-                log.error("개별 시세 저장 실패 stockCode={} period={}",
-                        stockCode,
-                        periodType,
-                        e
-                );
             }
-        }
 
-        log.info("개별 시세 저장 완료 stockCode={} period={}",
-                stockCode,
-                periodType
-        );
+            log.info("개별 시세 저장 완료 stockCode={} period={}",
+                    stockCode,
+                    periodType
+            );
+
+            return;
+        }
     }
 
     private Long parseLong(Object value) {
@@ -249,7 +298,6 @@ public class KisHistoryService {
                             .replace(",", "")
                             .trim()
             );
-
         } catch (Exception e) {
             return 0L;
         }
@@ -266,9 +314,22 @@ public class KisHistoryService {
                             .replace(",", "")
                             .trim()
             );
-
         } catch (Exception e) {
             return 0.0;
+        }
+    }
+
+    public void syncHistoryStop(AtomicBoolean historySyncStopRunning) {
+        if (!historySyncStopRunning.compareAndSet(false, true)) {
+            log.warn("이미 중지 요청 처리 중");
+            return;
+        }
+
+        try {
+            stopRequested = true;
+            log.info("과거 시세 중지 요청 완료");
+        } finally {
+            historySyncStopRunning.set(false);
         }
     }
 }

@@ -2,8 +2,7 @@ package com.kh.investSpring.api.kis.dao;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import org.apache.ibatis.annotations.Param;
+import java.util.Map;
 
 import com.kh.investSpring.api.kis.dto.StockHistoryCacheDto;
 
@@ -14,9 +13,15 @@ public interface StockHistoryDao {
     void mergeHistory(StockHistoryCacheDto dto);
 
     List<StockHistoryCacheDto> selectHistoryByRange(
-            @Param("stockCode") String stockCode,
-            @Param("periodType") String periodType,
-            @Param("fromDate") LocalDate fromDate,
-            @Param("toDate") LocalDate toDate
+            String stockCode,
+            String periodType,
+            LocalDate fromDate,
+            LocalDate toDate
     );
+
+    void mergeFetchState(String stockCode, String periodType);
+
+    Map<String, Object> selectFetchState();
+
+    void clearFetchState();
 }

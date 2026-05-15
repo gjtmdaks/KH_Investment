@@ -132,6 +132,7 @@
 	    SELECT STOCK_CODE
 	    FROM STOCKS
 	    WHERE STOCK_CODE IS NOT NULL
+	    ORDER BY STOCK_CODE
 	</select>
 	
 	<select id="selectHistoryByRange" resultType="com.kh.investSpring.api.kis.dto.StockHistoryCacheDto">
@@ -238,6 +239,53 @@
 	<delete id="deleteOldTicks">
 		DELETE FROM stock_realtime_tick
 		WHERE trade_time <![CDATA[ < ]]> TRUNC(SYSDATE)
+	</delete>
+	
+	<update id="mergeFetchState">
+	    MERGE INTO FETCH_STATE t
+	    USING (
+	        SELECT
+	            'HISTORY' AS FETCH_TYPE,
+	            #{stockCode} AS LAST_STOCK_CODE,
+	            #{periodType} AS LAST_PERIOD_TYPE
+	        FROM dual
+	    ) s
+	    ON (
+	        t.FETCH_TYPE = s.FETCH_TYPE
+	    )
+	
+	    WHEN MATCHED THEN
+	    UPDATE SET
+	        LAST_STOCK_CODE = s.LAST_STOCK_CODE,
+	        LAST_PERIOD_TYPE = s.LAST_PERIOD_TYPE,
+	        UPDATED_AT = SYSTIMESTAMP
+	
+	    WHEN NOT MATCHED THEN
+	    INSERT (
+	        FETCH_TYPE,
+	        LAST_STOCK_CODE,
+	        LAST_PERIOD_TYPE,
+	        UPDATED_AT
+	    )
+	    VALUES (
+	        s.FETCH_TYPE,
+	        s.LAST_STOCK_CODE,
+	        s.LAST_PERIOD_TYPE,
+	        SYSTIMESTAMP
+	    )
+	</update>
+	
+	<select id="selectFetchState" resultType="map">
+	    SELECT
+	        LAST_STOCK_CODE,
+	        LAST_PERIOD_TYPE
+	    FROM FETCH_STATE
+	    WHERE FETCH_TYPE = 'HISTORY'
+	</select>
+	
+	<delete id="clearFetchState">
+	    DELETE FROM FETCH_STATE
+	    WHERE FETCH_TYPE = 'HISTORY'
 	</delete>
 
 </mapper>
