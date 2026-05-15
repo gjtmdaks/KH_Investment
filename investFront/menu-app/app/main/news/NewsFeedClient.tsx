@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { API_BASE_URL } from "@/lib/api-base";
+import { API_BASE_URL, getPublicApiBase } from "@/lib/api-base";
 
 import NewsArticleModal from "./NewsArticleModal";
 import RelatedStockChips from "./RelatedStockChips";
@@ -14,6 +14,7 @@ export type { NewsItem };
 
 const PAGE_SIZE = 7;
 const BATCH_MAX_CODES = 100;
+const NEWS_MARKET_FULL_LIMIT = 100;
 
 type BatchPriceMap = Record<string, string | null | undefined>;
 
@@ -81,6 +82,29 @@ function collectRelatedStockCodes(rows: NewsItem[]): string[] {
   return [...set];
 }
 
+function mergeByArticleLink(existing: NewsItem[], incoming: NewsItem[]): NewsItem[] {
+  const seen = new Set<string>();
+  const out: NewsItem[] = [];
+  for (const it of existing) {
+    const k = (it.articleLink || "").trim();
+    const id = k || `local:${out.length}:${it.title ?? ""}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(it);
+  }
+  for (const it of incoming) {
+    const k = (it.articleLink || "").trim();
+    if (!k) {
+      out.push(it);
+      continue;
+    }
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(it);
+  }
+  return out;
+}
+
 // 상위 카테고리(고정). 버튼은 상시 표기, 데이터는 카테고리 매핑 후 필터링
 const MAIN_CATEGORIES: Array<"" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가"> = [
   "",
@@ -93,11 +117,6 @@ const MAIN_CATEGORIES: Array<"" | "반도체" | "증시" | "경제" | "금리" |
 ];
 
 type PaginationEntry = number | "ellipsis";
-
-function getApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")?.trim();
-  return raw || "http://localhost:8081";
-}
 
 /**
  *  1 2 3 4 5 ... 10  — 앞쪽 5페이지, 생략, 마지막 페이지.
@@ -171,6 +190,9 @@ export default function NewsFeedClient({ ok, items }: Props) {
   const [liveChangeRateByCode, setLiveChangeRateByCode] = useState<
     Record<string, string | null>
   >({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
+  const [loadMoreExhausted, setLoadMoreExhausted] = useState(false);
 
   const liveRatesRef = useRef<Record<string, string | null>>({});
   liveRatesRef.current = liveChangeRateByCode;
@@ -183,6 +205,9 @@ export default function NewsFeedClient({ ok, items }: Props) {
     setSelectedCategory("");
     setSelected(null);
     setLiveChangeRateByCode({});
+    setLoadMoreFailed(false);
+    setLoadMoreExhausted(false);
+    setLoadingMore(false);
   }, [ok, items]);
 
   const data = useMemo(() => {
@@ -263,6 +288,48 @@ export default function NewsFeedClient({ ok, items }: Props) {
   const onSelectCategory = (cat: "" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가") => {
     setSelectedCategory(cat);
     setPage(1);
+  };
+
+  const showLoadMore =
+    loadOk &&
+    !loadMoreFailed &&
+    !loadMoreExhausted &&
+    dataAll.length < NEWS_MARKET_FULL_LIMIT;
+
+  const onLoadMore = async () => {
+    if (loadingMore || !showLoadMore) return;
+    setLoadingMore(true);
+    try {
+      const base = getPublicApiBase();
+      const res = await fetch(
+        `${base}/api/public/news/market?size=${NEWS_MARKET_FULL_LIMIT}`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) {
+        setLoadMoreFailed(true);
+        return;
+      }
+      const data = (await res.json()) as NewsItem[];
+      if (!Array.isArray(data)) {
+        setLoadMoreFailed(true);
+        return;
+      }
+      const merged = mergeByArticleLink(dataAll, data);
+      if (merged.length === dataAll.length) {
+        setLoadMoreExhausted(true);
+      }
+      setDataAll(merged);
+      setPage(1);
+      setSelectedCategory("");
+    } catch {
+      setLoadMoreFailed(true);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -352,6 +419,19 @@ export default function NewsFeedClient({ ok, items }: Props) {
           })}
         </div>
       )}
+
+      {showLoadMore ? (
+        <div className={styles.loadMoreRow}>
+          <button
+            type="button"
+            className={styles.loadMoreBtn}
+            onClick={() => void onLoadMore()}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "불러오는 중…" : "뉴스 더 불러오기"}
+          </button>
+        </div>
+      ) : null}
 
       {totalPages > 1 ? (
         <nav

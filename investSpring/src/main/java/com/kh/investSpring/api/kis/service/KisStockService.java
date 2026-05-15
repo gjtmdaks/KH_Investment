@@ -1,5 +1,9 @@
 package com.kh.investSpring.api.kis.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -8,8 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.kh.investSpring.api.dart.service.StockStaticProfileService;
 import com.kh.investSpring.api.kis.config.KisProperties;
@@ -25,12 +34,16 @@ public class KisStockService {
 
     private static final long PRICE_CACHE_TTL_MS = 1_000L;
     private static final long ORDERBOOK_CACHE_TTL_MS = 1_000L;
+    private static final String BATCH_CHG_CACHE_PREFIX = "invest:kis:batch:chg:";
+    private static final Duration BATCH_CHG_TTL = Duration.ofSeconds(45);
     private final RestClient restClient;
     private final KisProperties kisProperties;
     private final KisTokenService kisTokenService;
     private final KisApiRequestCoordinator kisApiRequestCoordinator;
     private final StockDao stockDao;
     private final StockStaticProfileService stockStaticProfileService;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> priceCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedValue<KisStockOrderbookResponse>> orderbookCache = new ConcurrentHashMap<>();
 
@@ -40,13 +53,17 @@ public class KisStockService {
             KisTokenService kisTokenService,
             KisApiRequestCoordinator kisApiRequestCoordinator,
             StockDao stockDao,
-            StockStaticProfileService stockStaticProfileService) {
+            StockStaticProfileService stockStaticProfileService,
+            StringRedisTemplate stringRedisTemplate,
+            ObjectMapper objectMapper) {
         this.restClient = restClient;
         this.kisProperties = kisProperties;
         this.kisTokenService = kisTokenService;
         this.kisApiRequestCoordinator = kisApiRequestCoordinator;
         this.stockDao = stockDao;
         this.stockStaticProfileService = stockStaticProfileService;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public KisStockPriceResponse getStockPrice(String stockCode) {
@@ -117,6 +134,32 @@ public class KisStockService {
         if (unique.size() > 100) {
             throw new IllegalArgumentException("한 번에 최대 100개 종목코드까지 조회할 수 있습니다.");
         }
+        List<String> sorted = new ArrayList<>(unique);
+        Collections.sort(sorted);
+        String cacheKey = BATCH_CHG_CACHE_PREFIX + fingerprintSortedCodes(sorted);
+        try {
+            String cached = stringRedisTemplate.opsForValue().get(cacheKey);
+            if (cached != null && !cached.isBlank()) {
+                Map<String, String> parsed = objectMapper.readValue(cached, new TypeReference<Map<String, String>>() {
+                });
+                if (parsed != null && !parsed.isEmpty()) {
+                    return new LinkedHashMap<>(parsed);
+                }
+            }
+        } catch (Exception ignored) {
+            // best-effort: miss and fetch from KIS
+        }
+
+        Map<String, String> fresh = fetchChangeRatesFromKis(unique);
+        try {
+            stringRedisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(fresh), BATCH_CHG_TTL);
+        } catch (JsonProcessingException ignored) {
+            // skip cache write
+        }
+        return fresh;
+    }
+
+    private Map<String, String> fetchChangeRatesFromKis(LinkedHashSet<String> unique) {
         Map<String, String> out = new LinkedHashMap<>();
         for (String code : unique) {
             try {
@@ -132,6 +175,21 @@ public class KisStockService {
             }
         }
         return out;
+    }
+
+    private static String fingerprintSortedCodes(List<String> sortedCodes) {
+        String payload = String.join(",", sortedCodes);
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(payload.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return String.valueOf(payload.hashCode());
+        }
     }
 
     public KisStockOrderbookResponse getStockOrderbook(String stockCode) {

@@ -1,21 +1,25 @@
+import { getPublicApiBase } from "@/lib/api-base";
+
 import NewsFeedClient from "./NewsFeedClient";
 import type { NewsItem } from "./newsTypes";
 import styles from "./NewsPage.module.css";
 
 export const dynamic = "force-dynamic";
 
-function getApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")?.trim();
-  return raw || "http://localhost:8081";
-}
+const NEWS_MARKET_SSR_SIZE = 56;
 
-async function fetchMarketNews(): Promise<{ ok: boolean; items: NewsItem[] }> {
-  const base = getApiBase();
+async function fetchMarketNews(
+  limit: number,
+): Promise<{ ok: boolean; items: NewsItem[] }> {
+  const base = getPublicApiBase();
   try {
-    const res = await fetch(`${base}/api/public/news/market?size=100`, {
-      cache: "no-store",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${base}/api/public/news/market?size=${limit}`,
+      {
+        cache: "no-store",
+        credentials: "include",
+      },
+    );
     if (!res.ok) {
       return { ok: false, items: [] };
     }
@@ -30,7 +34,7 @@ async function fetchMarketNews(): Promise<{ ok: boolean; items: NewsItem[] }> {
 }
 
 export default async function NewsPage() {
-  const { ok, items } = await fetchMarketNews();
+  const { ok, items } = await fetchMarketNews(NEWS_MARKET_SSR_SIZE);
 
   return (
     <div className={styles.pageWrap}>
