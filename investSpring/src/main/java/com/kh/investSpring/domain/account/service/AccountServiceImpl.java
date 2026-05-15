@@ -6,6 +6,9 @@ import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.main.dto.MainResponse.Account;
+import com.kh.investSpring.domain.main.dto.MainResponse.Holding;
+
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
@@ -101,6 +104,26 @@ public class AccountServiceImpl implements AccountService {
                 .totalStockValue(asset.getTotalStockValue())
                 .holdings(holdings != null ? holdings : List.of())
                 .build();
+    }
+
+    @Override
+    public Account getSidebarAccount(Long userNo) {
+        if (userNo == null) {
+            return null;
+        }
+
+        return accountDao.selectSidebarAccountByUserNo(userNo);
+    }
+
+    @Override
+    public List<Holding> getSidebarHoldings(Long userNo) {
+        if (userNo == null) {
+            return List.of();
+        }
+
+        List<Holding> holdings = accountDao.selectSidebarHoldingsByUserNo(userNo);
+
+        return holdings != null ? holdings : List.of();
     }
     
 }

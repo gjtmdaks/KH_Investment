@@ -187,4 +187,89 @@
 	
 	    ORDER BY sh.STOCK_CODE
 	</select>
+	
+	<select id="selectSidebarAccountByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.main.dto.MainResponse$Account">
+	    SELECT
+	        NVL(ab.AVAILABLE_CASH, 0) AS availableCash,
+	
+	        NVL(stock_summary.INVESTED_AMOUNT, 0) AS investedAmount
+	
+	    FROM ACCOUNTS a
+	
+	    LEFT JOIN ACCOUNT_BALANCE ab
+	        ON a.ACCOUNT_NO = ab.ACCOUNT_NO
+	
+	    LEFT JOIN (
+	        SELECT
+	            sh.ACCOUNT_NO,
+	            SUM(
+	                NVL(sh.STOCK_RESERVES, 0)
+	                * NVL(sh.AVG_PRICE, 0)
+	            ) AS INVESTED_AMOUNT
+	        FROM STOCKS_HELD sh
+	        GROUP BY sh.ACCOUNT_NO
+	    ) stock_summary
+	        ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
+	
+	    WHERE a.USER_NO = #{_parameter}
+	      AND a.STATUS = 'ACTIVE'
+	</select>
+	<select id="selectSidebarHoldingsByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.main.dto.MainResponse$Holding">
+	    SELECT
+	        sh.STOCK_CODE AS stockCode,
+	
+	        NVL(s.STOCK_NAME, sh.STOCK_CODE) AS stockName,
+	
+	        NVL(sh.STOCK_RESERVES, 0) AS quantity,
+	
+	        NVL(sh.AVG_PRICE, 0) AS avgPrice,
+	
+	        NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS currentPrice,
+	
+	        NVL(sh.STOCK_RESERVES, 0)
+	        * NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS stockValue,
+	
+	        (
+	            NVL(sh.STOCK_RESERVES, 0)
+	            * NVL(src.CURRENT_PRICE, sh.AVG_PRICE)
+	        )
+	        -
+	        (
+	            NVL(sh.STOCK_RESERVES, 0)
+	            * NVL(sh.AVG_PRICE, 0)
+	        ) AS profitAmount,
+	
+	        CASE
+	            WHEN NVL(sh.AVG_PRICE, 0) > 0 THEN
+	                (
+	                    (
+	                        NVL(src.CURRENT_PRICE, sh.AVG_PRICE)
+	                        - NVL(sh.AVG_PRICE, 0)
+	                    )
+	                    / NVL(sh.AVG_PRICE, 0)
+	                ) * 100
+	            ELSE 0
+	        END AS profitRate
+	
+	    FROM ACCOUNTS a
+	
+	    JOIN STOCKS_HELD sh
+	        ON a.ACCOUNT_NO = sh.ACCOUNT_NO
+	
+	    LEFT JOIN STOCKS s
+	        ON sh.STOCK_CODE = s.STOCK_CODE
+	
+	    LEFT JOIN STOCK_REALTIME_CURRENT src
+	        ON sh.STOCK_CODE = src.STOCK_CODE
+	
+	    WHERE a.USER_NO = #{_parameter}
+	      AND a.STATUS = 'ACTIVE'
+	      AND NVL(sh.STOCK_RESERVES, 0) > 0
+	
+	    ORDER BY sh.STOCK_CODE
+	</select>
 </mapper>

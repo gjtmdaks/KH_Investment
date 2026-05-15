@@ -45,7 +45,7 @@ public class MainServiceImpl implements MainService {
 
     // ✅ Sidebar
     private MainResponse.Sidebar buildSidebar(Long userNo) {
-
+    	
         if (userNo == null) {
             return MainResponse.Sidebar.builder()
                     .account(null)
@@ -54,11 +54,25 @@ public class MainServiceImpl implements MainService {
                     .recentView(List.of())
                     .build();
         }
+        
+        MainResponse.Account account = null;
+        List<MainResponse.Holding> holdings = List.of();
+        
+        try {
+            account = accountService.getSidebarAccount(userNo);
+        } catch (Exception e) {
+            log.error("sidebar account 조회 실패 - userNo={}", userNo, e);
+        }
 
-        // 로그인 상태
+        try {
+            holdings = accountService.getSidebarHoldings(userNo);
+        } catch (Exception e) {
+            log.error("sidebar holdings 조회 실패 - userNo={}", userNo, e);
+        }
+        //로그인 상태
         return MainResponse.Sidebar.builder()
-                .account(null)
-                .holdings(List.of())
+                .account(account)
+                .holdings(holdings != null ? holdings : List.of())
                 .watchlist(List.of())
                 .recentView(List.of())
                 .build();

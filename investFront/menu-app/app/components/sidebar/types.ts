@@ -25,3 +25,24 @@ export interface SidebarWatchResponse {
   // 화면 표시 목록
   stockList: SidebarStock[];
 }
+
+export interface MyInvestmentAccount {
+  availableCash: number;
+  investedAmount: number;
+}
+
+export interface MyInvestmentHolding {
+  stockCode: string;
+  stockName: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  stockValue: number;
+  profitAmount: number;
+  profitRate: number;
+}
+
+export interface MyInvestmentSidebarData {
+  account: MyInvestmentAccount | null;
+  holdings: MyInvestmentHolding[];
+}
