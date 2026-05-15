@@ -8,6 +8,7 @@ export const stockDetailTabs: Array<{ key: TabKey; label: string }> = [
   { key: "orderbook", label: "호가" },
   { key: "summary", label: "종목정보" },
   { key: "news", label: "뉴스" },
+  { key: "community", label: "커뮤니티" },
 ];
 
 export const chartPeriods: ChartPeriodLabel[] = [

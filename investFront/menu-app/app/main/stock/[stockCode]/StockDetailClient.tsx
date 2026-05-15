@@ -9,6 +9,7 @@ import { StockDetailNewsPanel } from "@/app/components/stock/detail/StockDetailN
 import { StockDetailOrderbookPanel } from "@/app/components/stock/detail/StockDetailOrderbookPanel";
 import { StockDetailOrderCard } from "@/app/components/stock/detail/StockDetailOrderCard";
 import { StockDetailSummaryPanel } from "@/app/components/stock/detail/StockDetailSummaryPanel";
+import { StockDetailCommunityPanel } from "@/app/components/stock/detail/StockDetailCommunityPanel";
 import { apiClient } from "@/lib/api-client";
 import { stockDetailTabs } from "@/lib/stock/stockDetailConstants";
 import { parseNumeric } from "@/lib/stock/stockDetailFormat";
@@ -134,6 +135,9 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
             ) : null}
             {activeTab === "news" && newsPhase === "done" ? (
               <StockDetailNewsPanel news={news} />
+            ) : null}
+            {activeTab === "community" ? (
+              <StockDetailCommunityPanel stockCode={stockCode} />
             ) : null}
           </div>
         </section>
