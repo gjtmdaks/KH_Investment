@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
+import { API_BASE_URL } from "@/lib/api-base";
+
 import NewsArticleModal from "./NewsArticleModal";
 import RelatedStockChips from "./RelatedStockChips";
 import { formatRelativeTimeKo, shortenHost, thumbLetter } from "./newsFormat";
@@ -9,8 +12,74 @@ import type { NewsItem } from "./newsTypes";
 
 export type { NewsItem };
 
-const PAGE_SIZE = 5;
-const FETCH_SIZE = 50;
+const PAGE_SIZE = 7;
+const BATCH_MAX_CODES = 100;
+
+type BatchPriceMap = Record<string, string | null | undefined>;
+
+function idleYield(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    const finish = () => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    };
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(() => finish(), { timeout: 1500 });
+    } else {
+      window.setTimeout(finish, 16);
+    }
+  });
+}
+
+async function fetchChangeRatesViaBatchApi(
+  codes: string[],
+  signal: AbortSignal,
+): Promise<Record<string, string | null>> {
+  const unique = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
+  const out: Record<string, string | null> = {};
+  for (let i = 0; i < unique.length; i += BATCH_MAX_CODES) {
+    const chunk = unique.slice(i, i + BATCH_MAX_CODES);
+    const res = await fetch(`${API_BASE_URL}/api/stocks/prices/batch`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stockCodes: chunk }),
+    });
+    if (!res.ok) {
+      continue;
+    }
+    const data = (await res.json()) as BatchPriceMap;
+    if (data != null && typeof data === "object") {
+      for (const k of Object.keys(data)) {
+        const v = data[k];
+        out[k] =
+          v != null && String(v).trim() !== "" ? String(v) : null;
+      }
+    }
+  }
+  return out;
+}
+
+function collectRelatedStockCodes(rows: NewsItem[]): string[] {
+  const set = new Set<string>();
+  for (const it of rows) {
+    const list = it.relatedStocks;
+    if (!list?.length) continue;
+    for (const s of list) {
+      const c = s.stockCode?.trim();
+      if (c) set.add(c);
+    }
+  }
+  return [...set];
+}
 
 // 상위 카테고리(고정). 버튼은 상시 표기, 데이터는 카테고리 매핑 후 필터링
 const MAIN_CATEGORIES: Array<"" | "반도체" | "증시" | "경제" | "금리" | "환율" | "유가"> = [
@@ -99,6 +168,12 @@ export default function NewsFeedClient({ ok, items }: Props) {
   const [loadOk, setLoadOk] = useState(ok);
   const [dataAll, setDataAll] = useState<NewsItem[]>(items);
   const [selected, setSelected] = useState<NewsItem | null>(null);
+  const [liveChangeRateByCode, setLiveChangeRateByCode] = useState<
+    Record<string, string | null>
+  >({});
+
+  const liveRatesRef = useRef<Record<string, string | null>>({});
+  liveRatesRef.current = liveChangeRateByCode;
 
   // server component에서 내려준 초기 데이터/상태가 바뀌면 동기화
   useEffect(() => {
@@ -107,12 +182,58 @@ export default function NewsFeedClient({ ok, items }: Props) {
     setPage(1);
     setSelectedCategory("");
     setSelected(null);
+    setLiveChangeRateByCode({});
   }, [ok, items]);
 
   const data = useMemo(() => {
     if (!selectedCategory) return dataAll;
     return dataAll.filter((it) => toTopCategory(it) === selectedCategory);
   }, [dataAll, selectedCategory]);
+
+  useEffect(() => {
+    const fullList = collectRelatedStockCodes(data);
+    if (fullList.length === 0) {
+      return;
+    }
+
+    const snap = liveRatesRef.current;
+    const start = (page - 1) * PAGE_SIZE;
+    const shownSlice = data.slice(start, start + PAGE_SIZE);
+    const visibleList = collectRelatedStockCodes(shownSlice);
+    const visibleSet = new Set(visibleList);
+    const restList = fullList.filter((c) => !visibleSet.has(c));
+
+    const needVisible = visibleList.filter((c) => !(c in snap));
+    const needRest = restList.filter((c) => !(c in snap));
+
+    const ac = new AbortController();
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        if (needVisible.length > 0) {
+          const mapVis = await fetchChangeRatesViaBatchApi(needVisible, ac.signal);
+          if (!cancelled) {
+            setLiveChangeRateByCode((prev) => ({ ...prev, ...mapVis }));
+          }
+        }
+        if (needRest.length > 0) {
+          await idleYield(ac.signal);
+          if (cancelled) return;
+          const mapRest = await fetchChangeRatesViaBatchApi(needRest, ac.signal);
+          if (!cancelled) {
+            setLiveChangeRateByCode((prev) => ({ ...prev, ...mapRest }));
+          }
+        }
+      } catch {
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [data, page]);
 
   const total = data.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -204,14 +325,12 @@ export default function NewsFeedClient({ ok, items }: Props) {
                 </div>
                 <div className={styles.body}>
                   <h3 className={styles.title}>{item.title}</h3>
-                  {item.description ? (
-                    <p className={styles.desc}>{item.description}</p>
-                  ) : null}
                   <div className={styles.metaRow}>
                     {item.relatedStocks && item.relatedStocks.length > 0 ? (
                       <div className={styles.metaChips}>
                         <RelatedStockChips
                           items={item.relatedStocks}
+                          liveChangeRateByCode={liveChangeRateByCode}
                           size="compact"
                           variant="inline"
                         />
@@ -288,7 +407,11 @@ export default function NewsFeedClient({ ok, items }: Props) {
         </nav>
       ) : null}
 
-      <NewsArticleModal item={selected} onClose={() => setSelected(null)} />
+      <NewsArticleModal
+        item={selected}
+        liveChangeRateByCode={liveChangeRateByCode}
+        onClose={() => setSelected(null)}
+      />
     </>
   );
 }

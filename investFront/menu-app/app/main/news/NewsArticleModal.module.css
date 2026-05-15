@@ -153,7 +153,7 @@
 
 .title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.45;
   letter-spacing: -0.02em;
@@ -166,7 +166,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  font-size: 12px;
+  font-size: 14px;
   color: #6e6e73;
 }
 
@@ -184,7 +184,7 @@
 
 .previewLabel {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -193,7 +193,7 @@
 
 .desc {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   color: #aeaeb2;
   white-space: pre-wrap;
@@ -253,7 +253,7 @@
 
 .hint {
   margin: 10px 0 0;
-  font-size: 11px;
+  font-size: 14px;
   color: #6e6e73;
   text-align: center;
 }

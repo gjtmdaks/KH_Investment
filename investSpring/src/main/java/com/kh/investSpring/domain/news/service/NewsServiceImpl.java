@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kh.investSpring.api.kis.service.KisStockService;
 import com.kh.investSpring.api.naver.NaverNewsApiClient;
 import com.kh.investSpring.api.naver.dto.NaverNewsItemDto;
 import com.kh.investSpring.domain.news.dao.NewsDao;
@@ -49,7 +51,9 @@ public class NewsServiceImpl implements NewsService {
 	/** 뉴스 1건당 관련 종목 칩 최대 노출 개수 */
 	private static final int RELATED_STOCKS_MAX = 5;
 	private static final int STOCK_NEWS_FETCH_MULTIPLIER = 2;
-    private static final int STOCK_NEWS_MIN_FETCH_SIZE = 12;
+	private static final int STOCK_NEWS_MIN_FETCH_SIZE = 12;
+	/** 공개 시장 뉴스 목록·Redis 캐시 최대 건수 */
+	private static final int MARKET_NEWS_MAX_DISPLAY = 100;
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
 			"EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
@@ -61,6 +65,7 @@ public class NewsServiceImpl implements NewsService {
 	private final NaverNewsApiClient naverNewsApiClient;
 	private final NewsKeywordLabelService newsKeywordLabelService;
 	private final NewsOgEnrichmentService newsOgEnrichmentService;
+	private final KisStockService kisStockService;
 
 	/** 시장 뉴스 캐시 미스 시 중복 ingest(워밍·첫 요청 동시) 방지 */
 	private final Object marketNewsFetchLock = new Object();
@@ -168,7 +173,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return enrichRelatedStockRates(out);
+		return overlayKisRatesForExistingStocks(enrichRelatedStockRates(out));
 	}
 
 	private List<NewsResponse> ingestStockItems(List<NaverNewsItemDto> items, String stockCode, int limit) {
@@ -182,7 +187,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return enrichRelatedStockRates(out);
+		return overlayKisRatesForExistingStocks(enrichRelatedStockRates(out));
 	}
 
 	private NewsResponse persistOne(NaverNewsItemDto item, String stockCodeOrNull) {
@@ -333,7 +338,7 @@ public class NewsServiceImpl implements NewsService {
 					List.of()));
 		}
 		// DB fallback 경로: NEWS_INFO_STOCK 매핑을 일괄 조회해 관련 종목을 채웁니다.
-		return attachRelatedStocksFromDb(list);
+		return overlayKisRatesForExistingStocks(attachRelatedStocksFromDb(list));
 	}
 
 	/**
@@ -381,6 +386,102 @@ public class NewsServiceImpl implements NewsService {
 					reordered));
 		}
 		return out;
+	}
+
+	/**
+	 * {@link StockDao#getStockInfo(String)}로 등록된 종목만 골라 KIS 전일대비율을 채웁니다.
+	 * Redis 캐시·워밍 직후 응답에 등락률이 포함되도록 ingest/fallback 경로의 마지막 단계에서 호출합니다.
+	 */
+	private List<NewsResponse> overlayKisRatesForExistingStocks(List<NewsResponse> rows) {
+		if (rows == null || rows.isEmpty()) {
+			return rows == null ? List.of() : rows;
+		}
+		LinkedHashSet<String> codes = new LinkedHashSet<>();
+		for (NewsResponse r : rows) {
+			if (r == null || r.relatedStocks() == null) {
+				continue;
+			}
+			for (RelatedStock rs : r.relatedStocks()) {
+				if (rs.stockCode() != null && !rs.stockCode().isBlank()) {
+					codes.add(rs.stockCode().trim());
+				}
+			}
+		}
+		if (codes.isEmpty()) {
+			return rows;
+		}
+		LinkedHashSet<String> existingCodes = new LinkedHashSet<>();
+		for (String code : codes) {
+			try {
+				StockInfoDto info = stockDao.getStockInfo(code);
+				if (info != null) {
+					existingCodes.add(code);
+				}
+			} catch (Exception e) {
+				log.debug("뉴스 관련종목 KIS 보강 시 종목 조회 생략 {}: {}", code, e.getMessage());
+			}
+		}
+		if (existingCodes.isEmpty()) {
+			return rows;
+		}
+		Map<String, String> kisRateStrings = new HashMap<>();
+		List<String> codeList = new ArrayList<>(existingCodes);
+		final int batch = 100;
+		for (int i = 0; i < codeList.size(); i += batch) {
+			int end = Math.min(i + batch, codeList.size());
+			List<String> chunk = codeList.subList(i, end);
+			try {
+				kisRateStrings.putAll(kisStockService.getChangeRatesByStockCodes(new ArrayList<>(chunk)));
+			} catch (Exception e) {
+				log.warn("뉴스 관련종목 KIS 등락률 일괄 조회 실패: {}", e.getMessage());
+			}
+		}
+		Map<String, Double> kisRates = new HashMap<>();
+		for (Map.Entry<String, String> e : kisRateStrings.entrySet()) {
+			Double d = parsePctToDouble(e.getValue());
+			if (d != null) {
+				kisRates.put(e.getKey(), d);
+			}
+		}
+		if (kisRates.isEmpty()) {
+			return rows;
+		}
+		List<NewsResponse> out = new ArrayList<>(rows.size());
+		for (NewsResponse r : rows) {
+			if (r == null || r.relatedStocks() == null || r.relatedStocks().isEmpty()) {
+				out.add(r);
+				continue;
+			}
+			List<RelatedStock> rebuilt = new ArrayList<>(r.relatedStocks().size());
+			for (RelatedStock rs : r.relatedStocks()) {
+				String c = rs.stockCode() == null ? null : rs.stockCode().trim();
+				Double kis = (c == null) ? null : kisRates.get(c);
+				Double use = kis != null ? kis : rs.changeRate();
+				rebuilt.add(new RelatedStock(rs.stockCode(), rs.stockName(), use));
+			}
+			out.add(new NewsResponse(
+					r.newsInfoId(),
+					r.title(),
+					r.description(),
+					r.publisher(),
+					r.primaryLabel(),
+					r.keywordKind(),
+					r.articleLink(),
+					r.publishedAt(),
+					rebuilt));
+		}
+		return out;
+	}
+
+	private static Double parsePctToDouble(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return null;
+		}
+		try {
+			return Double.parseDouble(raw.replace(",", "").trim());
+		} catch (NumberFormatException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -542,7 +643,7 @@ public class NewsServiceImpl implements NewsService {
 		if (size < 1) {
 			return 1;
 		}
-		return Math.min(size, 50);
+		return Math.min(size, MARKET_NEWS_MAX_DISPLAY);
 	}
 
 	/** 네이버 기사 원문 URL 우선(originallink), 없으면 link */

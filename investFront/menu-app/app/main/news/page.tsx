@@ -12,7 +12,7 @@ function getApiBase(): string {
 async function fetchMarketNews(): Promise<{ ok: boolean; items: NewsItem[] }> {
   const base = getApiBase();
   try {
-    const res = await fetch(`${base}/api/public/news/market?size=50`, {
+    const res = await fetch(`${base}/api/public/news/market?size=100`, {
       cache: "no-store",
       credentials: "include",
     });

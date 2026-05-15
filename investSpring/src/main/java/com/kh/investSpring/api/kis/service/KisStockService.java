@@ -2,6 +2,8 @@ package com.kh.investSpring.api.kis.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,6 +95,43 @@ public class KisStockService {
                 valueToString(output.get("stck_lwpr")));
         putCached(priceCache, stockCode, result);
         return result;
+    }
+
+    /**
+     * 뉴스 관련 종목 칩 등: 한 번의 HTTP로 여러 종목 등락률(prdy_ctrt)을 채울 때 사용.
+     * 종목마다 기존 {@link #getStockPrice(String)}를 호출하며 1초 메모리 캐시를 공유한다.
+     */
+    public Map<String, String> getChangeRatesByStockCodes(List<String> rawCodes) {
+        if (rawCodes == null || rawCodes.isEmpty()) {
+            return Map.of();
+        }
+        LinkedHashSet<String> unique = new LinkedHashSet<>();
+        for (String c : rawCodes) {
+            if (c != null && !c.isBlank()) {
+                unique.add(c.trim());
+            }
+        }
+        if (unique.isEmpty()) {
+            return Map.of();
+        }
+        if (unique.size() > 100) {
+            throw new IllegalArgumentException("한 번에 최대 100개 종목코드까지 조회할 수 있습니다.");
+        }
+        Map<String, String> out = new LinkedHashMap<>();
+        for (String code : unique) {
+            try {
+                KisStockPriceResponse p = getStockPrice(code);
+                String rate = p.changeRate();
+                if (rate != null && !rate.isBlank()) {
+                    out.put(code, rate);
+                } else {
+                    out.put(code, null);
+                }
+            } catch (Exception e) {
+                out.put(code, null);
+            }
+        }
+        return out;
     }
 
     public KisStockOrderbookResponse getStockOrderbook(String stockCode) {
