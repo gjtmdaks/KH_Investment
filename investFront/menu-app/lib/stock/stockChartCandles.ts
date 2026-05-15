@@ -2,6 +2,20 @@ import type { ChartCandle } from "@/app/components/stock/StockCandleChart";
 
 import type { ChartPeriodLabel } from "@/lib/stock/stockDetailTypes";
 
+export type ChartZoomProfile = "minute" | "daily" | "longTerm";
+
+export function getChartZoomProfile(period: ChartPeriodLabel): ChartZoomProfile {
+  if (isMinuteChartPeriod(period)) {
+    return "minute";
+  }
+
+  if (period === "일") {
+    return "daily";
+  }
+
+  return "longTerm";
+}
+
 export function isMinuteChartPeriod(period: ChartPeriodLabel) {
   return (
     period === "1분" ||
@@ -28,6 +42,34 @@ export function getMinuteIntervalMinutes(period: ChartPeriodLabel) {
 
 export function getSeoulIsoDate() {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+}
+
+export const MAX_MINUTE_SCROLL_TRADING_DAYS = 60;
+
+export function getPreviousTradingDay(isoDate: string) {
+  const date = parseIsoDate(isoDate);
+  date.setDate(date.getDate() - 1);
+
+  while (date.getDay() === 0 || date.getDay() === 6) {
+    date.setDate(date.getDate() - 1);
+  }
+
+  return formatIsoDate(date);
+}
+
+export function mergeMinuteCandles(
+  older: ChartCandle[],
+  existing: ChartCandle[]
+): ChartCandle[] {
+  const byTime = new Map<string, ChartCandle>();
+
+  for (const candle of [...older, ...existing]) {
+    byTime.set(candle.date, candle);
+  }
+
+  return [...byTime.values()].sort((left, right) => {
+    return Date.parse(left.date) - Date.parse(right.date);
+  });
 }
 
 export function getApiPeriod(period: ChartPeriodLabel) {
@@ -71,6 +113,12 @@ export function getChartDateRange(period: ChartPeriodLabel) {
     from: formatIsoDate(from),
     to: formatIsoDate(to),
   };
+}
+
+function parseIsoDate(isoDate: string) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
 }
 
 function formatIsoDate(value: Date) {
