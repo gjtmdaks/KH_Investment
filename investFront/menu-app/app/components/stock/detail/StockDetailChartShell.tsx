@@ -80,6 +80,7 @@ export function StockDetailChartShell({
           candles={candles}
           loading={chartLoading}
           error={chartError}
+          viewResetKey={`${stockCode}-${activePeriod}`}
         />
       </div>
     </div>
