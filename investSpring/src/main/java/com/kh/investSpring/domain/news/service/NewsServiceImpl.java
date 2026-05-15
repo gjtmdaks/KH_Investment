@@ -85,20 +85,21 @@ public class NewsServiceImpl implements NewsService {
 				return cached;
 			}
 
-			int fetchSize = Math.min(100, Math.max(n * 4, 40));
+			int buildSize = MARKET_NEWS_MAX_DISPLAY;
+			int fetchSize = Math.min(100, Math.max(buildSize * 4, 40));
 			List<NaverNewsItemDto> items = naverNewsApiClient.searchNews(FinanceNewsTopicFilter.MARKET_SEARCH_QUERY, fetchSize)
 					.stream()
 					.filter(FinanceNewsTopicFilter::passesNaverItem)
 					.toList();
 			if (!items.isEmpty()) {
-				List<NewsResponse> fresh = ingestMarketItems(items, n);
+				List<NewsResponse> fresh = ingestMarketItems(items, buildSize);
 				cacheList(CACHE_MARKET, fresh, Duration.ofMinutes(5));
-				return fresh;
+				return limitList(fresh, n);
 			}
 
-			List<NewsResponse> fallback = mapEntities(newsDao.selectRecentNewsInfo(n));
+			List<NewsResponse> fallback = mapMarketEntities(newsDao.selectRecentNewsInfo(buildSize));
 			cacheList(CACHE_MARKET, fallback, Duration.ofMinutes(5));
-			return fallback;
+			return limitList(fallback, n);
 		}
 	}
 
@@ -139,11 +140,11 @@ public class NewsServiceImpl implements NewsService {
 			return cached;
 		}
 
-		List<NewsResponse> fallback = mapEntities(newsDao.selectNewsInfoByStockCode(code, n));
-        if (!fallback.isEmpty()) {
-            cacheList(cacheKey, fallback, Duration.ofMinutes(3));
-            return fallback;
-        }
+		List<NewsResponse> fallback = mapEntitiesWithKis(newsDao.selectNewsInfoByStockCode(code, n));
+		if (!fallback.isEmpty()) {
+			cacheList(cacheKey, fallback, Duration.ofMinutes(3));
+			return fallback;
+		}
 
 
 		String queryKeyword = resolveStockSearchKeyword(code);
@@ -173,7 +174,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return overlayKisRatesForExistingStocks(enrichRelatedStockRates(out));
+		return enrichRelatedStockRates(out);
 	}
 
 	private List<NewsResponse> ingestStockItems(List<NaverNewsItemDto> items, String stockCode, int limit) {
@@ -315,7 +316,7 @@ public class NewsServiceImpl implements NewsService {
 		return date.toInstant();
 	}
 
-	private List<NewsResponse> mapEntities(List<NewsInfoEntity> rows) {
+	private List<NewsResponse> mapEntitiesWithKis(List<NewsInfoEntity> rows) {
 		if (rows == null || rows.isEmpty()) {
 			return List.of();
 		}
@@ -337,8 +338,42 @@ public class NewsServiceImpl implements NewsService {
 					toInstant(e.getPublishedAt()),
 					List.of()));
 		}
-		// DB fallback 경로: NEWS_INFO_STOCK 매핑을 일괄 조회해 관련 종목을 채웁니다.
 		return overlayKisRatesForExistingStocks(attachRelatedStocksFromDb(list));
+	}
+
+	/**
+	 * 시장 뉴스 DB fallback: 틱·DB 기반 등락만 채우고 KIS 전일대비 오버레이는 생략합니다.
+	 */
+	private List<NewsResponse> mapMarketEntities(List<NewsInfoEntity> rows) {
+		if (rows == null || rows.isEmpty()) {
+			return List.of();
+		}
+		List<NewsResponse> list = new ArrayList<>(rows.size());
+		for (NewsInfoEntity e : rows) {
+			String title = HtmlStripUtil.stripHtml(e.getNewsTitle());
+			String desc = HtmlStripUtil.stripHtml(e.getNewsDescription());
+			if (!FinanceNewsTopicFilter.passesText(title, desc)) {
+				continue;
+			}
+			list.add(new NewsResponse(
+					e.getNewsInfoId(),
+					title,
+					desc,
+					HtmlStripUtil.stripHtml(e.getPublisher()),
+					e.getPrimaryLabel(),
+					e.getKeywordKind(),
+					e.getArticleLink(),
+					toInstant(e.getPublishedAt()),
+					List.of()));
+		}
+		return enrichRelatedStockRates(attachRelatedStocksFromDb(list));
+	}
+
+	private static List<NewsResponse> limitList(List<NewsResponse> rows, int n) {
+		if (rows == null || rows.isEmpty() || n >= rows.size()) {
+			return rows == null ? List.of() : rows;
+		}
+		return new ArrayList<>(rows.subList(0, n));
 	}
 
 	/**

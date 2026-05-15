@@ -317,3 +317,122 @@
   border-color: rgba(255, 255, 255, 0.25);
   cursor: default;
 }
+
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-bottom: 8px;
+}
+
+.loadMoreBtn {
+  cursor: pointer;
+  min-height: 42px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.loadMoreBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.skeletonTagBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.skeletonTag {
+  width: 64px;
+  height: 34px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: newsShimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonCard {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.skeletonThumb {
+  flex-shrink: 0;
+  width: 72px;
+  height: 50px;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: newsShimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.skeletonLineLg,
+.skeletonLineMd {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: newsShimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonLineLg {
+  width: 92%;
+}
+
+.skeletonLineMd {
+  width: 56%;
+}
+
+@keyframes newsShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
