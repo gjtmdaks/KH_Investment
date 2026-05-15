@@ -1,6 +1,11 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import styles from "../MainSidebar.module.css";
 import SidebarEmpty from "../components/SidebarEmpty";
-import { useRouter } from "next/navigation";
+import { getAccountAssets } from "@/lib/account";
 import type {
   MyInvestmentHolding,
   MyInvestmentSidebarData,
@@ -14,7 +19,7 @@ type Props = {
 };
 
 function formatWon(value?: number | null) {
-  return `${(value ?? 0).toLocaleString()}원`;
+  return `${Math.round(value ?? 0).toLocaleString()}원`;
 }
 
 function formatQuantity(value?: number | null) {
@@ -22,7 +27,7 @@ function formatQuantity(value?: number | null) {
 }
 
 function formatSignedWon(value?: number | null) {
-  const numberValue = value ?? 0;
+  const numberValue = Math.round(value ?? 0);
   const sign = numberValue > 0 ? "+" : "";
 
   return `${sign}${numberValue.toLocaleString()}원`;
@@ -46,12 +51,84 @@ function getProfitClass(value?: number | null) {
 export default function MyInvestmentPanel({ data, isLogin }: Props) {
   const router = useRouter();
 
+  const [investment, setInvestment] = useState<MyInvestmentSidebarData>({
+    account: data.sidebar?.account ?? null,
+    holdings: data.sidebar?.holdings ?? [],
+  });
+
+  useEffect(() => {
+    setInvestment({
+      account: data.sidebar?.account ?? null,
+      holdings: data.sidebar?.holdings ?? [],
+    });
+  }, [data.sidebar?.account, data.sidebar?.holdings]);
+
+  useEffect(() => {
+    if (!isLogin) return;
+
+    let isMounted = true;
+
+    async function fetchInvestment() {
+      try {
+        const asset = await getAccountAssets();
+
+        if (!isMounted) return;
+
+        const holdings: MyInvestmentHolding[] = Array.isArray(asset.holdings)
+          ? asset.holdings.map((holding) => {
+              const investedAmount = holding.avgPrice * holding.quantity;
+              const profitAmount = holding.stockValue - investedAmount;
+              const profitRate =
+                investedAmount > 0 ? (profitAmount / investedAmount) * 100 : 0;
+
+              return {
+                stockCode: holding.stockCode,
+                stockName: holding.stockName,
+                quantity: holding.quantity,
+                avgPrice: holding.avgPrice,
+                currentPrice: holding.currentPrice,
+                stockValue: holding.stockValue,
+                profitAmount,
+                profitRate,
+              };
+            })
+          : [];
+
+        const investedAmount = holdings.reduce(
+          (sum, holding) => sum + holding.avgPrice * holding.quantity,
+          0
+        );
+
+        setInvestment({
+          account: {
+            availableCash: asset.availableCash,
+            investedAmount,
+          },
+          holdings,
+        });
+      } catch (error) {
+        console.error("내 투자 사이드바 조회 실패", error);
+      }
+    }
+
+    fetchInvestment();
+
+    const intervalId = window.setInterval(() => {
+      fetchInvestment();
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [isLogin]);
+
   if (!isLogin) {
     return <SidebarEmpty text="로그인이 필요해요" />;
   }
 
-  const account = data.sidebar?.account ?? null;
-  const holdings: MyInvestmentHolding[] = data.sidebar?.holdings ?? [];
+  const account = investment.account;
+  const holdings = investment.holdings;
 
   return (
     <div className={styles.panelContent}>
