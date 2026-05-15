@@ -1,0 +1,30 @@
+.empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 180px;
+  padding: 32px 20px;
+
+  border: 1px dashed var(--stock-border);
+  border-radius: var(--stock-radius-md);
+  background: rgba(2, 6, 23, 0.28);
+
+  color: var(--stock-text-sub);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .empty {
+    min-height: 140px;
+    padding: 24px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+}

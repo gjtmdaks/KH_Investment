@@ -3,7 +3,7 @@
 import { stripHtml } from "@/lib/stock/stockDetailFormat";
 import type { NewsResponse } from "@/lib/stock/stockDetailTypes";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailNews.module.css";
 import { StockDetailEmptyState } from "./StockDetailEmptyState";
 
 export function StockDetailNewsPanel({ news }: { news: NewsResponse[] }) {

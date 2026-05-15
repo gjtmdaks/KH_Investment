@@ -10,7 +10,7 @@ import type {
   StaticProfileResponse,
 } from "@/lib/stock/stockDetailTypes";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailSummaryPanel.module.css";
 import { StockDetailEmptyState } from "./StockDetailEmptyState";
 import { StockDetailStat } from "./StockDetailStat";
 

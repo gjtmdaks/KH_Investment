@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "./stockDetail.module.css";
+import styles from "./css/stockDetailStat.module.css";
 
 export function StockDetailStat({ label, value }: { label: string; value: string }) {
   return (
