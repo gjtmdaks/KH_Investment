@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import com.kh.investSpring.domain.board.dao.BoardDao;
 import com.kh.investSpring.domain.board.dto.CommunityDto;
 import com.kh.investSpring.domain.stock.dao.StockDao;
+import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,39 @@ public class StockServiceImpl implements StockService {
                                         .build()
                                 ).toList()
                 )
+                .build();
+    }
+    
+    public List<StockScreenerDto> getRisingStocks() {
+        return stockDao.getRisingStocks();
+    }
+
+    public List<StockScreenerDto> getFallingStocks() {
+        return stockDao.getFallingStocks();
+    }
+
+    public List<StockScreenerDto> getPopularWatchlistStocks() {
+        return stockDao.getPopularWatchlistStocks();
+    }
+
+    public List<StockScreenerDto> getViewedStocks() {
+        return stockDao.getViewedStocks();
+    }
+
+    public List<StockScreenerDto> getVolumeStocks() {
+        return stockDao.getVolumeStocks();
+    }
+    
+    public List<StockScreenerDto> searchStocks(String market, String changeRate, String volume) {
+        return stockDao.searchStocks(market, changeRate, volume);
+    }
+    
+    public RealtimeSectionResponseDto getRealtimeSection() {
+
+        return RealtimeSectionResponseDto.builder()
+                .surging(stockDao.getRealtimeSurgingStocks())
+                .falling(stockDao.getRealtimeFallingStocks())
+                .active(stockDao.getRealtimeActiveStocks())
                 .build();
     }
 }

@@ -65,6 +65,7 @@ public class SecurityFilterChainFactory {
 									"/logout/oauth2/**",
 									"/api/public/**",
 									"/api/stocks/**",
+									"/stock/**",
 									"/users/login",
 						            "/users/signin",
 						            "/users/signup",

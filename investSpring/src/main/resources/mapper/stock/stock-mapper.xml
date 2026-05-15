@@ -104,5 +104,211 @@
 			AND ROWNUM <![CDATA[ <= ]]> 40
         ORDER BY stock_code
     </select>
+    
+	<select id="getRisingStocks" resultType="StockScreenerDto">
+        SELECT *
+        FROM(SELECT 
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            s.market_type AS marketType,
+	            s.sector AS sector,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume
+	        FROM stocks s
+	        JOIN stock_realtime_current r
+	            ON s.stock_code = r.stock_code
+	        WHERE s.status = 'ACTIVE'
+	        ORDER BY r.change_rate DESC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+    
+    <select id="getFallingStocks" resultType="StockScreenerDto">
+        SELECT *
+        FROM(SELECT
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            s.market_type AS marketType,
+	            s.sector AS sector,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume
+	        FROM stocks s
+	        JOIN stock_realtime_current r
+	            ON s.stock_code = r.stock_code
+	        WHERE s.status = 'ACTIVE'
+	        ORDER BY r.change_rate ASC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+    
+    <select id="getPopularWatchlistStocks" resultType="StockScreenerDto">
+        SELECT *
+        FROM(SELECT
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            s.market_type AS marketType,
+	            s.sector AS sector,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume,
+	            COUNT(w.user_no) AS extraValue
+	        FROM watchlist w
+	        JOIN stocks s
+	            ON w.stock_code = s.stock_code
+	        LEFT JOIN stock_realtime_current r
+	            ON s.stock_code = r.stock_code
+	        GROUP BY
+	            s.stock_code,
+	            s.stock_name,
+	            s.market_type,
+	            s.sector,
+	            r.current_price,
+	            r.change_rate,
+	            r.volume
+	        ORDER BY extraValue DESC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+    
+    <select id="getViewedStocks" resultType="StockScreenerDto">
+        SELECT *
+        FROM(SELECT
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            s.market_type AS marketType,
+	            s.sector AS sector,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume,
+	            COUNT(v.user_no) AS extraValue
+	        FROM recent_view v
+	        JOIN stocks s
+	            ON v.stock_code = s.stock_code
+	        LEFT JOIN stock_realtime_current r
+	            ON s.stock_code = r.stock_code
+	        WHERE v.viewed_at >= SYSDATE - 1
+	        GROUP BY
+	            s.stock_code,
+	            s.stock_name,
+	            s.market_type,
+	            s.sector,
+	            r.current_price,
+	            r.change_rate,
+	            r.volume
+	        ORDER BY extraValue DESC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+    
+    <select id="getVolumeStocks" resultType="StockScreenerDto">
+        SELECT *
+        FROM(SELECT
+	            s.stock_code AS stockCode,
+	            s.stock_name AS stockName,
+	            s.market_type AS marketType,
+	            s.sector AS sector,
+	            r.current_price AS currentPrice,
+	            r.change_rate AS changeRate,
+	            r.volume AS volume
+	        FROM stocks s
+	        JOIN stock_realtime_current r
+	            ON s.stock_code = r.stock_code
+	        ORDER BY r.volume DESC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+    
+	<select id="searchStocks" parameterType="map" resultType="StockScreenerDto">
+	    SELECT *
+	    FROM (SELECT
+		        s.stock_code AS stockCode,
+		        s.stock_name AS stockName,
+		        s.market_type AS marketType,
+		        s.sector AS sector,
+		        r.current_price AS currentPrice,
+		        r.change_rate AS changeRate,
+		        r.volume AS volume
+		    FROM stocks s
+		    LEFT JOIN stock_realtime_current r
+		        ON s.stock_code = r.stock_code
+		
+		    WHERE 1=1
+		
+		    <if test="market != null and market != ''">
+		        AND s.market_type = #{market}
+		    </if>
+		
+		    <if test="changeRate == 'UP5'">
+		        AND r.change_rate <![CDATA[ <= ]]> 5
+		    </if>
+		
+		    <if test="changeRate == 'DOWN5'">
+		        AND r.change_rate <![CDATA[ <= ]]> -5
+		    </if>
+		
+		    ORDER BY r.volume DESC)
+	
+	    WHERE ROWNUM <![CDATA[ <= ]]> 100
+	</select>
+	
+	<select id="getRealtimeSurgingStocks" resultType="StockScreenerDto">
+	    SELECT *
+	    FROM (SELECT
+		        s.stock_code AS stockCode,
+		        s.stock_name AS stockName,
+		        s.market_type AS marketType,
+		        s.sector AS sector,
+		        r.current_price AS currentPrice,
+		        r.change_rate AS changeRate,
+		        r.volume AS volume
+		    FROM stock_realtime_current r
+		    JOIN stocks s
+		        ON r.stock_code = s.stock_code
+		    WHERE s.status = 'ACTIVE'
+		    ORDER BY r.change_rate DESC)
+	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	</select>
+	
+	<select id="getRealtimeFallingStocks" resultType="StockScreenerDto">
+	    SELECT *
+	    FROM (SELECT
+		        s.stock_code AS stockCode,
+		        s.stock_name AS stockName,
+		        s.market_type AS marketType,
+		        s.sector AS sector,
+		        r.current_price AS currentPrice,
+		        r.change_rate AS changeRate,
+		        r.volume AS volume
+		    FROM stock_realtime_current r
+		    JOIN stocks s
+		        ON r.stock_code = s.stock_code
+		    WHERE s.status = 'ACTIVE'
+		    ORDER BY r.change_rate ASC)
+	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	</select>
+	
+	<select id="getRealtimeActiveStocks" resultType="StockScreenerDto">
+	    SELECT *
+	    FROM (SELECT
+		        s.stock_code AS stockCode,
+		        s.stock_name AS stockName,
+		        s.market_type AS marketType,
+		        s.sector AS sector,
+		        rc.current_price AS currentPrice,
+		        rc.change_rate AS changeRate,
+		        COUNT(rt.tick_id) AS volume
+		    FROM stock_realtime_tick rt
+		    JOIN stocks s
+		        ON rt.stock_code = s.stock_code
+		    LEFT JOIN stock_realtime_current rc
+		        ON rt.stock_code = rc.stock_code
+		    WHERE rt.trade_time >= SYSTIMESTAMP - INTERVAL '5' MINUTE
+		    GROUP BY
+		        s.stock_code,
+		        s.stock_name,
+		        s.market_type,
+		        s.sector,
+		        rc.current_price,
+		        rc.change_rate
+		    ORDER BY COUNT(rt.tick_id) DESC)
+	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	</select>
 
 </mapper>
