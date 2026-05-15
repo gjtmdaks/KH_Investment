@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "../myAccount.module.css";
 import {
   getAccountAssets,
@@ -32,6 +33,7 @@ function getProfitClass(value?: number | null) {
 }
 
 export default function AssetPanel() {
+  const router = useRouter();
   const [asset, setAsset] = useState<AccountAssetResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -188,7 +190,9 @@ export default function AssetPanel() {
                       : 0;
 
                   return (
-                    <tr key={stock.stockCode}>
+                    <tr key={stock.stockCode}
+                      className={styles.clickableRow}
+                      onClick={() => router.push(`/main/stock/${stock.stockCode}`)} >
                       <td>{stock.stockCode}</td>
                       <td>{stock.stockName}</td>
                       <td>{stock.quantity.toLocaleString()}주</td>

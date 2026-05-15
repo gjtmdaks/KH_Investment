@@ -548,3 +548,18 @@
   border-color: #ff6b6b;
   color: #ff6b6b;
 }
+
+.clickableRow {
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.clickableRow:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.clickableRow:active {
+  transform: scale(0.995);
+}
