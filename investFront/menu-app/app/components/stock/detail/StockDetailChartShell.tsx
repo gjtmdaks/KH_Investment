@@ -10,6 +10,8 @@ import {
   aggregateYearlyCandles,
   getApiPeriod,
   getChartDateRange,
+  getMinuteIntervalMinutes,
+  isMinuteChartPeriod,
   normalizeCandlePayload,
 } from "@/lib/stock/stockChartCandles";
 
@@ -33,18 +35,31 @@ export function StockDetailChartShell({
     setChartError(null);
 
     try {
-      const { from, to } = getChartDateRange(activePeriod);
-      const apiPeriod = getApiPeriod(activePeriod);
-      const response = await fetchJson<unknown>(
-        `/api/stocks/${stockCode}/candles?period=${apiPeriod}&from=${from}&to=${to}`
-      );
-      const normalizedCandles = normalizeCandlePayload(response);
-      const nextCandles =
-        activePeriod === "년"
-          ? aggregateYearlyCandles(normalizedCandles)
-          : normalizedCandles;
+      const minuteMode = isMinuteChartPeriod(activePeriod);
 
-      setCandles(nextCandles);
+      if (minuteMode) {
+        const tradeDate = getChartDateRange(activePeriod).from;
+        const intervalMinutes = getMinuteIntervalMinutes(activePeriod);
+        const response = await fetchJson<unknown>(
+          `/api/stocks/${stockCode}/minute-candles?intervalMinutes=${intervalMinutes}&tradeDate=${tradeDate}`
+        );
+        const normalizedCandles = normalizeCandlePayload(response);
+
+        setCandles(normalizedCandles);
+      } else {
+        const { from, to } = getChartDateRange(activePeriod);
+        const apiPeriod = getApiPeriod(activePeriod);
+        const response = await fetchJson<unknown>(
+          `/api/stocks/${stockCode}/candles?period=${apiPeriod}&from=${from}&to=${to}`
+        );
+        const normalizedCandles = normalizeCandlePayload(response);
+        const nextCandles =
+          activePeriod === "년"
+            ? aggregateYearlyCandles(normalizedCandles)
+            : normalizedCandles;
+
+        setCandles(nextCandles);
+      }
     } catch {
       setCandles([]);
       setChartError("차트 데이터를 불러오지 못했습니다.");
@@ -60,6 +75,8 @@ export function StockDetailChartShell({
 
     return () => window.clearTimeout(timer);
   }, [loadCandles]);
+
+  const intradayMode = isMinuteChartPeriod(activePeriod);
 
   return (
     <div className={styles.chartCard}>
@@ -81,6 +98,7 @@ export function StockDetailChartShell({
           loading={chartLoading}
           error={chartError}
           viewResetKey={`${stockCode}-${activePeriod}`}
+          intradayMode={intradayMode}
         />
       </div>
     </div>

@@ -208,6 +208,70 @@
 	        #{changeRate}
 	    )
 	</insert>
+
+	<select id="selectIntradayMinutesByDate"
+	        resultType="com.kh.investSpring.api.kis.dto.StockIntradayMinuteCacheDto">
+	    SELECT
+	        CACHE_ID AS cacheId,
+	        STOCK_CODE AS stockCode,
+	        TRADE_DATE AS tradeDate,
+	        BAR_TIME AS barTime,
+	        OPEN_PRICE AS openPrice,
+	        HIGH_PRICE AS highPrice,
+	        LOW_PRICE AS lowPrice,
+	        CLOSE_PRICE AS closePrice,
+	        VOLUME AS volume
+	    FROM STOCK_INTRADAY_MINUTE_CACHE
+	    WHERE STOCK_CODE = #{stockCode}
+	      AND TRADE_DATE = #{tradeDate}
+	    ORDER BY BAR_TIME ASC
+	</select>
+
+	<insert id="mergeIntradayMinute">
+	    MERGE INTO STOCK_INTRADAY_MINUTE_CACHE t
+	    USING (
+	        SELECT
+	            #{stockCode}  AS STOCK_CODE,
+	            #{tradeDate}  AS TRADE_DATE,
+	            #{barTime}    AS BAR_TIME
+	        FROM dual
+	    ) s
+	    ON (
+	        t.STOCK_CODE = s.STOCK_CODE
+	        AND t.TRADE_DATE = s.TRADE_DATE
+	        AND t.BAR_TIME = s.BAR_TIME
+	    )
+	    WHEN MATCHED THEN
+	    UPDATE SET
+	        OPEN_PRICE = #{openPrice},
+	        HIGH_PRICE = #{highPrice},
+	        LOW_PRICE = #{lowPrice},
+	        CLOSE_PRICE = #{closePrice},
+	        VOLUME = #{volume}
+	    WHEN NOT MATCHED THEN
+	    INSERT (
+	        CACHE_ID,
+	        STOCK_CODE,
+	        TRADE_DATE,
+	        BAR_TIME,
+	        OPEN_PRICE,
+	        HIGH_PRICE,
+	        LOW_PRICE,
+	        CLOSE_PRICE,
+	        VOLUME
+	    )
+	    VALUES (
+	        SEQ_STOCK_MIN_CACHE.NEXTVAL,
+	        #{stockCode},
+	        #{tradeDate},
+	        #{barTime},
+	        #{openPrice},
+	        #{highPrice},
+	        #{lowPrice},
+	        #{closePrice},
+	        #{volume}
+	    )
+	</insert>
 	
 	<update id="updateRealtimeCurrent">
 	    UPDATE stock_realtime_current

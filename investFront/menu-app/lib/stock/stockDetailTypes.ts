@@ -60,7 +60,7 @@ export type NewsResponse = {
   publishedAt?: string | null;
 };
 
-export type ChartPeriodLabel = "일" | "주" | "월" | "년";
+export type ChartPeriodLabel = "1분" | "15분" | "30분" | "60분" | "일" | "주" | "월" | "년";
 
 export type TabKey = "chart" | "orderbook" | "summary" | "news";
 
