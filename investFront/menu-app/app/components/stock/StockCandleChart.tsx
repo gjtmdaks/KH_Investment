@@ -34,6 +34,7 @@ type StockCandleChartProps = {
   error: string | null;
   emptyMessage?: string;
   viewResetKey: string;
+  intradayMode?: boolean;
 };
 
 const CHART_HEIGHT = 360;
@@ -74,7 +75,33 @@ type CrosshairTooltipState = {
   volume: number | null;
 };
 
-function formatCrosshairKoreanDate(time: Time): string {
+const seoulIntradayLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  year: "2-digit",
+  month: "numeric",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+function candleTimeToChartTime(candle: ChartCandle): Time {
+  const trimmed = candle.date.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = Date.parse(trimmed);
+
+  if (Number.isFinite(parsed)) {
+    return Math.floor(parsed / 1000) as Time;
+  }
+
+  return trimmed as Time;
+}
+
+function formatCrosshairLabel(time: Time, intradayMode: boolean): string {
   if (isBusinessDay(time)) {
     const yy = time.year % 100;
 
@@ -82,6 +109,10 @@ function formatCrosshairKoreanDate(time: Time): string {
   }
 
   if (typeof time === "number" && Number.isFinite(time)) {
+    if (intradayMode) {
+      return seoulIntradayLabelFormatter.format(new Date(time * 1000));
+    }
+
     const d = new Date(time * 1000);
     const yy = d.getFullYear() % 100;
 
@@ -100,9 +131,26 @@ function formatCrosshairKoreanDate(time: Time): string {
         return `${y % 100}년 ${month}월 ${day}일`;
       }
     }
+
+    const ms = Date.parse(time);
+
+    if (Number.isFinite(ms)) {
+      if (intradayMode) {
+        return seoulIntradayLabelFormatter.format(new Date(ms));
+      }
+
+      const d = new Date(ms);
+      const yy = d.getFullYear() % 100;
+
+      return `${yy}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    }
   }
 
   return String(time);
+}
+
+function formatAxisTime(time: Time, intradayMode: boolean): string {
+  return formatCrosshairLabel(time, intradayMode);
 }
 
 function formatTooltipPrice(n: number): string {
@@ -115,6 +163,7 @@ export default function StockCandleChart({
   error,
   emptyMessage = "표시할 차트 데이터가 없습니다.",
   viewResetKey,
+  intradayMode = false,
 }: StockCandleChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -124,6 +173,9 @@ export default function StockCandleChart({
     ((param: MouseEventParams<Time>) => void) | null
   >(null);
   const appliedFitKeyRef = useRef<string | null>(null);
+  const intradayModeRef = useRef(intradayMode);
+
+  intradayModeRef.current = intradayMode;
 
   const [crosshairTooltip, setCrosshairTooltip] =
     useState<CrosshairTooltipState | null>(null);
@@ -145,7 +197,8 @@ export default function StockCandleChart({
         },
         localization: {
           locale: "ko-KR",
-          timeFormatter: formatCrosshairKoreanDate,
+          timeFormatter: (t: Time) =>
+            formatAxisTime(t, intradayModeRef.current),
         },
         grid: {
           vertLines: { color: "rgba(148, 163, 184, 0.08)" },
@@ -160,9 +213,13 @@ export default function StockCandleChart({
           fixRightEdge: false,
           lockVisibleTimeRangeOnResize: true,
           rightOffset: 0,
+          timeVisible: intradayModeRef.current,
+          secondsVisible: false,
         },
         crosshair: {
-          mode: CrosshairMode.Normal,
+          mode: intradayModeRef.current
+            ? CrosshairMode.MagnetOHLC
+            : CrosshairMode.Normal,
         },
         ...CHART_INTERACTION_OPTIONS,
         width: container.clientWidth,
@@ -259,7 +316,10 @@ export default function StockCandleChart({
         setCrosshairTooltip({
           left,
           top,
-          dateLabel: formatCrosshairKoreanDate(param.time),
+          dateLabel: formatCrosshairLabel(
+            param.time,
+            intradayModeRef.current
+          ),
           open: ohlc.open,
           high: ohlc.high,
           low: ohlc.low,
@@ -290,7 +350,7 @@ export default function StockCandleChart({
     }
 
     const candleData: CandlestickData[] = candles.map((candle) => ({
-      time: candle.date,
+      time: candleTimeToChartTime(candle),
       open: candle.open,
       high: candle.high,
       low: candle.low,
@@ -298,7 +358,7 @@ export default function StockCandleChart({
     }));
 
     const volumeData: HistogramData[] = candles.map((candle) => ({
-      time: candle.date,
+      time: candleTimeToChartTime(candle),
       value: candle.volume,
       color:
         candle.close >= candle.open
@@ -316,20 +376,25 @@ export default function StockCandleChart({
       },
       localization: {
         locale: "ko-KR",
-        timeFormatter: formatCrosshairKoreanDate,
+        timeFormatter: (t: Time) =>
+          formatAxisTime(t, intradayModeRef.current),
       },
       crosshair: {
-        mode: CrosshairMode.Normal,
+        mode: intradayModeRef.current
+          ? CrosshairMode.MagnetOHLC
+          : CrosshairMode.Normal,
       },
       timeScale: {
         fixLeftEdge: false,
         fixRightEdge: false,
         lockVisibleTimeRangeOnResize: true,
         rightOffset: 0,
+        timeVisible: intradayModeRef.current,
+        secondsVisible: false,
       },
       ...CHART_INTERACTION_OPTIONS,
     });
-  }, [candles, error, loading]);
+  }, [candles, error, intradayMode, loading]);
 
   useLayoutEffect(() => {
     const chart = chartRef.current;

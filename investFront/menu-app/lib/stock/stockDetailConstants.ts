@@ -10,4 +10,13 @@ export const stockDetailTabs: Array<{ key: TabKey; label: string }> = [
   { key: "news", label: "뉴스" },
 ];
 
-export const chartPeriods: ChartPeriodLabel[] = ["일", "주", "월", "년"];
+export const chartPeriods: ChartPeriodLabel[] = [
+  "1분",
+  "15분",
+  "30분",
+  "60분",
+  "일",
+  "주",
+  "월",
+  "년",
+];

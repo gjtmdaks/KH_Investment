@@ -2,7 +2,39 @@ import type { ChartCandle } from "@/app/components/stock/StockCandleChart";
 
 import type { ChartPeriodLabel } from "@/lib/stock/stockDetailTypes";
 
+export function isMinuteChartPeriod(period: ChartPeriodLabel) {
+  return (
+    period === "1분" ||
+    period === "15분" ||
+    period === "30분" ||
+    period === "60분"
+  );
+}
+
+export function getMinuteIntervalMinutes(period: ChartPeriodLabel) {
+  switch (period) {
+    case "1분":
+      return 1;
+    case "15분":
+      return 15;
+    case "30분":
+      return 30;
+    case "60분":
+      return 60;
+    default:
+      return 1;
+  }
+}
+
+export function getSeoulIsoDate() {
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+}
+
 export function getApiPeriod(period: ChartPeriodLabel) {
+  if (isMinuteChartPeriod(period)) {
+    throw new Error("분봉 주기는 getApiPeriod를 사용하지 않습니다.");
+  }
+
   if (period === "일") {
     return "D";
   }
@@ -15,6 +47,15 @@ export function getApiPeriod(period: ChartPeriodLabel) {
 }
 
 export function getChartDateRange(period: ChartPeriodLabel) {
+  if (isMinuteChartPeriod(period)) {
+    const d = getSeoulIsoDate();
+
+    return {
+      from: d,
+      to: d,
+    };
+  }
+
   const to = new Date();
   const from = new Date(to);
 

@@ -20,19 +20,23 @@ import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
 import com.kh.investSpring.api.kis.dto.StockBatchPriceRequest;
 import com.kh.investSpring.api.kis.service.KisStockService;
 import com.kh.investSpring.api.kis.service.StockHistoryReadService;
+import com.kh.investSpring.api.kis.service.StockMinuteReadService;
 
 @RestController
 public class KisStockController {
 
     private final KisStockService kisStockService;
     private final StockHistoryReadService stockHistoryReadService;
+    private final StockMinuteReadService stockMinuteReadService;
 
     public KisStockController(
             KisStockService kisStockService,
-            StockHistoryReadService stockHistoryReadService
+            StockHistoryReadService stockHistoryReadService,
+            StockMinuteReadService stockMinuteReadService
     ) {
         this.kisStockService = kisStockService;
         this.stockHistoryReadService = stockHistoryReadService;
+        this.stockMinuteReadService = stockMinuteReadService;
     }
 
     @GetMapping("/api/stocks/{stockCode}/price")
@@ -69,5 +73,14 @@ public class KisStockController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         return stockHistoryReadService.getCandles(stockCode, period, from, to);
+    }
+
+    @GetMapping("/api/stocks/{stockCode}/minute-candles")
+    public KisStockCandleResponse getMinuteCandles(
+            @PathVariable String stockCode,
+            @RequestParam int intervalMinutes,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeDate
+    ) {
+        return stockMinuteReadService.getMinuteCandles(stockCode, intervalMinutes, tradeDate);
     }
 }
