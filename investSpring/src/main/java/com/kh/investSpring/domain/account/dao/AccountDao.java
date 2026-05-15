@@ -5,6 +5,8 @@ import java.util.List;
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse.HoldingStock;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.main.dto.MainResponse.Account;
+import com.kh.investSpring.domain.main.dto.MainResponse.Holding;
 
 public interface AccountDao {
 	
@@ -21,5 +23,9 @@ public interface AccountDao {
 	AccountAssetSummaryDto selectAccountAssetByUserNo(Long userNo);
 
 	List<HoldingStock> selectHoldingStocksByUserNo(Long userNo);
+
+	Account selectSidebarAccountByUserNo(Long userNo);
+
+	List<Holding> selectSidebarHoldingsByUserNo(Long userNo);
 
 }

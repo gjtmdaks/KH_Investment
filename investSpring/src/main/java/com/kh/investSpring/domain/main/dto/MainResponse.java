@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.main.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import lombok.Builder;
@@ -32,7 +33,8 @@ public class MainResponse {
     @Data
     @Builder
     public static class Account {
-        private Long balance;
+        private BigDecimal availableCash;
+        private BigDecimal investedAmount;
     }
 
     @Data
@@ -41,8 +43,11 @@ public class MainResponse {
         private String stockCode;
         private String stockName;
         private Long quantity;
-        private Long avgPrice;
-        private Long currentPrice;
+        private BigDecimal avgPrice;
+        private BigDecimal currentPrice;
+        private BigDecimal stockValue;
+        private BigDecimal profitAmount;
+        private BigDecimal profitRate;
     }
 
     @Data

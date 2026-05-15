@@ -1,6 +1,8 @@
 package com.kh.investSpring.domain.account.dao;
 
 import java.util.List;
+import com.kh.investSpring.domain.main.dto.MainResponse.Account;
+import com.kh.investSpring.domain.main.dto.MainResponse.Holding;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
@@ -57,6 +59,16 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public List<AccountAssetResponse.HoldingStock> selectHoldingStocksByUserNo(Long userNo) {
 	    return session.selectList("account.selectHoldingStocksByUserNo", userNo);
+	}
+	
+	@Override
+	public Account selectSidebarAccountByUserNo(Long userNo) {
+	    return session.selectOne("account.selectSidebarAccountByUserNo", userNo);
+	}
+
+	@Override
+	public List<Holding> selectSidebarHoldingsByUserNo(Long userNo) {
+	    return session.selectList("account.selectSidebarHoldingsByUserNo", userNo);
 	}
 	
 }
