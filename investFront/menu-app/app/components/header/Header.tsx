@@ -70,6 +70,12 @@ export default function Header({ data }: { data?: unknown }) {
           </Link>
         </nav>
 
+        <input
+          type="text"
+          placeholder="종목명 또는 종목코드 검색"
+          className={styles.searchInput}
+        />
+
         <div className={styles.rightArea}>
           {isLogin ? (
             <div className={styles.loggedInWrap}>

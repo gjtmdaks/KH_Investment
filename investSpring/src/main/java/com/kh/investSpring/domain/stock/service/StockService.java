@@ -2,7 +2,9 @@ package com.kh.investSpring.domain.stock.service;
 
 import java.util.List;
 
+import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
 
 public interface StockService {
@@ -12,4 +14,19 @@ public interface StockService {
 
     // ✅ 거래대금 1위 종목
     TopStockDto getTopVolumeStock();
+    
+    public List<StockScreenerDto> getRisingStocks();
+    
+    public List<StockScreenerDto> getFallingStocks();
+    
+    public List<StockScreenerDto> getPopularWatchlistStocks();
+    
+    public List<StockScreenerDto> getViewedStocks();
+    
+    public List<StockScreenerDto> getVolumeStocks();
+    
+    public List<StockScreenerDto> searchStocks(String market, String changeRate, String volume);
+
+	RealtimeSectionResponseDto getRealtimeSection();
+    
 }
