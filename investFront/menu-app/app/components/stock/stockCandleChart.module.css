@@ -53,10 +53,10 @@
 .crosshairTooltipGrid {
   display: grid;
   grid-template-columns: 18px 1fr 18px 1fr;
-  gap: 4px 10px;
+  gap: 2px 7px;
   align-items: baseline;
 
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.35;
 }
 

@@ -17,6 +17,7 @@ import {
   type CandlestickData,
 } from "lightweight-charts";
 import { formatNumber } from "@/lib/stock/stockDetailFormat";
+import type { ChartZoomProfile } from "@/lib/stock/stockChartCandles";
 import styles from "./stockCandleChart.module.css";
 
 export type ChartCandle = {
@@ -34,6 +35,7 @@ type StockCandleChartProps = {
   error: string | null;
   emptyMessage?: string;
   viewResetKey: string;
+  zoomProfile?: ChartZoomProfile;
   intradayMode?: boolean;
 };
 
@@ -53,8 +55,8 @@ const CHART_INTERACTION_OPTIONS = {
     pinch: true,
   },
   kineticScroll: {
-    mouse: true,
-    touch: true,
+    mouse: false,
+    touch: false,
   },
 } as const;
 
@@ -157,12 +159,48 @@ function formatTooltipPrice(n: number): string {
   return Math.round(n).toLocaleString("ko-KR");
 }
 
+function applyInitialZoom(chart: IChartApi, profile: ChartZoomProfile) {
+  const timeScale = chart.timeScale();
+  timeScale.fitContent();
+
+  const range = timeScale.getVisibleLogicalRange();
+
+  if (!range) {
+    return;
+  }
+
+  const span = range.to - range.from;
+
+  if (span <= 0) {
+    return;
+  }
+
+  if (profile === "minute") {
+    timeScale.setVisibleLogicalRange({
+      from: range.from - span * 0.28,
+      to: range.to + span * 0.06,
+    });
+
+    return;
+  }
+
+  if (profile === "longTerm") {
+    const zoomInFrom = span * 0.42;
+
+    timeScale.setVisibleLogicalRange({
+      from: range.from + zoomInFrom,
+      to: range.to,
+    });
+  }
+}
+
 export default function StockCandleChart({
   candles,
   loading,
   error,
   emptyMessage = "표시할 차트 데이터가 없습니다.",
   viewResetKey,
+  zoomProfile = "daily",
   intradayMode = false,
 }: StockCandleChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -173,9 +211,13 @@ export default function StockCandleChart({
     ((param: MouseEventParams<Time>) => void) | null
   >(null);
   const appliedFitKeyRef = useRef<string | null>(null);
+  const forceInitialZoomRef = useRef(false);
   const intradayModeRef = useRef(intradayMode);
+  const zoomProfileRef = useRef(zoomProfile);
+  const prevCandlesLengthRef = useRef(0);
 
   intradayModeRef.current = intradayMode;
+  zoomProfileRef.current = zoomProfile;
 
   const [crosshairTooltip, setCrosshairTooltip] =
     useState<CrosshairTooltipState | null>(null);
@@ -342,12 +384,17 @@ export default function StockCandleChart({
     if (loading || error || candles.length === 0) {
       candleSeries.setData([]);
       volumeSeries.setData([]);
+      prevCandlesLengthRef.current = 0;
       startTransition(() => {
         setCrosshairTooltip(null);
       });
 
       return;
     }
+
+    const previousLength = prevCandlesLengthRef.current;
+    const isPrepend = candles.length > previousLength && previousLength > 0;
+    const prependOffset = isPrepend ? candles.length - previousLength : 0;
 
     const candleData: CandlestickData[] = candles.map((candle) => ({
       time: candleTimeToChartTime(candle),
@@ -366,8 +413,20 @@ export default function StockCandleChart({
           : "rgba(96, 165, 250, 0.5)",
     }));
 
+    const timeScale = chart.timeScale();
+    const logicalRange = isPrepend ? timeScale.getVisibleLogicalRange() : null;
+
     candleSeries.setData(candleData);
     volumeSeries.setData(volumeData);
+
+    if (isPrepend && logicalRange && prependOffset > 0) {
+      timeScale.setVisibleLogicalRange({
+        from: logicalRange.from + prependOffset,
+        to: logicalRange.to + prependOffset,
+      });
+    }
+
+    prevCandlesLengthRef.current = candles.length;
     chart.applyOptions({
       width: container.clientWidth,
       height: CHART_HEIGHT,
@@ -397,19 +456,43 @@ export default function StockCandleChart({
   }, [candles, error, intradayMode, loading]);
 
   useLayoutEffect(() => {
+    forceInitialZoomRef.current = true;
+    appliedFitKeyRef.current = null;
+  }, [viewResetKey]);
+
+  useLayoutEffect(() => {
     const chart = chartRef.current;
+
     if (error || (!loading && candles.length === 0)) {
       appliedFitKeyRef.current = null;
+
+      return;
     }
+
     if (!chart || loading || error || candles.length === 0) {
       return;
     }
-    if (appliedFitKeyRef.current === viewResetKey) {
+
+    const isPrependLoad =
+      appliedFitKeyRef.current === viewResetKey &&
+      prevCandlesLengthRef.current > 0 &&
+      candles.length > prevCandlesLengthRef.current;
+
+    if (isPrependLoad) {
       return;
     }
+
+    const shouldApplyZoom =
+      forceInitialZoomRef.current || appliedFitKeyRef.current !== viewResetKey;
+
+    if (!shouldApplyZoom) {
+      return;
+    }
+
+    forceInitialZoomRef.current = false;
     appliedFitKeyRef.current = viewResetKey;
-    chart.timeScale().fitContent();
-  }, [candles.length, error, loading, viewResetKey]);
+    applyInitialZoom(chart, zoomProfileRef.current);
+  }, [candles.length, error, loading, viewResetKey, zoomProfile]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;

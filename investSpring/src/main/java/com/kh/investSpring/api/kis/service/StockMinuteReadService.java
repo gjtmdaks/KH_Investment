@@ -36,6 +36,7 @@ public class StockMinuteReadService {
 
     private final StockIntradayMinuteDao stockIntradayMinuteDao;
     private final KisIntradayMinuteIngestService kisIntradayMinuteIngestService;
+    private final KisHistoricalMinuteIngestService kisHistoricalMinuteIngestService;
     private final KisHistoryService kisHistoryService;
 
     private final ConcurrentHashMap<String, Long> lastIngestAt = new ConcurrentHashMap<>();
@@ -56,8 +57,8 @@ public class StockMinuteReadService {
         List<StockIntradayMinuteCacheDto> rows =
                 stockIntradayMinuteDao.selectByStockAndDate(stockCode, resolvedDate);
 
-        if (rows.isEmpty() && resolvedDate.equals(today) && !kisHistoryService.isBulkSyncInProgress()) {
-            maybeIngest(stockCode, resolvedDate);
+        if (rows.isEmpty() && !kisHistoryService.isBulkSyncInProgress()) {
+            maybeIngest(stockCode, resolvedDate, today);
 
             rows = stockIntradayMinuteDao.selectByStockAndDate(stockCode, resolvedDate);
         }
@@ -84,7 +85,23 @@ public class StockMinuteReadService {
         );
     }
 
-    private void maybeIngest(String stockCode, LocalDate tradeDate) {
+    private void maybeIngest(String stockCode, LocalDate tradeDate, LocalDate today) {
+        if (tradeDate.isAfter(today)) {
+            return;
+        }
+
+        LocalDate retentionFloor = today.minusYears(1);
+
+        if (tradeDate.isBefore(retentionFloor)) {
+            log.debug(
+                    "분봉 적재 생략(보관 한도) stockCode={} tradeDate={}",
+                    stockCode,
+                    tradeDate
+            );
+
+            return;
+        }
+
         String key = stockCode + ":" + tradeDate;
         long now = System.currentTimeMillis();
         Long last = lastIngestAt.get(key);
@@ -108,7 +125,11 @@ public class StockMinuteReadService {
             lastIngestAt.put(key, now2);
 
             try {
-                kisIntradayMinuteIngestService.ingestTradingDay(stockCode, tradeDate);
+                if (tradeDate.equals(today)) {
+                    kisIntradayMinuteIngestService.ingestTradingDay(stockCode, tradeDate);
+                } else {
+                    kisHistoricalMinuteIngestService.ingestTradingDay(stockCode, tradeDate);
+                }
             } catch (Exception e) {
                 log.warn("분봉 적재 실패 stockCode={} tradeDate={}", stockCode, tradeDate, e);
             }
