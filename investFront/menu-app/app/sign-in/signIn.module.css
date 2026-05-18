@@ -188,16 +188,26 @@
   text-align: left;
 }
 
-.findPasswordLink {
-  display: block;
+.findLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-top: 14px;
+}
+
+.findLink {
   color: #9ca3b5;
-  text-align: center;
   font-size: 14px;
   text-decoration: none;
 }
 
-.findPasswordLink:hover {
+.findLink:hover {
   color: #2563eb;
   text-decoration: underline;
+}
+
+.findLinkDivider {
+  color: #cbd5e1;
+  font-size: 13px;
 }

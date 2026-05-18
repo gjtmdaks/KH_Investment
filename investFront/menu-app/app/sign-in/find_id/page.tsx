@@ -5,29 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api-error";
-import styles from "./findPassword.module.css";
+import styles from "../find_password/findPassword.module.css";
 
-export default function FindPasswordPage() {
-  const [userId, setUserId] = useState("");
-  const [userName, setUserName] = useState("");
+export default function FindUserIdPage() {
   const [email, setEmail] = useState("");
-
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (!userId.trim()) {
-      setError("아이디를 입력해주세요.");
-      return;
-    }
-
-    if (!userName.trim()) {
-      setError("이름을 입력해주세요.");
-      return;
-    }
 
     if (!email.trim()) {
       setError("이메일을 입력해주세요.");
@@ -37,19 +24,13 @@ export default function FindPasswordPage() {
     setLoading(true);
 
     try {
-      const { data } = await apiClient.post("/users/find_password", {
-        userId: userId.trim(),
-        userName: userName.trim(),
-        email: email.trim(),
-      });
+      const { data } = await apiClient.post("/users/find_id", { email: email.trim() });
 
       if (data.success) {
-        alert(
-          "임시 비밀번호를 이메일로 발송했습니다. 로그인 후 비밀번호를 재설정해 주세요."
-        );
+        alert("가입 이메일로 아이디 정보를 발송했습니다.");
         window.location.href = "/sign-in";
       } else {
-        setError(data.message || "비밀번호 찾기에 실패했습니다.");
+        setError(data.message || "아이디 찾기에 실패했습니다.");
       }
     } catch (err: unknown) {
       setError(getApiErrorMessage(err));
@@ -79,49 +60,20 @@ export default function FindPasswordPage() {
 
       <section className={styles.card}>
         <p className={styles.brand}>KH 증권</p>
-        <h1 className={styles.title}>비밀번호 찾기</h1>
+        <h1 className={styles.title}>아이디 찾기</h1>
         <p className={styles.description}>
-          가입한 아이디, 이름, 이메일을 입력하시면 8자리 임시 비밀번호를
-          보내드립니다.
+          가입 시 등록한 이메일을 입력하면 해당 이메일로 가입하신 아이디 정보를 보내드립니다.
         </p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {error ? <p className={styles.error}>{error}</p> : null}
 
           <div>
-            <label className={styles.fieldLabel} htmlFor="user-id">
-              아이디
-            </label>
-            <input
-              id="user-id"
-              type="text"
-              className={styles.fieldInput}
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="아이디를 입력하세요"
-            />
-          </div>
-
-          <div>
-            <label className={styles.fieldLabel} htmlFor="user-name">
-              이름
-            </label>
-            <input
-              id="user-name"
-              type="text"
-              className={styles.fieldInput}
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="이름을 입력하세요"
-            />
-          </div>
-
-          <div>
-            <label className={styles.fieldLabel} htmlFor="user-email">
+            <label className={styles.fieldLabel} htmlFor="find-id-email">
               이메일
             </label>
             <input
-              id="user-email"
+              id="find-id-email"
               type="email"
               autoComplete="email"
               className={styles.fieldInput}
@@ -132,7 +84,7 @@ export default function FindPasswordPage() {
           </div>
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? "발송 중..." : "임시 비밀번호 발송"}
+            {loading ? "발송 중..." : "아이디 이메일 발송"}
           </button>
         </form>
 

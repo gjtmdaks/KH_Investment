@@ -130,6 +130,35 @@
 	      AND U.DELETE_AT IS NULL
 	
 	</select>
+
+    <select id="selectLocalUserIdByEmail" parameterType="string" resultType="string">
+        SELECT LU.USER_ID
+        FROM USERS U
+        JOIN USER_LOCAL LU
+          ON U.USER_NO = LU.USER_NO
+        WHERE LOWER(U.EMAIL) = LOWER(#{email})
+          AND U.PROVIDER = 'LOCAL'
+          AND NVL(U.STATUS, 'ACTIVE') = 'ACTIVE'
+          AND U.DELETE_AT IS NULL
+    </select>
+
+    <select id="selectLocalUserByUserIdAndUserNameAndEmail"
+            resultType="com.kh.investSpring.domain.user.vo.LocalUser">
+        SELECT
+            LU.USER_NO AS userNo,
+            LU.USER_ID AS userId,
+            LU.PASSWORD AS password,
+            U.USER_NAME AS userName
+        FROM USER_LOCAL LU
+        JOIN USERS U
+          ON LU.USER_NO = U.USER_NO
+        WHERE LU.USER_ID = #{userId}
+          AND U.USER_NAME = #{userName}
+          AND LOWER(U.EMAIL) = LOWER(#{email})
+          AND U.PROVIDER = 'LOCAL'
+          AND NVL(U.STATUS, 'ACTIVE') = 'ACTIVE'
+          AND U.DELETE_AT IS NULL
+    </select>
 	
 	<update id="updatePassword"
 	        parameterType="com.kh.investSpring.domain.user.vo.LocalUser">

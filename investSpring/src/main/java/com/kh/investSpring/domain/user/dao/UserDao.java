@@ -25,6 +25,10 @@ public interface UserDao {
 
 	LocalUser selectLocalUserByUserIdAndUserName(String userId, String userName);
 
+	String selectLocalUserIdByEmail(String email);
+
+	LocalUser selectLocalUserByUserIdAndUserNameAndEmail(String userId, String userName, String email);
+
 	int updatePassword(LocalUser localUser);
 
 	void deleteInvestmentType(Long userNo);

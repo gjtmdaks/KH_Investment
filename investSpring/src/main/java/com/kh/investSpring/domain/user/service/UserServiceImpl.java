@@ -19,12 +19,15 @@ import com.kh.investSpring.domain.user.dao.UserDao;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeAnswerRequest;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
-import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
+import com.kh.investSpring.domain.user.dto.FindPasswordRequest;
+import com.kh.investSpring.domain.user.dto.FindUserIdRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
+import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordRequest;
+import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
@@ -49,6 +52,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final SignupEmailVerificationService signupEmailVerificationService;
+    private final AccountRecoveryEmailService accountRecoveryEmailService;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
+    private final MemberEditVerificationService memberEditVerificationService;
     
     
     @Override
@@ -261,6 +267,23 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public VerifyCurrentPasswordResponse verifyCurrentPassword(
+			Long userNo,
+			VerifyCurrentPasswordRequest request
+	) {
+	    if (request == null) {
+	        throw new IllegalArgumentException("요청값이 없습니다.");
+	    }
+
+	    String editToken = memberEditVerificationService.verifyAndIssueToken(
+	            userNo,
+	            request.currentPassword()
+	    );
+
+	    return new VerifyCurrentPasswordResponse(editToken);
+	}
+
+	@Override
 	@Transactional
 	public UserMeResponse updateMyInfo(Long userNo, UserUpdateRequest updateRequest) {
 	    if (userNo == null) {
@@ -281,6 +304,12 @@ public class UserServiceImpl implements UserService {
 	        throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
 	    }
 
+	    boolean isLocalUser = "LOCAL".equalsIgnoreCase(user.getProvider());
+
+	    if (isLocalUser) {
+	        memberEditVerificationService.assertVerified(userNo, updateRequest.getEditToken());
+	    }
+
 	    user.setUserName(updateRequest.getUserName().trim());
 	    user.setEmail(toNullIfBlank(updateRequest.getEmail()));
 	    user.setPhone(toNullIfBlank(updateRequest.getPhone()));
@@ -291,7 +320,47 @@ public class UserServiceImpl implements UserService {
 	        throw new IllegalStateException("회원정보 수정에 실패했습니다.");
 	    }
 
+	    if (isLocalUser) {
+	        updatePasswordIfRequested(userNo, updateRequest);
+	        memberEditVerificationService.clearVerification(userNo);
+	    }
+
 	    return getMyInfo(userNo);
+	}
+
+	private void updatePasswordIfRequested(Long userNo, UserUpdateRequest updateRequest) {
+	    String newPassword = updateRequest.getNewPassword();
+	    String newPasswordConfirm = updateRequest.getNewPasswordConfirm();
+
+	    boolean hasNewPassword = newPassword != null && !newPassword.isBlank();
+	    boolean hasConfirm = newPasswordConfirm != null && !newPasswordConfirm.isBlank();
+
+	    if (!hasNewPassword && !hasConfirm) {
+	        return;
+	    }
+
+	    if (!hasNewPassword || !hasConfirm) {
+	        throw new IllegalArgumentException("새 비밀번호와 비밀번호 확인을 모두 입력해주세요.");
+	    }
+
+	    PasswordPolicyValidator.validate(newPassword);
+
+	    if (!newPassword.equals(newPasswordConfirm)) {
+	        throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
+	    }
+
+	    LocalUser localUser = userDao.selectLocalUserByUserNo(userNo);
+
+	    if (localUser == null) {
+	        throw new IllegalArgumentException("로컬 계정 정보를 찾을 수 없습니다.");
+	    }
+
+	    localUser.setPassword(passwordEncoder.encode(newPassword));
+	    int passwordResult = userDao.updatePassword(localUser);
+
+	    if (passwordResult == 0) {
+	        throw new IllegalStateException("비밀번호 변경에 실패했습니다.");
+	    }
 	}
 
 	private String toNullIfBlank(String value) {
@@ -303,39 +372,59 @@ public class UserServiceImpl implements UserService {
 	}
 
     @Override
+    public void findUserId(FindUserIdRequest request) {
+        if (request == null || request.email() == null || request.email().isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+
+        String email = accountRecoveryEmailService.normalizeEmail(request.email());
+        accountRecoveryEmailService.validateEmailFormat(email);
+
+        String userId = userDao.selectLocalUserIdByEmail(email);
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("입력하신 이메일로 가입된 로컬 계정을 찾을 수 없습니다.");
+        }
+
+        accountRecoveryEmailService.sendUserId(email, userId);
+    }
+
+    @Override
     @Transactional
-    public void resetPassword(UserResetPasswordRequest request) {
-    	
-    	// 검사 로직
-    	if (request == null) {
+    public void issueTemporaryPassword(FindPasswordRequest request) {
+        if (request == null) {
             throw new IllegalArgumentException("요청값이 없습니다.");
         }
 
-        if (request.getUserId() == null || request.getUserId().isBlank()) {
+        if (request.userId() == null || request.userId().isBlank()) {
             throw new IllegalArgumentException("아이디를 입력해주세요.");
         }
 
-        if (request.getUserName() == null || request.getUserName().isBlank()) {
+        if (request.userName() == null || request.userName().isBlank()) {
             throw new IllegalArgumentException("이름을 입력해주세요.");
         }
 
-        PasswordPolicyValidator.validate(request.getNewPassword());
-        // 검사 로직 끝
-        
-        LocalUser localUser =
-                userDao.selectLocalUserByUserIdAndUserName(
-                        request.getUserId(),
-                        request.getUserName()
-                );
-
-        if (localUser == null) {
-            throw new RuntimeException("회원 정보가 일치하지 않습니다.");
+        if (request.email() == null || request.email().isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
         }
 
-        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-        localUser.setPassword(encodedPassword);
+        String email = accountRecoveryEmailService.normalizeEmail(request.email());
+        accountRecoveryEmailService.validateEmailFormat(email);
 
+        LocalUser localUser = userDao.selectLocalUserByUserIdAndUserNameAndEmail(
+                request.userId().trim(),
+                request.userName().trim(),
+                email
+        );
+
+        if (localUser == null) {
+            throw new IllegalArgumentException("입력하신 정보와 일치하는 회원을 찾을 수 없습니다.");
+        }
+
+        String temporaryPassword = temporaryPasswordGenerator.generate();
+        localUser.setPassword(passwordEncoder.encode(temporaryPassword));
         userDao.updatePassword(localUser);
+
+        accountRecoveryEmailService.sendTemporaryPassword(email, temporaryPassword);
     }
 
     @Override

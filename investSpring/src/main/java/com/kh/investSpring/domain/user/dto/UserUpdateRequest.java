@@ -7,7 +7,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserUpdateRequest {
 
+    private String editToken;
     private String userName;
     private String email;
     private String phone;
+    private String newPassword;
+    private String newPasswordConfirm;
 }
