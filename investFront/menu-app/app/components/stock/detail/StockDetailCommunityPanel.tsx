@@ -95,8 +95,8 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
       return;
     }
 
-    if (trimmedContent.length > 2000) {
-      setMessage("댓글은 2,000자 이하로 입력해주세요.");
+    if (trimmedContent.length > 500) {
+      setMessage("댓글은 500자 이하로 입력해주세요.");
       return;
     }
 
@@ -128,7 +128,7 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
     }
 
     if (trimmedContent.length > 2000) {
-      setMessage("답글은 2,000자 이하로 입력해주세요.");
+      setMessage("답글은 500자 이하로 입력해주세요.");
       return;
     }
 
@@ -226,12 +226,12 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder="이 종목에 대한 의견을 작성해보세요."
-          maxLength={2000}
+          maxLength={500}
           rows={2}
         />
 
         <div className={styles.communityWriteFooter}>
-          <span>{content.length.toLocaleString()} / 2,000</span>
+          <span>{content.length.toLocaleString()} / 500</span>
 
           <button
             type="button"
@@ -299,12 +299,12 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                       value={replyContent}
                       onChange={(event) => setReplyContent(event.target.value)}
                       placeholder="답글을 작성해보세요."
-                      maxLength={2000}
+                      maxLength={500}
                       rows={2}
                     />
 
                     <div className={styles.communityWriteFooter}>
-                      <span>{replyContent.length.toLocaleString()} / 2,000</span>
+                      <span>{replyContent.length.toLocaleString()} / 500</span>
 
                       <div className={styles.replyButtonGroup}>
                         <button
