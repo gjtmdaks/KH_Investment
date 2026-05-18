@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 
 import { StockDetailChartShell } from "@/app/components/stock/detail/StockDetailChartShell";
 import { StockDetailEmptyState } from "@/app/components/stock/detail/StockDetailEmptyState";
@@ -66,6 +66,16 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     handleCreateOrder,
   } = useStockDetailOrderForm(stockCode, price);
 
+  const handleOrderbookPriceSelect = useCallback(
+    (selectedPrice: string) => {
+      const numeric = parseNumeric(selectedPrice);
+
+      setOrderType("LIMIT");
+      setOrderPrice(numeric !== null ? String(numeric) : selectedPrice);
+    },
+    [setOrderPrice, setOrderType]
+  );
+
   const isUp = useMemo(() => {
     const rate = Number(price?.changeRate ?? 0);
     const change = Number(price?.changePrice ?? 0);
@@ -122,7 +132,11 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
               <StockDetailEmptyState title="호가 정보를 불러오는 중입니다." />
             ) : null}
             {!orderbookLoading && activeTab === "orderbook" ? (
-              <StockDetailOrderbookPanel orderbook={orderbook} />
+              <StockDetailOrderbookPanel
+                orderbook={orderbook}
+                price={price}
+                onSelectPrice={handleOrderbookPriceSelect}
+              />
             ) : null}
             {detailLoading && activeTab === "summary" ? (
               <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />
