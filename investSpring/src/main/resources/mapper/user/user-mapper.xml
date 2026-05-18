@@ -8,6 +8,14 @@
         WHERE USER_ID = #{userId}
     </select>
 
+    <select id="countActiveUserByEmail" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE LOWER(EMAIL) = LOWER(#{email})
+          AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'
+          AND DELETE_AT IS NULL
+    </select>
+
 	<select id="selectUserByUserNo" parameterType="long" resultType="com.kh.investSpring.domain.user.vo.User">
         SELECT
             USER_NO AS userNo,
@@ -24,12 +32,14 @@
     
 	<insert id="insertUser" parameterType="com.kh.investSpring.domain.user.vo.User">
         <selectKey keyProperty="userNo" resultType="int" order="BEFORE">
-            SELECT SEQ_USERS_NO.NEXTVAL FROM DUAL
+            SELECT SEQ_USERS.NEXTVAL FROM DUAL
         </selectKey>
 
         INSERT INTO USERS (
             USER_NO,
             USER_NAME,
+            EMAIL,
+            PHONE,
             PROVIDER,
             CREATED_AT,
             STATUS,
@@ -37,6 +47,8 @@
         ) VALUES (
             #{userNo},
             #{userName},
+            #{email},
+            #{phone},
             'LOCAL',
             SYSDATE,
             'ACTIVE',

@@ -18,11 +18,11 @@ import Link from "next/link";
 function getProviderName(provider?: string) {
   switch (provider) {
     case "LOCAL":
-      return "로컬";
+      return "KH증권 계정";
     case "KAKAO":
-      return "카카오";
+      return "카카오계정";
     case "NAVER":
-      return "네이버";
+      return "네이버계정";
     default:
       return provider || "-";
   }

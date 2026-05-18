@@ -15,9 +15,12 @@ import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
+import com.kh.investSpring.domain.user.dto.EmailSendCodeRequest;
+import com.kh.investSpring.domain.user.dto.EmailVerifyCodeRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
+import com.kh.investSpring.domain.user.service.SignupEmailVerificationService;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
 
@@ -32,7 +35,20 @@ public class UserController {
 
 	private final UserService us;
 	private final AuthLogoutService authLogoutService;
-	
+	private final SignupEmailVerificationService signupEmailVerificationService;
+
+    @PostMapping("/signup/email/send-code")
+    public ApiResponse<Void> sendSignupEmailCode(@RequestBody EmailSendCodeRequest request) {
+        signupEmailVerificationService.sendVerificationCode(request.email());
+        return ApiResponse.success(null, "인증번호를 이메일로 발송했습니다.");
+    }
+
+    @PostMapping("/signup/email/verify-code")
+    public ApiResponse<Void> verifySignupEmailCode(@RequestBody EmailVerifyCodeRequest request) {
+        signupEmailVerificationService.verifyCode(request.email(), request.code());
+        return ApiResponse.success(null, "이메일 인증이 완료되었습니다.");
+    }
+
     // 로컬 회원가입
     @PostMapping("/signup")
     public ApiResponse<UserSignUpResponse> signUp(@RequestBody UserSignUpRequest request) {

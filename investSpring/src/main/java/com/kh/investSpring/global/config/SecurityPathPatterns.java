@@ -21,7 +21,7 @@ public final class SecurityPathPatterns {
 			"/api/news",
 			"/users/login",
 			"/users/signin",
-			"/users/signup",
+			"/users/signup/**",
 			"/users/logout",
 			"/users/logout/**",
 			"/users/find_password",

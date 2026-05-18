@@ -4,6 +4,11 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
+import {
+  isPasswordPolicyValid,
+  PASSWORD_POLICY_HINT,
+  validatePassword,
+} from "@/lib/password-policy";
 import styles from "./findPassword.module.css";
 
 export default function ResetPasswordPage() {
@@ -13,6 +18,11 @@ export default function ResetPasswordPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const passwordValidation =
+    newPassword.length > 0 ? validatePassword(newPassword) : null;
+  const isPasswordInvalid =
+    passwordValidation !== null && !passwordValidation.valid;
 
   async function handleReset(e: FormEvent) {
     e.preventDefault();
@@ -28,13 +38,9 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (!newPassword.trim()) {
-      setError("새 비밀번호를 입력해주세요.");
-      return;
-    }
-
-    if (newPassword.length < 4) {
-      setError("비밀번호는 최소 4글자 이상이어야 합니다.");
+    const passwordCheck = validatePassword(newPassword);
+    if (!passwordCheck.valid) {
+      setError(passwordCheck.message ?? "비밀번호 형식이 올바르지 않습니다.");
       return;
     }
 
@@ -124,14 +130,26 @@ export default function ResetPasswordPage() {
             <input
               id="new-password"
               type="password"
-              className={styles.fieldInput}
+              className={`${styles.fieldInput} ${
+                isPasswordInvalid ? styles.inputError : ""
+              }`}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="새 비밀번호를 입력하세요"
             />
+            <p className={styles.fieldHint}>{PASSWORD_POLICY_HINT}</p>
+            {isPasswordInvalid ? (
+              <p className={styles.fieldError}>
+                {passwordValidation?.message}
+              </p>
+            ) : null}
           </div>
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={loading || !isPasswordPolicyValid(newPassword)}
+          >
             {loading ? "변경 중..." : "비밀번호 변경"}
           </button>
         </form>

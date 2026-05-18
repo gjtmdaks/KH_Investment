@@ -1,8 +1,10 @@
 package com.kh.investSpring.domain.user.dto;
 
 public record UserSignUpRequest(
-		String userId,
+        String userId,
         String password,
-        String userName) {
-
+        String passwordConfirm,
+        String userName,
+        String email,
+        String phone) {
 }

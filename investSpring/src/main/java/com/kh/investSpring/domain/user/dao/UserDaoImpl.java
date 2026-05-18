@@ -26,6 +26,11 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
+	public int countActiveUserByEmail(String email) {
+		return session.selectOne("user.countActiveUserByEmail", email);
+	}
+
+	@Override
 	public User selectUserByUserNo(long userNo) {
 		return session.selectOne("user.selectUserByUserNo", userNo);
 	}
