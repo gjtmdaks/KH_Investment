@@ -15,6 +15,8 @@ import {
   type OhlcData,
   type Time,
   type CandlestickData,
+  TickMarkType,
+  type TickMarkFormatter,
 } from "lightweight-charts";
 import { formatNumber } from "@/lib/stock/stockDetailFormat";
 import type { ChartZoomProfile } from "@/lib/stock/stockChartCandles";
@@ -110,11 +112,20 @@ type CrosshairTooltipState = {
   volume: number | null;
 };
 
+const SEOUL_TIME_ZONE = "Asia/Seoul";
+
 const seoulIntradayLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul",
+  timeZone: SEOUL_TIME_ZONE,
   year: "2-digit",
   month: "numeric",
   day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+const seoulIntradayAxisTickFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: SEOUL_TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
@@ -186,6 +197,94 @@ function formatCrosshairLabel(time: Time, intradayMode: boolean): string {
 
 function formatAxisTime(time: Time, intradayMode: boolean): string {
   return formatCrosshairLabel(time, intradayMode);
+}
+
+function formatIntradayAxisTickMark(time: Time): string | null {
+  if (typeof time !== "number" || !Number.isFinite(time)) {
+    return null;
+  }
+
+  const label = seoulIntradayAxisTickFormatter.format(new Date(time * 1000));
+
+  return label.length <= 8 ? label : label.slice(0, 8);
+}
+
+function formatDailyAxisTickMark(
+  time: Time,
+  tickMarkType: TickMarkType
+): string | null {
+  if (isBusinessDay(time)) {
+    switch (tickMarkType) {
+      case TickMarkType.Year:
+        return String(time.year % 100);
+      case TickMarkType.Month:
+        return `${time.month}월`;
+      case TickMarkType.DayOfMonth:
+      case TickMarkType.Time:
+      case TickMarkType.TimeWithSeconds:
+        return `${time.day}일`;
+      default:
+        return null;
+    }
+  }
+
+  if (typeof time === "string") {
+    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(time.trim());
+
+    if (iso) {
+      const year = Number(iso[1]);
+      const month = Number(iso[2]);
+      const day = Number(iso[3]);
+
+      switch (tickMarkType) {
+        case TickMarkType.Year:
+          return String(year % 100);
+        case TickMarkType.Month:
+          return `${month}월`;
+        case TickMarkType.DayOfMonth:
+        case TickMarkType.Time:
+        case TickMarkType.TimeWithSeconds:
+          return `${day}일`;
+        default:
+          return null;
+      }
+    }
+  }
+
+  return null;
+}
+
+function createChartTickMarkFormatter(
+  getIntradayMode: () => boolean
+): TickMarkFormatter {
+  return (time, tickMarkType) => {
+    if (getIntradayMode()) {
+      if (
+        tickMarkType !== TickMarkType.Time &&
+        tickMarkType !== TickMarkType.TimeWithSeconds
+      ) {
+        return null;
+      }
+
+      return formatIntradayAxisTickMark(time);
+    }
+
+    return formatDailyAxisTickMark(time, tickMarkType);
+  };
+}
+
+function getTimeScaleOptions(getIntradayMode: () => boolean) {
+  const intraday = getIntradayMode();
+
+  return {
+    fixLeftEdge: false,
+    fixRightEdge: false,
+    lockVisibleTimeRangeOnResize: true,
+    rightOffset: 0,
+    timeVisible: intraday,
+    secondsVisible: false,
+    tickMarkFormatter: createChartTickMarkFormatter(getIntradayMode),
+  } as const;
 }
 
 function formatTooltipPrice(n: number): string {
@@ -284,12 +383,7 @@ export default function StockCandleChart({
         },
         timeScale: {
           borderColor: "rgba(148, 163, 184, 0.12)",
-          fixLeftEdge: false,
-          fixRightEdge: false,
-          lockVisibleTimeRangeOnResize: true,
-          rightOffset: 0,
-          timeVisible: intradayModeRef.current,
-          secondsVisible: false,
+          ...getTimeScaleOptions(() => intradayModeRef.current),
         },
         crosshair: {
           mode: intradayModeRef.current
@@ -474,17 +568,22 @@ export default function StockCandleChart({
           ? CrosshairMode.MagnetOHLC
           : CrosshairMode.Normal,
       },
-      timeScale: {
-        fixLeftEdge: false,
-        fixRightEdge: false,
-        lockVisibleTimeRangeOnResize: true,
-        rightOffset: 0,
-        timeVisible: intradayModeRef.current,
-        secondsVisible: false,
-      },
+      timeScale: getTimeScaleOptions(() => intradayModeRef.current),
       ...CHART_INTERACTION_OPTIONS,
     });
   }, [candles, error, intradayMode, loading]);
+
+  useLayoutEffect(() => {
+    const chart = chartRef.current;
+
+    if (!chart) {
+      return;
+    }
+
+    chart.applyOptions({
+      timeScale: getTimeScaleOptions(() => intradayModeRef.current),
+    });
+  }, [intradayMode]);
 
   useLayoutEffect(() => {
     forceInitialZoomRef.current = true;
