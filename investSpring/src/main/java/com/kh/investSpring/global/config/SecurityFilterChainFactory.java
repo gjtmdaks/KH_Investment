@@ -78,6 +78,7 @@ public class SecurityFilterChainFactory {
                                     "/watchlist/**",
                                     "/orders/**",
                                     "/recent-view/**",
+                                    "/notice/**",
                                     "/api/board/**",
 						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {

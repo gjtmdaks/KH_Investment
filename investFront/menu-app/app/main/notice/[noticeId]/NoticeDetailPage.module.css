@@ -1,0 +1,141 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 40px 24px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f2f4f6;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #191f28;
+  line-height: 1.4;
+  letter-spacing: -0.6px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin-top: 12px;
+}
+
+.metaItem {
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+.date {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+.content {
+  padding-top: 36px;
+  min-height: 320px;
+  font-size: 16px;
+  line-height: 1.9;
+  color: #333d4b;
+  white-space: pre-wrap;
+}
+
+.actionBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 40px;
+  padding-top: 28px;
+
+  border-top: 1px solid #f2f4f6;
+}
+
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 96px;
+  height: 42px;
+
+  border-radius: 12px;
+
+  background-color: #3182f6;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.editButton:hover {
+  background-color: #1b64da;
+}
+
+.editButton:active {
+  transform: scale(0.97);
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 96px;
+  height: 42px;
+
+  border: none;
+  border-radius: 12px;
+
+  background-color: #f04452;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.deleteButton:hover {
+  background-color: #d92d3a;
+}
+
+.deleteButton:active {
+  transform: scale(0.97);
+}
+
+.breadcrumb {
+  margin-bottom: 12px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #8b95a1;
+}

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="notice">
+    <select id="selectNoticeList" resultType="NoticeListResponse">
+        SELECT
+            NOTICE_ID,
+            TITLE,
+            CREATED_AT,
+            UPDATED_AT
+        FROM NOTICE
+        WHERE DELETE_YN = 'N'
+        ORDER BY NOTICE_ID DESC
+    </select>
+
+    <select id="selectNoticeCount" resultType="long">
+        SELECT COUNT(*)
+        FROM NOTICE
+        WHERE DELETE_YN = 'N'
+    </select>
+
+    <select id="selectNoticeDetail" parameterType="long" resultType="NoticeDetailResponse">
+        SELECT
+            NOTICE_ID,
+            TITLE,
+            CONTENT,
+            CREATED_AT,
+            UPDATED_AT,
+            USER_NO
+        FROM NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+        	AND DELETE_YN = 'N'
+    </select>
+
+	<insert id="insertNotice" parameterType="Notice">
+	    INSERT INTO NOTICE (
+	        NOTICE_ID,
+	        TITLE,
+	        CONTENT,
+	        CREATED_AT,
+	        UPDATED_AT,
+	        USER_NO,
+	        DELETE_YN
+	    )
+	    VALUES (
+	        SEQ_NOTICE.NEXTVAL,
+	        #{title},
+	        #{content},
+	        SYSDATE,
+	        SYSDATE,
+	        #{userNo},
+	        'N'
+	    )
+	</insert>
+    
+    <update id="updateNotice">
+	    UPDATE NOTICE
+	    SET
+	        TITLE = #{title},
+	        CONTENT = #{content},
+	        UPDATED_AT = SYSDATE
+	    WHERE NOTICE_ID = #{noticeId}
+	    	AND DELETE_YN = 'N'
+	</update>
+	
+	<update id="deleteNotice">
+	    UPDATE NOTICE
+	    SET
+	    	DELETE_YN = 'Y'
+	    WHERE NOTICE_ID = #{noticeId}
+	</update>
+
+</mapper>

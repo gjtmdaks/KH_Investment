@@ -1,0 +1,181 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+
+  background-color: #f9fafb;
+
+  padding: 40px 24px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  background-color: #ffffff;
+
+  border-radius: 20px;
+
+  padding: 32px;
+
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 28px;
+}
+
+.writeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 110px;
+  height: 42px;
+
+  border-radius: 12px;
+
+  background-color: #3182f6;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #191f28;
+
+  letter-spacing: -0.5px;
+}
+
+.table {
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+.table thead th {
+  height: 52px;
+
+  border-bottom: 1px solid #e5e8eb;
+
+  color: #6b7684;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.table tbody td {
+  height: 58px;
+
+  border-bottom: 1px solid #f2f4f6;
+
+  font-size: 15px;
+
+  color: #191f28;
+
+  text-align: center;
+}
+
+.row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.row:hover {
+  background-color: #f8fafc;
+}
+
+.row:focus-visible {
+  outline: 2px solid #3182f6;
+  outline-offset: -2px;
+}
+
+.numberCol {
+  width: 120px;
+}
+
+.dateCol {
+  width: 180px;
+}
+
+.titleCol {
+  text-align: left;
+}
+
+.titleCell {
+  text-align: left !important;
+
+  padding-left: 16px;
+  font-weight: 600;
+  color: #191f28;
+}
+
+.noticeLink {
+  text-decoration: none;
+
+  color: #191f28;
+
+  font-weight: 500;
+}
+
+.noticeLink:hover {
+  color: #3182f6;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 36px;
+}
+
+.pageButton,
+.activePage {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: all 0.15s ease;
+}
+
+.pageButton {
+  background-color: #f2f4f6;
+  color: #4e5968;
+}
+
+.pageButton:hover {
+  background-color: #e5e8eb;
+}
+
+.activePage {
+  background-color: #3182f6;
+  color: #ffffff;
+}
