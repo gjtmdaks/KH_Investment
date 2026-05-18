@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { API_BASE_URL } from "@/lib/api-base";
 import {
+  ORDERBOOK_REFRESH_INTERVAL_MS,
   QUOTE_REFRESH_INTERVAL_MS,
   STOCK_NEWS_PAGE_SIZE,
 } from "@/lib/stock/stockDetailConstants";
@@ -198,10 +199,21 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [loadSnapshot]);
 
   useEffect(() => {
-    const timer = window.setInterval(refreshQuote, QUOTE_REFRESH_INTERVAL_MS);
+    if (activeTab === "orderbook") {
+      void refreshQuote();
+    }
+  }, [activeTab, refreshQuote]);
+
+  useEffect(() => {
+    const intervalMs =
+      activeTab === "orderbook"
+        ? ORDERBOOK_REFRESH_INTERVAL_MS
+        : QUOTE_REFRESH_INTERVAL_MS;
+
+    const timer = window.setInterval(refreshQuote, intervalMs);
 
     return () => window.clearInterval(timer);
-  }, [refreshQuote]);
+  }, [activeTab, refreshQuote]);
 
   useEffect(() => {
     if (activeTab !== "news") {
