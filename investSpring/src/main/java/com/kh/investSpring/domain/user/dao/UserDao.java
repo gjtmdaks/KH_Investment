@@ -7,6 +7,8 @@ public interface UserDao {
 
 	int selectByUserId(String userId);
 
+	int countActiveUserByEmail(String email);
+
 	User selectUserByUserNo(long userNo);
 
 	int insertUser(User user);

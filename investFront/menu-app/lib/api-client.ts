@@ -1,6 +1,10 @@
 "use client";
 
-import axios, { AxiosHeaders, type AxiosError } from "axios";
+import axios, {
+  AxiosHeaders,
+  type AxiosError,
+  type AxiosResponse,
+} from "axios";
 
 import { API_BASE_URL } from "@/lib/api-base";
 
@@ -14,7 +18,31 @@ export const apiClient = axios.create({
 type AuthErrorBody = {
   code?: string;
   message?: string;
+  success?: boolean;
 };
+
+type ApiFailureBody = {
+  success: false;
+  message?: string;
+  data?: unknown;
+};
+
+/** 백엔드 ApiResponse.fail + 400 — 예상 가능한 검증 오류(로그인 실패 등) */
+function isExpectedApiFailure(
+  response: AxiosResponse<unknown> | undefined
+): response is AxiosResponse<ApiFailureBody> {
+  if (!response || response.status !== 400) {
+    return false;
+  }
+
+  const body = response.data;
+  return (
+    body != null &&
+    typeof body === "object" &&
+    "success" in body &&
+    (body as ApiFailureBody).success === false
+  );
+}
 
 const authDebugEnabled = process.env.NODE_ENV === "development";
 
@@ -56,8 +84,14 @@ console.log("API_BASE_URL =", API_BASE_URL);
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<AuthErrorBody>) => {
-    const status = error.response?.status;
-    const code = error.response?.data?.code;
+    const response = error.response;
+
+    if (isExpectedApiFailure(response)) {
+      return response;
+    }
+
+    const status = response?.status;
+    const code = response?.data?.code;
 
     if (status === 401 && code === "AUTH_REQUIRED") {
       const cfg = error.config;

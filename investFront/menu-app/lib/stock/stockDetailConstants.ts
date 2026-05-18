@@ -1,6 +1,6 @@
 import type { ChartPeriodLabel, TabKey } from "@/lib/stock/stockDetailTypes";
 
-export const QUOTE_REFRESH_INTERVAL_MS = 30_000;
+export const HERO_QUOTE_REFRESH_INTERVAL_MS = 2_500;
 export const ORDERBOOK_REFRESH_INTERVAL_MS = 2_500;
 export const STOCK_NEWS_PAGE_SIZE = 5;
 

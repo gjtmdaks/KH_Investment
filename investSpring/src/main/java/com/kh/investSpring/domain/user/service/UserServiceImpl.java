@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
+import com.kh.investSpring.global.validation.PasswordPolicyValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,11 +37,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private static final String LOGIN_CREDENTIAL_MISMATCH_MESSAGE =
+            "아이디 혹은 비밀번호가 일치하지 않습니다.";
+
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$");
+
     private final UserDao userDao;
     private final AccountDao accountDao;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
+    private final SignupEmailVerificationService signupEmailVerificationService;
     
     
     @Override
@@ -63,15 +72,24 @@ public class UserServiceImpl implements UserService {
     public UserSignUpResponse signUp(UserSignUpRequest request) {
         validateSignUpRequest(request);
 
+        String email = signupEmailVerificationService.normalizeEmail(request.email());
+        signupEmailVerificationService.assertEmailVerified(email);
+
         int count = userDao.selectByUserId(request.userId());
 
         if (count > 0) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
 
+        if (userDao.countActiveUserByEmail(email) > 0) {
+            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+        }
+
         User user = new User();
-        user.setUserName(request.userName());
-        user.setAuth(2); // 일반 유저
+        user.setUserName(request.userName().trim());
+        user.setEmail(email);
+        user.setPhone(normalizePhone(request.phone()));
+        user.setAuth(2);
 
         userDao.insertUser(user);
 
@@ -87,7 +105,9 @@ public class UserServiceImpl implements UserService {
         
         accountDao.insertAccount(user.getUserNo());
         accountDao.insertAccountBalance(user.getUserNo());
-        
+
+        signupEmailVerificationService.clearEmailVerified(email);
+
         return new UserSignUpResponse(
                 user.getUserNo(),
                 request.userId(),
@@ -104,17 +124,36 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("아이디는 필수입니다.");
         }
 
-        if (request.password() == null || request.password().isBlank()) {
-            throw new IllegalArgumentException("비밀번호는 필수입니다.");
+        PasswordPolicyValidator.validate(request.password());
+
+        if (request.passwordConfirm() == null || request.passwordConfirm().isBlank()) {
+            throw new IllegalArgumentException("비밀번호 확인은 필수입니다.");
         }
 
-        if (request.password().length() < 4) {
-            throw new IllegalArgumentException("비밀번호는 최소 4글자 이상이어야 합니다.");
+        if (!request.password().equals(request.passwordConfirm())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         if (request.userName() == null || request.userName().isBlank()) {
             throw new IllegalArgumentException("이름은 필수입니다.");
         }
+
+        if (request.email() == null || request.email().isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+
+        if (request.phone() == null || request.phone().isBlank()) {
+            throw new IllegalArgumentException("전화번호는 필수입니다.");
+        }
+
+        String phone = normalizePhone(request.phone());
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
+            throw new IllegalArgumentException("올바른 휴대전화 번호 형식이 아닙니다.");
+        }
+    }
+
+    private String normalizePhone(String rawPhone) {
+        return rawPhone.trim().replaceAll("\\s+", "");
     }
 
 	@Override
@@ -122,11 +161,11 @@ public class UserServiceImpl implements UserService {
 	    LocalUser localUser = userDao.selectLocalUserByUserId(request.getUserId());
 	    
 	    if (localUser == null) {
-	        throw new IllegalArgumentException("존재하지 않는 아이디입니다.");
+	        throw new IllegalArgumentException(LOGIN_CREDENTIAL_MISMATCH_MESSAGE);
 	    }
-	    
+
 	    if (!passwordEncoder.matches(request.getPassword(), localUser.getPassword())) {
-	        throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+	        throw new IllegalArgumentException(LOGIN_CREDENTIAL_MISMATCH_MESSAGE);
 	    }
 
 	    User user = userDao.selectUserByUserNo(localUser.getUserNo());
@@ -280,13 +319,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("이름을 입력해주세요.");
         }
 
-        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
-            throw new IllegalArgumentException("새 비밀번호를 입력해주세요.");
-        }
-
-        if (request.getNewPassword().length() < 4) {
-            throw new IllegalArgumentException("비밀번호는 최소 4글자 이상이어야 합니다.");
-        }
+        PasswordPolicyValidator.validate(request.getNewPassword());
         // 검사 로직 끝
         
         LocalUser localUser =

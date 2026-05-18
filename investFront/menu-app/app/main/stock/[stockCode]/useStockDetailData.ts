@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { API_BASE_URL } from "@/lib/api-base";
 import {
+  HERO_QUOTE_REFRESH_INTERVAL_MS,
   ORDERBOOK_REFRESH_INTERVAL_MS,
-  QUOTE_REFRESH_INTERVAL_MS,
   STOCK_NEWS_PAGE_SIZE,
 } from "@/lib/stock/stockDetailConstants";
 import { normalizeOrderbookResponse } from "@/lib/stock/stockDetailOrderbook";
@@ -173,24 +173,25 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     }
   }, [fetchJson, stockCode]);
 
-  const refreshQuote = useCallback(async () => {
-    const [priceResult, orderbookResult] = await Promise.allSettled([
-      fetchJson<PriceResponse>(`/api/stocks/${stockCode}/price`),
-      fetchJson<OrderbookResponse>(`/api/stocks/${stockCode}/orderbook`),
-    ]);
-    if (priceResult.status === "fulfilled") {
-      setPrice(priceResult.value);
+  const refreshPrice = useCallback(async () => {
+    try {
+      const priceData = await fetchJson<PriceResponse>(
+        `/api/stocks/${stockCode}/price`
+      );
+      setPrice(priceData);
+    } catch {
+      return;
     }
+  }, [fetchJson, stockCode]);
 
-    if (orderbookResult.status === "fulfilled") {
-      setOrderbook(normalizeOrderbookResponse(orderbookResult.value));
-    }
-
-    if (
-      priceResult.status === "rejected" &&
-      orderbookResult.status === "rejected"
-    ) {
-      setError("시세 갱신에 실패했습니다.");
+  const refreshOrderbook = useCallback(async () => {
+    try {
+      const orderbookData = await fetchJson<OrderbookResponse>(
+        `/api/stocks/${stockCode}/orderbook`
+      );
+      setOrderbook(normalizeOrderbookResponse(orderbookData));
+    } catch {
+      return;
     }
   }, [fetchJson, stockCode]);
 
@@ -199,21 +200,30 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [loadSnapshot]);
 
   useEffect(() => {
-    if (activeTab === "orderbook") {
-      void refreshQuote();
-    }
-  }, [activeTab, refreshQuote]);
+    void refreshPrice();
 
-  useEffect(() => {
-    const intervalMs =
-      activeTab === "orderbook"
-        ? ORDERBOOK_REFRESH_INTERVAL_MS
-        : QUOTE_REFRESH_INTERVAL_MS;
-
-    const timer = window.setInterval(refreshQuote, intervalMs);
+    const timer = window.setInterval(
+      refreshPrice,
+      HERO_QUOTE_REFRESH_INTERVAL_MS
+    );
 
     return () => window.clearInterval(timer);
-  }, [activeTab, refreshQuote]);
+  }, [refreshPrice]);
+
+  useEffect(() => {
+    if (activeTab !== "orderbook") {
+      return;
+    }
+
+    void refreshOrderbook();
+
+    const timer = window.setInterval(
+      refreshOrderbook,
+      ORDERBOOK_REFRESH_INTERVAL_MS
+    );
+
+    return () => window.clearInterval(timer);
+  }, [activeTab, refreshOrderbook]);
 
   useEffect(() => {
     if (activeTab !== "news") {

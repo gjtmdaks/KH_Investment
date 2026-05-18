@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { getApiErrorMessage, normalizeLoginErrorMessage } from "@/lib/api-error";
 import { API_BASE_URL } from "@/lib/api-base";
 import styles from "./signIn.module.css";
 
@@ -59,7 +60,7 @@ export default function SignInPage() {
     );
 
     if (!data.success || !data.data?.accessToken) {
-      setError(data.message ?? "로그인에 실패했습니다.");
+      setError(normalizeLoginErrorMessage(data.message ?? "로그인에 실패했습니다."));
       return;
     }
 
@@ -67,11 +68,8 @@ export default function SignInPage() {
     window.localStorage.setItem("user", JSON.stringify(data.data));
 
     router.push("/main");
-  } catch (error: any){
-    console.error("로그인 실패 전체:", error);
-    console.error("응답 상태:", error.response?.status);
-    console.error("응답 데이터:", error.response?.data);
-    setError("서버와 통신할 수 없습니다.");
+  } catch (error: unknown) {
+    setError(getApiErrorMessage(error));
   } finally {
     setLoading(false);
   }
