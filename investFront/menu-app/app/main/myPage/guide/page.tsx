@@ -1,3 +1,4 @@
+import Link from "next/link"; 
 import layoutStyles from "../myPage.module.css";
 import styles from "./guide.module.css";
 import MyPageSidebar from "../components/MyPageSidebar";
@@ -10,6 +11,7 @@ function MobileUIScreen({ children }: { children: any }) {
     </div>
   );
 }
+
 function Step1UI() {
   return (
     <MobileUIScreen>
@@ -30,6 +32,7 @@ function Step1UI() {
     </MobileUIScreen>
   );
 }
+
 function Step2UI() {
   return (
     <MobileUIScreen>
@@ -64,6 +67,7 @@ function Step2UI() {
     </MobileUIScreen>
   );
 }
+
 function Step3UI() {
   return (
     <MobileUIScreen>
@@ -91,11 +95,11 @@ export default function Guide() {
   ];
 
   const features = [
-    { title: "종목 검색", desc: "실시간 시세 확인", icon: "🔍" },
-    { title: "주문", desc: "간편한 매수/매도", icon: "⚖️" },
-    { title: "내 정보", desc: "자산 현황 및 내역", icon: "👤" },
-    { title: "차트 분석", desc: "다양한 지표 제공", icon: "📊" },
-    { title: "랭킹", desc: "수익률 순위 확인", icon: "🏆" },
+    { title: "종목 검색", desc: "실시간 시세 확인", icon: "🔍", path: "/main/stock" },
+    { title: "주문", desc: "간편한 매수/매도", icon: "⚖️", path: "/main/stock" },
+    { title: "내 정보", desc: "자산 현황 및 내역", icon: "👤", path: "/main/myPage/member" }, 
+    { title: "차트 분석", desc: "다양한 지표 제공", icon: "📊", path: "/main/stock" },
+    { title: "랭킹", desc: "수익률 순위 확인", icon: "🏆", path: "/main/ranking" },
   ];
 
   return (
@@ -135,11 +139,14 @@ export default function Guide() {
             <h3 className={styles.sectionTitle}>주요 기능 한눈에 보기</h3>
             <div className={styles.featureGrid}>
               {features.map((f, idx) => (
-                <div key={idx} className={styles.featureCard}>
-                  <div className={styles.featureIcon}>{f.icon}</div>
-                  <div className={styles.featureTitle}>{f.title}</div>
-                  <p className={styles.featureDesc}>{f.desc}</p>
-                </div>
+                
+                <Link href={f.path} key={idx} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className={styles.featureCard}>
+                    <div className={styles.featureIcon}>{f.icon}</div>
+                    <div className={styles.featureTitle}>{f.title}</div>
+                    <p className={styles.featureDesc}>{f.desc}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
