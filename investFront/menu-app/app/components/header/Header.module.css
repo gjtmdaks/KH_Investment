@@ -44,8 +44,6 @@
   gap: 32px;
 
   margin-left: 56px;
-
-  flex-shrink: 0;
 }
 
 .navItem {
@@ -65,49 +63,20 @@
   color: #3182f6;
 }
 
-/* 검색 영역 */
-.searchWrap {
+.leftArea {
+  display: flex;
+  align-items: center;
+
+  flex-shrink: 0;
+}
+
+.centerArea {
   flex: 1;
 
   display: flex;
   justify-content: center;
 
-  margin: 0 40px;
-}
-
-.searchInput {
-  width: 100%;
-  max-width: 360px;
-
-  height: 40px;
-
-  padding: 0 16px;
-
-  border: 1px solid #e5e8eb;
-  border-radius: 999px;
-
-  background-color: #f8fafc;
-
-  font-size: 14px;
-  color: #191f28;
-
-  outline: none;
-
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.searchInput::placeholder {
-  color: #8b95a1;
-}
-
-.searchInput:focus {
-  background-color: #ffffff;
-  border-color: #3182f6;
-
-  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
+  padding: 0 40px;
 }
 
 /* 오른쪽 */

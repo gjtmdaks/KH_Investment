@@ -1,0 +1,74 @@
+.list {
+  border: 1px solid #e5e8eb;
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  background-color: #ffffff;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px 20px;
+
+  text-decoration: none;
+
+  border-bottom: 1px solid #f2f4f6;
+
+  transition: background-color 0.12s ease;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item:hover {
+  background-color: #f8fafc;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.stockName {
+  font-size: 16px;
+  font-weight: 700;
+
+  color: #191f28;
+}
+
+.stockCode {
+  font-size: 13px;
+
+  color: #8b95a1;
+}
+
+.market {
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #3182f6;
+
+  background-color: rgba(49, 130, 246, 0.08);
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 180px;
+
+  font-size: 15px;
+  color: #8b95a1;
+}

@@ -1,0 +1,19 @@
+.page {
+  padding: 32px 24px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 0 auto;
+}
+
+.pageTitle {
+  font-size: 30px;
+  font-weight: 700;
+
+  color: #f8fafc;
+
+  margin-bottom: 28px;
+}

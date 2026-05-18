@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
+import StockSearchBar from "./StockSearchBar";
 import {
   getCurrentUser,
   performLogout,
   type LoginUser,
 } from "@/lib/auth-user";
-
 import styles from "./Header.module.css";
 
 type MainHeaderPayload = {
@@ -19,7 +18,6 @@ type MainHeaderPayload = {
 
 export default function Header({ data }: { data?: unknown }) {
   const header = (data as { header?: MainHeaderPayload } | null)?.header;
-
   const [localUser, setLocalUser] = useState<LoginUser | null>(null);
 
   useEffect(() => {
@@ -27,7 +25,6 @@ export default function Header({ data }: { data?: unknown }) {
       const user = await getCurrentUser();
       setLocalUser(user);
     }
-
     loadUser();
   }, []);
 
@@ -44,60 +41,61 @@ export default function Header({ data }: { data?: unknown }) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/main" className={styles.logoArea}>
-          <Image
-            src="/logo-full.png"
-            alt="KH 증권 로고"
-            width={132}
-            height={33}
-            className={styles.logoImage}
-            priority
-          />
-        </Link>
+        <div className={styles.leftArea}>
+          <Link
+            href="/main"
+            className={styles.logoArea}
+          >
+            <Image
+              src="/logo-full.png"
+              alt="KH 증권 로고"
+              width={132}
+              height={33}
+              className={styles.logoImage}
+              priority
+            />
+          </Link>
 
-        <nav className={styles.nav}>
-          <Link href="/main" className={styles.navItem}>
-            홈
-          </Link>
-          <Link href="/main/news" className={styles.navItem}>
-            뉴스
-          </Link>
-          <Link href="/main/screener" className={styles.navItem}>
-            주식 골라보기
-          </Link>
-          <Link href="/main/my-account" className={styles.navItem}>
-            내 계좌
-          </Link>
-          <Link href="/main/notice" className={styles.navItem}>
-            공지사항
-          </Link>
-        </nav>
+          <nav className={styles.nav}>
+            <Link href="/main" className={styles.navItem}>
+              홈
+            </Link>
 
-        <div className={styles.searchWrap}>
-          <input
-            type="text"
-            placeholder="종목명 또는 종목코드 검색"
-            className={styles.searchInput}
-          />
+            <Link href="/main/news" className={styles.navItem}>
+              뉴스
+            </Link>
+
+            <Link href="/main/screener" className={styles.navItem}>
+              주식 골라보기
+            </Link>
+
+            <Link href="/main/my-account" className={styles.navItem}>
+              내 계좌
+            </Link>
+
+            <Link href="/main/notice" className={styles.navItem}>
+              공지사항
+            </Link>
+          </nav>
         </div>
 
-        <div className={styles.searchWrap}>
-          <div className={styles.searchBox}>
-            {/* <SearchIcon /> */}
-            <input />
-          </div>
+        <div className={styles.centerArea}>
+          <StockSearchBar />
         </div>
 
         <div className={styles.rightArea}>
           {isLogin ? (
             <div className={styles.loggedInWrap}>
-              <Link href="/main/myPage" className={styles.userLink}>
+              <Link
+                href="/main/myPage"
+                className={styles.userLink}
+              >
                 <span className={styles.welcome}>
                   {displayName}님, 환영합니다!
                 </span>
               </Link>
 
-              <span className={styles.sep} aria-hidden>
+              <span className={styles.sep}>
                 |
               </span>
 
@@ -110,7 +108,10 @@ export default function Header({ data }: { data?: unknown }) {
               </button>
             </div>
           ) : (
-            <Link href="/sign-in" className={styles.loginButton}>
+            <Link
+              href="/sign-in"
+              className={styles.loginButton}
+            >
               로그인
             </Link>
           )}
