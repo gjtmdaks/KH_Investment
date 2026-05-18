@@ -24,6 +24,7 @@ import {
 import styles from "./css/stockDetailChartShell.module.css";
 
 const HOLIDAY_RETRY_LIMIT = 3;
+const PERIOD_CANDLE_RETRY_DELAY_MS = 2_500;
 
 type CachedMinuteChart = {
   kind: "minute";
@@ -183,22 +184,36 @@ export function StockDetailChartShell({
       } else {
         const { from, to } = getChartDateRange(activePeriod);
         const apiPeriod = getApiPeriod(activePeriod);
-        const response = await fetchJson<unknown>(
-          `/api/stocks/${stockCode}/candles?period=${apiPeriod}&from=${from}&to=${to}`
-        );
-        const normalizedCandles = normalizeCandlePayload(response);
-        const nextCandles =
-          activePeriod === "년"
+        const candlesPath = `/api/stocks/${stockCode}/candles?period=${apiPeriod}&from=${from}&to=${to}`;
+
+        const fetchPeriodCandles = async () => {
+          const response = await fetchJson<unknown>(candlesPath);
+          const normalizedCandles = normalizeCandlePayload(response);
+
+          return activePeriod === "년"
             ? aggregateYearlyCandles(normalizedCandles)
             : normalizedCandles;
+        };
+
+        let nextCandles = await fetchPeriodCandles();
+
+        if (nextCandles.length === 0) {
+          await new Promise<void>((resolve) => {
+            window.setTimeout(resolve, PERIOD_CANDLE_RETRY_DELAY_MS);
+          });
+          nextCandles = await fetchPeriodCandles();
+        }
 
         setCandles(nextCandles);
         hasMoreOlderRef.current = false;
         setHasMoreOlder(false);
-        chartCacheRef.current.set(cacheKey, {
-          kind: "period",
-          candles: nextCandles,
-        });
+
+        if (nextCandles.length > 0) {
+          chartCacheRef.current.set(cacheKey, {
+            kind: "period",
+            candles: nextCandles,
+          });
+        }
       }
     } catch {
       setCandles([]);

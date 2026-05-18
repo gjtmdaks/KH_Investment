@@ -1,4 +1,4 @@
-const KIS_VTS_BASE_URL = "https://openapivts.koreainvestment.com:29443";
+const KIS_DEFAULT_BASE_URL = "https://openapi.koreainvestment.com:9443";
 
 export function resolveKisBaseUrl(): string {
   const configured = process.env.KIS_BASE_URL?.replace(/\/$/, "").trim();
@@ -7,5 +7,5 @@ export function resolveKisBaseUrl(): string {
     return configured;
   }
 
-  return KIS_VTS_BASE_URL;
+  return KIS_DEFAULT_BASE_URL;
 }
