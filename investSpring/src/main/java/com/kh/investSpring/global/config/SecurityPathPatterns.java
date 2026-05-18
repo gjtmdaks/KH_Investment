@@ -29,6 +29,8 @@ public final class SecurityPathPatterns {
 			"/watchlist",
 			"/watchlist/**",
 			"/recent-view/**",
+			"/notice",
+			"/notice/{noticeId}",
 			"/admin/**" // 개발단계에서만
 	};
 

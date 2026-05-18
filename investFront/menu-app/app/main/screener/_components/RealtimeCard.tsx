@@ -16,7 +16,7 @@ export default function RealtimeCard({
           const isUp = stock.changeRate >= 0;
 
           return (
-            <Link href={`/main/stock/${stock.stockCode}`}>
+            <Link href={`/main/stock/${stock.stockCode}`} key={`${stock.stockCode}`}>
                 <div
                 key={stock.stockCode}
                 className={styles.realtimeItem}

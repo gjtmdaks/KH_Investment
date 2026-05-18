@@ -68,13 +68,25 @@ export default function Header({ data }: { data?: unknown }) {
           <Link href="/main/my-account" className={styles.navItem}>
             내 계좌
           </Link>
+          <Link href="/main/notice" className={styles.navItem}>
+            공지사항
+          </Link>
         </nav>
 
-        <input
-          type="text"
-          placeholder="종목명 또는 종목코드 검색"
-          className={styles.searchInput}
-        />
+        <div className={styles.searchWrap}>
+          <input
+            type="text"
+            placeholder="종목명 또는 종목코드 검색"
+            className={styles.searchInput}
+          />
+        </div>
+
+        <div className={styles.searchWrap}>
+          <div className={styles.searchBox}>
+            {/* <SearchIcon /> */}
+            <input />
+          </div>
+        </div>
 
         <div className={styles.rightArea}>
           {isLogin ? (
