@@ -162,13 +162,18 @@ export function normalizeCandlePayload(payload: unknown): ChartCandle[] {
 }
 
 function normalizeCandle(item: Record<string, unknown>): ChartCandle {
+  const open = toNumber(item.open ?? item.openPrice);
+  const close = toNumber(
+    item.close ?? item.closePrice ?? item.stck_prpr ?? item.stck_clpr
+  );
+
   return {
-    date: String(item.date ?? ""),
-    open: toNumber(item.open),
-    high: toNumber(item.high),
-    low: toNumber(item.low),
-    close: toNumber(item.close),
-    volume: toNumber(item.volume),
+    date: String(item.date ?? item.time ?? ""),
+    open,
+    high: toNumber(item.high ?? item.highPrice),
+    low: toNumber(item.low ?? item.lowPrice),
+    close,
+    volume: toNumber(item.volume ?? item.vol),
   };
 }
 

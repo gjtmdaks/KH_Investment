@@ -41,6 +41,39 @@ type StockCandleChartProps = {
 
 const CHART_HEIGHT = 360;
 
+const CANDLE_UP_COLOR = "#fb7185";
+const CANDLE_DOWN_COLOR = "#60a5fa";
+const CANDLE_UP_VOLUME_COLOR = "rgba(251, 113, 133, 0.5)";
+const CANDLE_DOWN_VOLUME_COLOR = "rgba(96, 165, 250, 0.5)";
+
+function isCandleUp(candle: ChartCandle) {
+  return candle.close >= candle.open;
+}
+
+function getCandleColors(candle: ChartCandle) {
+  const up = isCandleUp(candle);
+
+  return {
+    color: up ? CANDLE_UP_COLOR : CANDLE_DOWN_COLOR,
+    volumeColor: up ? CANDLE_UP_VOLUME_COLOR : CANDLE_DOWN_VOLUME_COLOR,
+  };
+}
+
+const CANDLESTICK_STYLE = {
+  upColor: CANDLE_UP_COLOR,
+  downColor: CANDLE_DOWN_COLOR,
+  borderUpColor: CANDLE_UP_COLOR,
+  borderDownColor: CANDLE_DOWN_COLOR,
+  borderVisible: false,
+  wickUpColor: CANDLE_UP_COLOR,
+  wickDownColor: CANDLE_DOWN_COLOR,
+  priceFormat: {
+    type: "price" as const,
+    precision: 0,
+    minMove: 1,
+  },
+};
+
 const CHART_INTERACTION_OPTIONS = {
   handleScroll: {
     mouseWheel: true,
@@ -268,18 +301,7 @@ export default function StockCandleChart({
         height: CHART_HEIGHT,
       });
 
-      const candleSeries = chart.addSeries(CandlestickSeries, {
-        upColor: "#fb7185",
-        downColor: "#60a5fa",
-        borderVisible: false,
-        wickUpColor: "#fb7185",
-        wickDownColor: "#60a5fa",
-        priceFormat: {
-          type: "price",
-          precision: 0,
-          minMove: 1,
-        },
-      });
+      const candleSeries = chart.addSeries(CandlestickSeries, CANDLESTICK_STYLE);
 
       const volumeSeries = chart.addSeries(
         HistogramSeries,
@@ -396,26 +418,35 @@ export default function StockCandleChart({
     const isPrepend = candles.length > previousLength && previousLength > 0;
     const prependOffset = isPrepend ? candles.length - previousLength : 0;
 
-    const candleData: CandlestickData[] = candles.map((candle) => ({
-      time: candleTimeToChartTime(candle),
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-    }));
+    const candleData: CandlestickData[] = candles.map((candle) => {
+      const { color } = getCandleColors(candle);
 
-    const volumeData: HistogramData[] = candles.map((candle) => ({
-      time: candleTimeToChartTime(candle),
-      value: candle.volume,
-      color:
-        candle.close >= candle.open
-          ? "rgba(251, 113, 133, 0.5)"
-          : "rgba(96, 165, 250, 0.5)",
-    }));
+      return {
+        time: candleTimeToChartTime(candle),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        color,
+        borderColor: color,
+        wickColor: color,
+      };
+    });
+
+    const volumeData: HistogramData[] = candles.map((candle) => {
+      const { volumeColor } = getCandleColors(candle);
+
+      return {
+        time: candleTimeToChartTime(candle),
+        value: candle.volume,
+        color: volumeColor,
+      };
+    });
 
     const timeScale = chart.timeScale();
     const logicalRange = isPrepend ? timeScale.getVisibleLogicalRange() : null;
 
+    candleSeries.applyOptions(CANDLESTICK_STYLE);
     candleSeries.setData(candleData);
     volumeSeries.setData(volumeData);
 

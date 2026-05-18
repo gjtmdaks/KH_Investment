@@ -57,8 +57,18 @@ public class StockMinuteReadService {
         List<StockIntradayMinuteCacheDto> rows =
                 stockIntradayMinuteDao.selectByStockAndDate(stockCode, resolvedDate);
 
-        if (rows.isEmpty() && !kisHistoryService.isBulkSyncInProgress()) {
-            maybeIngest(stockCode, resolvedDate, today);
+        if (!kisHistoryService.isBulkSyncInProgress()) {
+            if (rows.isEmpty()) {
+                maybeIngest(stockCode, resolvedDate, today);
+            } else if (needsClosePriceRepair(rows)) {
+                log.info(
+                        "분봉 종가 누락 캐시 복구 재적재 stockCode={} tradeDate={} bars={}",
+                        stockCode,
+                        resolvedDate,
+                        rows.size()
+                );
+                forceReingest(stockCode, resolvedDate, today);
+            }
 
             rows = stockIntradayMinuteDao.selectByStockAndDate(stockCode, resolvedDate);
         }
@@ -83,6 +93,21 @@ public class StockMinuteReadService {
                 toLabel,
                 candles
         );
+    }
+
+    private boolean needsClosePriceRepair(List<StockIntradayMinuteCacheDto> rows) {
+        return rows.stream().anyMatch(row -> {
+            long open = safeLong(row.getOpenPrice());
+            long close = safeLong(row.getClosePrice());
+
+            return open > 0L && close <= 0L;
+        });
+    }
+
+    private void forceReingest(String stockCode, LocalDate tradeDate, LocalDate today) {
+        String key = stockCode + ":" + tradeDate;
+        lastIngestAt.remove(key);
+        maybeIngest(stockCode, tradeDate, today);
     }
 
     private void maybeIngest(String stockCode, LocalDate tradeDate, LocalDate today) {
