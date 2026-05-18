@@ -28,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class KisHistoryService {
 
+    private static final int SYNC_HISTORY_MAX_RETRIES = 5;
+
     private final KisProperties properties;
     private final KisTokenService kisTokenService;
     private final HttpClient httpClient;
@@ -157,12 +159,26 @@ public class KisHistoryService {
         stockHistoryDao.mergeFetchState(stockCode, nextPeriod);
     }
 
-    public void syncHistory(String stockCode, String periodType) throws IOException, InterruptedException {
+    public boolean syncHistory(String stockCode, String periodType) throws IOException, InterruptedException {
+        if (trySyncHistoryWithMarket(stockCode, periodType, "J")) {
+            return true;
+        }
+
+        log.info("KIS J 시장구분 적재 없음, UN 재시도 stockCode={} period={}", stockCode, periodType);
+
+        return trySyncHistoryWithMarket(stockCode, periodType, "UN");
+    }
+
+    private boolean trySyncHistoryWithMarket(
+            String stockCode,
+            String periodType,
+            String marketDivCode
+    ) throws IOException, InterruptedException {
         String token = kisTokenService.getAccessToken();
         String url =
                 properties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-daily-price"
-                + "?FID_COND_MRKT_DIV_CODE=UN"
+                + "?FID_COND_MRKT_DIV_CODE=" + marketDivCode
                 + "&FID_INPUT_ISCD=" + stockCode
                 + "&FID_PERIOD_DIV_CODE=" + periodType
                 + "&FID_ORG_ADJ_PRC=1";
@@ -180,14 +196,13 @@ public class KisHistoryService {
 
         int retry = 0;
 
-        while (true) {
+        while (retry < SYNC_HISTORY_MAX_RETRIES) {
             HttpResponse<String> response = httpClient.send(
-						                            request,
-						                            HttpResponse.BodyHandlers.ofString()
-						                    );
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
             String bodyText = response.body();
 
-            // HTTP 실패
             if (response.statusCode() != 200) {
                 retry++;
                 log.warn("HTTP 실패 stockCode={} period={} status={} retry={}",
@@ -201,7 +216,6 @@ public class KisHistoryService {
                 continue;
             }
 
-            // Rate Limit
             if (bodyText.contains("EGW00201")) {
                 retry++;
                 long wait = Math.min(60000, retry * 10000L);
@@ -218,12 +232,11 @@ public class KisHistoryService {
             }
 
             Map<String, Object> body = objectMapper.readValue(
-					                            bodyText,
-					                            new TypeReference<Map<String, Object>>() {}
-					                    );
+                    bodyText,
+                    new TypeReference<Map<String, Object>>() {}
+            );
             String rtCd = String.valueOf(body.get("rt_cd"));
 
-            // API 실패
             if (!"0".equals(rtCd)) {
                 retry++;
                 log.warn("KIS API 실패 stockCode={} period={} rt_cd={} msg_cd={} msg={} retry={}",
@@ -239,20 +252,22 @@ public class KisHistoryService {
                 continue;
             }
 
-            List<Map<String, Object>> output = (List<Map<String, Object>>) body.get("output");
+            List<Map<String, Object>> output = KisHistoryResponseMapper.extractHistoryRows(body);
 
-            if (output == null || output.isEmpty()) {
-                log.warn("데이터 없음 stockCode={} period={}",
+            if (output.isEmpty()) {
+                log.warn("데이터 없음 stockCode={} period={} marketDiv={}",
                         stockCode,
-                        periodType
+                        periodType,
+                        marketDivCode
                 );
 
-                return;
+                return false;
             }
 
-            log.info("KIS 성공 stockCode={} period={} size={}",
+            log.info("KIS 성공 stockCode={} period={} marketDiv={} size={}",
                     stockCode,
                     periodType,
+                    marketDivCode,
                     output.size()
             );
 
@@ -278,13 +293,24 @@ public class KisHistoryService {
                 stockHistoryDao.mergeHistory(dto);
             }
 
-            log.info("개별 시세 저장 완료 stockCode={} period={}",
+            log.info("개별 시세 저장 완료 stockCode={} period={} marketDiv={}",
                     stockCode,
-                    periodType
+                    periodType,
+                    marketDivCode
             );
 
-            return;
+            return true;
         }
+
+        log.error(
+                "KIS 과거시세 적재 재시도 초과 stockCode={} period={} marketDiv={} maxRetries={}",
+                stockCode,
+                periodType,
+                marketDivCode,
+                SYNC_HISTORY_MAX_RETRIES
+        );
+
+        return false;
     }
 
     private Long parseLong(Object value) {

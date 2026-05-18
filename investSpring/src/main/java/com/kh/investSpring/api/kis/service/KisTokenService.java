@@ -206,6 +206,9 @@ public class KisTokenService {
     }
 
     private void issueAccessTokenOnce() {
+        String tokenUrl = kisProperties.getBaseUrl() + "/oauth2/tokenP";
+        log.info("KIS access token 발급 요청 url={}", tokenUrl);
+
         Map<String, String> requestBody = Map.of(
                 "grant_type", "client_credentials",
                 "appkey", kisProperties.getAppKey(),
@@ -213,7 +216,7 @@ public class KisTokenService {
 
         KisTokenResponse response = kisApiRequestCoordinator.execute(
                 () -> restClient.post()
-                        .uri(kisProperties.getBaseUrl() + "/oauth2/tokenP")
+                        .uri(tokenUrl)
                         .header("content-type", "application/json; charset=utf-8")
                         .body(requestBody)
                         .retrieve()
