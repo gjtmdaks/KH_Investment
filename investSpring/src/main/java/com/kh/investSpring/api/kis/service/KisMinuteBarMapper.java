@@ -79,7 +79,12 @@ final class KisMinuteBarMapper {
         dto.setOpenPrice(parseLong(item.get("stck_oprc")));
         dto.setHighPrice(parseLong(item.get("stck_hgpr")));
         dto.setLowPrice(parseLong(item.get("stck_lwpr")));
-        dto.setClosePrice(parseLong(item.get("stck_clpr")));
+        dto.setClosePrice(
+                firstPositiveLong(
+                        item.get("stck_prpr"),
+                        item.get("stck_clpr")
+                )
+        );
         dto.setVolume(
                 firstPositiveLong(
                         item.get("cntg_vol"),
