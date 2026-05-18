@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.domain.board.dao.BoardDao;
-import com.kh.investSpring.domain.board.dto.CommunityDto;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
@@ -38,24 +37,12 @@ public class StockServiceImpl implements StockService {
         // 3️⃣ 차트 데이터
         List<Long> chart = stockDao.getMiniChart(stockCode);
 
-        // 4️⃣ 커뮤니티
-        var community = boardDao.getTopPostsByStock(stockCode);
-
         return TopStockDto.builder()
                 .stockCode(info.getStockCode())
                 .stockName(info.getStockName())
                 .price(info.getPrice())
                 .changeRate(info.getChangeRate())
                 .miniChart(chart)
-                .community(
-                        community.stream()
-                                .map(c -> CommunityDto.builder()
-                                        .boardNo(c.getBoardNo())
-                                        .content(c.getContent())
-                                        .likeCount(c.getLikeCount())
-                                        .build()
-                                ).toList()
-                )
                 .build();
     }
     
