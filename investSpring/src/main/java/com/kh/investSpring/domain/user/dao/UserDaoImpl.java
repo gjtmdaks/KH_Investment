@@ -87,6 +87,24 @@ public class UserDaoImpl implements UserDao {
     }
     
     @Override
+    public String selectLocalUserIdByEmail(String email) {
+        return session.selectOne("user.selectLocalUserIdByEmail", email);
+    }
+
+    @Override
+    public LocalUser selectLocalUserByUserIdAndUserNameAndEmail(
+            String userId,
+            String userName,
+            String email
+    ) {
+        Map<String, String> param = new HashMap<>();
+        param.put("userId", userId);
+        param.put("userName", userName);
+        param.put("email", email);
+        return session.selectOne("user.selectLocalUserByUserIdAndUserNameAndEmail", param);
+    }
+
+    @Override
     public int updatePassword(LocalUser localUser) {
 
         return session.update(

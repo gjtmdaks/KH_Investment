@@ -12,7 +12,8 @@ import com.kh.investSpring.domain.auth.dto.LogoutResponse;
 import com.kh.investSpring.domain.auth.service.AuthLogoutService;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
-import com.kh.investSpring.domain.user.dto.UserResetPasswordRequest;
+import com.kh.investSpring.domain.user.dto.FindPasswordRequest;
+import com.kh.investSpring.domain.user.dto.FindUserIdRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.EmailSendCodeRequest;
@@ -20,6 +21,8 @@ import com.kh.investSpring.domain.user.dto.EmailVerifyCodeRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
 import com.kh.investSpring.domain.user.dto.UserSignUpResponse;
 import com.kh.investSpring.domain.user.dto.UserUpdateRequest;
+import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordRequest;
+import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.service.SignupEmailVerificationService;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
@@ -101,6 +104,18 @@ public class UserController {
         return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다.");
     }
     
+    @PostMapping("/me/password/verify")
+    public ApiResponse<VerifyCurrentPasswordResponse> verifyCurrentPassword(
+            HttpServletRequest request,
+            @RequestBody VerifyCurrentPasswordRequest verifyRequest
+    ) {
+        Long userNo = (Long) request.getAttribute("userNo");
+
+        VerifyCurrentPasswordResponse response = us.verifyCurrentPassword(userNo, verifyRequest);
+
+        return ApiResponse.success(response, "비밀번호 확인 성공");
+    }
+
     @PatchMapping("/me")
     public ApiResponse<UserMeResponse> updateMyInfo(
             HttpServletRequest request,
@@ -113,18 +128,16 @@ public class UserController {
         return ApiResponse.success(response, "회원정보 수정 성공");
     }
     
-    //비밀번호 변경
+    @PostMapping("/find_id")
+    public ApiResponse<Void> findUserId(@RequestBody FindUserIdRequest request) {
+        us.findUserId(request);
+        return ApiResponse.success(null, "아이디 정보를 이메일로 발송했습니다.");
+    }
+
     @PostMapping("/find_password")
-    public ApiResponse<?> resetPassword(
-            @RequestBody UserResetPasswordRequest request
-    ) {
-
-        us.resetPassword(request);
-
-        return ApiResponse.success(
-                null,
-                "비밀번호 변경 성공"
-        );
+    public ApiResponse<Void> findPassword(@RequestBody FindPasswordRequest request) {
+        us.issueTemporaryPassword(request);
+        return ApiResponse.success(null, "임시 비밀번호를 이메일로 발송했습니다.");
     }
     
     // 투자성향 분석 결과 저장

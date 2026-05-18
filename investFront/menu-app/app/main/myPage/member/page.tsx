@@ -13,7 +13,6 @@ import {
   clearLoginStorage,
   type LoginUser,
 } from "@/lib/auth-user";
-import Link from "next/link";
 
 function getProviderName(provider?: string) {
   switch (provider) {
@@ -170,11 +169,19 @@ export default function MemberPage() {
               </div>
 
               <div className={memberStyles.actionArea}>
-                <Link href="/main/myPage/member/edit">
-                  <button type="button" className={memberStyles.primaryButton}>
-                    회원정보 수정
-                  </button>
-                </Link>
+                <button
+                  type="button"
+                  className={memberStyles.primaryButton}
+                  onClick={() => {
+                    const editPath =
+                      user.provider === "LOCAL"
+                        ? "/main/myPage/member/edit/verify"
+                        : "/main/myPage/member/edit";
+                    router.push(editPath);
+                  }}
+                >
+                  회원정보 수정
+                </button>
                 <button
                   type="button"
                   className={memberStyles.dangerButton}
