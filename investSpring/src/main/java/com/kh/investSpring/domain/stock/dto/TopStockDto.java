@@ -2,8 +2,6 @@ package com.kh.investSpring.domain.stock.dto;
 
 import java.util.List;
 
-import com.kh.investSpring.domain.board.dto.CommunityDto;
-
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,6 +17,4 @@ public class TopStockDto {
     // 📈 미니 차트 (최근 n틱)
     private List<Long> miniChart;
 
-    // 💬 커뮤니티 요약
-    private List<CommunityDto> community;
 }

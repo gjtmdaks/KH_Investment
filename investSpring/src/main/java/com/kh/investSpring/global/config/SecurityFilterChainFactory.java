@@ -78,6 +78,7 @@ public class SecurityFilterChainFactory {
                                     "/watchlist/**",
                                     "/orders/**",
                                     "/recent-view/**",
+                                    "/api/board/**",
 						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
@@ -93,6 +94,7 @@ public class SecurityFilterChainFactory {
 				.authorizeHttpRequests(auth -> {
 					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 					auth.requestMatchers(HttpMethod.GET, "/users/me").permitAll();
+					auth.requestMatchers(HttpMethod.GET, "/api/board/stocks/**").permitAll();
 					auth.requestMatchers(SecurityPathPatterns.AUTH_WHITELIST).permitAll();
 					auth.requestMatchers(SecurityPathPatterns.PUBLIC_WHITELIST).permitAll();
 					if (extraPermitAllPathPatterns.length > 0) {

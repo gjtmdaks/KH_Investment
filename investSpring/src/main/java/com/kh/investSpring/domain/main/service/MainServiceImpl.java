@@ -127,17 +127,6 @@ public class MainServiceImpl implements MainService {
                                         ? top.getMiniChart()
                                         : List.of()
                         )
-                        .communityPreview(
-                                top.getCommunity() != null
-                                        ? top.getCommunity().stream()
-                                        .map(c -> MainResponse.CommunityPreview.builder()
-                                                .boardNo(c.getBoardNo())
-                                                .content(c.getContent())
-                                                .likeCount(c.getLikeCount())
-                                                .build()
-                                        ).toList()
-                                        : List.of()
-                        )
                         .build();
             } catch (Exception e) {
                 topStock = null;
