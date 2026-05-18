@@ -2,8 +2,6 @@ package com.kh.investSpring.domain.board.dao;
 
 import java.util.List;
 
-import org.apache.ibatis.annotations.Param;
-
 import com.kh.investSpring.domain.board.dto.BoardDto;
 
 public interface BoardDao {

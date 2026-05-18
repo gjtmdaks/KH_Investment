@@ -1,0 +1,186 @@
+/* 검색 영역 */
+.searchWrap {
+  position: relative;
+
+  width: 100%;
+  max-width: 420px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  height: 44px;
+
+  padding: 0 14px;
+
+  background-color: #f4f6f8;
+
+  border: 1px solid transparent;
+  border-radius: 14px;
+
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.searchBox:focus-within {
+  background-color: #ffffff;
+
+  border-color: #3182f6;
+
+  box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.08);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+
+  opacity: 0.7;
+}
+
+.searchInput {
+  flex: 1;
+
+  height: 100%;
+
+  margin-left: 10px;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  font-size: 14px;
+  color: #191f28;
+}
+
+.searchInput::placeholder {
+  color: #8b95a1;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+
+  width: 100%;
+
+  background-color: #ffffff;
+
+  border: 1px solid #e5e8eb;
+  border-radius: 18px;
+
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.04);
+
+  overflow: hidden;
+
+  z-index: 1000;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 80px;
+
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+
+  max-height: 360px;
+
+  overflow-y: auto;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 18px;
+
+  text-decoration: none;
+
+  border-bottom: 1px solid #f2f4f6;
+
+  transition: background-color 0.12s ease;
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover {
+  background-color: #f8fafc;
+}
+
+.leftArea {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  min-width: 0;
+}
+
+.stockName {
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #191f28;
+}
+
+.stockCode {
+  font-size: 13px;
+
+  color: #8b95a1;
+}
+
+.market {
+  flex-shrink: 0;
+
+  margin-left: 16px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #3182f6;
+
+  background-color: rgba(49, 130, 246, 0.08);
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 80px;
+
+  font-size: 14px;
+  color: #6b7684;
+}
+
+@media (max-width: 1200px) {
+  .searchWrap {
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 920px) {
+  .searchWrap {
+    display: none;
+  }
+}

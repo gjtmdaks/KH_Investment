@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="search">
+    <!-- 자동완성 -->
+    <select id="selectSuggest" parameterType="string" resultType="SearchSuggestResponse">
+        SELECT *
+        FROM (SELECT
+	            STOCK_CODE,
+	            STOCK_NAME,
+	            MARKET_TYPE
+	        FROM STOCKS
+	        WHERE
+	            STOCK_NAME LIKE '%' || #{keyword} || '%'
+	            OR STOCK_CODE LIKE '%' || #{keyword} || '%'
+	        ORDER BY STOCK_NAME)
+        WHERE ROWNUM <![CDATA[ <= ]]> 10
+    </select>
+
+    <!-- 종목 검색 -->
+    <select id="selectStocks" parameterType="string" resultType="SearchStockResponse">
+        SELECT
+            STOCK_CODE,
+            STOCK_NAME,
+            MARKET_TYPE
+        FROM STOCKS
+        WHERE
+            STOCK_NAME LIKE '%' || #{keyword} || '%'
+            OR STOCK_CODE LIKE '%' || #{keyword} || '%'
+        ORDER BY STOCK_NAME
+    </select>
+
+    <!-- 뉴스 검색 -->
+    <select id="selectNews" parameterType="string" resultType="SearchNewsResponse">
+        SELECT
+            NEWS_INFO_ID,
+            NEWS_TITLE,
+            NEWS_DESCRIPTION,
+            PUBLISHED_AT,
+            ARTICLE_LINK,
+            PUBLISHER
+        FROM NEWS_INFO
+        WHERE
+            NEWS_TITLE LIKE '%' || #{keyword} || '%'
+            OR NEWS_DESCRIPTION LIKE '%' || #{keyword} || '%'
+        ORDER BY PUBLISHED_AT DESC
+    </select>
+	
+</mapper>

@@ -82,6 +82,7 @@ public class SecurityFilterChainFactory {
                                     "/recent-view/**",
                                     "/notice/**",
                                     "/api/board/**",
+                                    "/search/**",
 						            "/admin/**");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
