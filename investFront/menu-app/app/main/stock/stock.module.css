@@ -11,14 +11,15 @@
   display: grid;
 
   grid-template-columns:
-    40px   /* 하트 */
-    50px   /* 순위 */
-    minmax(220px, 1.5fr) /* 종목 */
-    1fr    /* 현재가 */
-    1fr    /* 등락률 */
-    1.2fr  /* 거래량 */
-    1.2fr  /* 거래대금 */
-    160px; /* 버튼 */
+    40px
+    50px
+    50px
+    minmax(200px, 1fr)
+    180px
+    100px
+    130px
+    150px
+    minmax(100px, 1.5fr);
 
   align-items: center;
 
@@ -42,12 +43,12 @@
     40px
     50px
     50px
-    minmax(220px, 1.2fr)
-    1fr
-    1fr
-    1.2fr
-    1.2fr
-    160px;
+    minmax(200px, 1fr)
+    180px
+    100px
+    130px
+    150px
+    minmax(100px, 1.5fr);
 
   align-items: center;
 

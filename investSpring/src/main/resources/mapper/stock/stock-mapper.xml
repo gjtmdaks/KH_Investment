@@ -17,7 +17,8 @@
 	            NVL(c.volume, 0) AS volume,
 	            NVL(c.current_price * c.volume, 0) AS tradingValue,
 	            ai.sentiment AS aiSentiment,
-	            ai.summary AS aiSummary
+	            ai.summary AS aiSummary,
+	            ai.score AS aiScore
 	            
 	        FROM stocks s
 	

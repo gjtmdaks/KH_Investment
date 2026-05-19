@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.kh.investSpring.domain.board.dao.BoardDao;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
@@ -18,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 public class StockServiceImpl implements StockService {
 
     private final StockDao stockDao;
-    private final BoardDao boardDao;
 
     @Override
     public List<StockDto> getStockList() {
@@ -30,14 +28,9 @@ public class StockServiceImpl implements StockService {
 
         return stocks.stream()
                 .map(stock -> {
-                    // AI 분석 없을 경우 기본값
-                    if (stock.getAiSentiment() == null) {
-                        stock.setAiSentiment("NEUTRAL");
-                    }
-
                     if (stock.getAiSummary() == null
                             || stock.getAiSummary().isBlank()) {
-                        stock.setAiSummary("AI 분석 대기중");
+                        stock.setAiSummary("⏳ AI 분석 대기중");
                     }
 
                     return stock;

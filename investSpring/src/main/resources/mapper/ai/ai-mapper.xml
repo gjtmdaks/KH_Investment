@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ai">
+	<select id="getUnAnalyzedNews" resultType="NewsAnalysisTargetDto">
+        SELECT *
+        FROM (SELECT
+	            ni.news_info_id AS newsInfoId,
+	            ni.news_title AS title,
+	            ni.news_description AS description
+	        FROM news_info ni
+	
+	        LEFT JOIN news_analysis na
+	            ON ni.news_info_id = na.news_info_id
+	
+	        WHERE na.news_info_id IS NULL
+	        ORDER BY ni.published_at DESC)
+        WHERE ROWNUM <![CDATA[ <= ]]> 100
+    </select>
+    
+    <insert id="insertNewsAnalysis" parameterType="NewsAnalysisDto">
+	    INSERT INTO news_analysis (
+	        news_info_id,
+	        sentiment,
+	        score,
+	        ai_summary,
+	        analyzed_at
+	    )
+	    VALUES (
+	        #{newsInfoId},
+	        #{sentiment},
+	        #{score},
+	        #{aiSummary},
+	        SYSDATE
+	    )
+	</insert>
+	
+	<select id="getStockNewsAnalysisTargets" resultType="StockNewsAnalysisDto">
+	    SELECT *
+	    FROM (
+	        SELECT
+	            ns.stock_code        AS stockCode,
+	            s.stock_name         AS stockName,
+	            ni.news_info_id      AS newsInfoId,
+	            ni.news_title        AS title,
+	            ni.news_description  AS description,
+	            na.sentiment         AS sentiment,
+	            na.score             AS score,
+	            ROW_NUMBER() OVER (
+	                PARTITION BY ns.stock_code
+	                ORDER BY ni.published_at DESC
+	            ) rn
+	        FROM news_info_stock ns
+	
+	        JOIN news_info ni
+	            ON ns.news_info_id = ni.news_info_id
+	        JOIN news_analysis na
+	            ON ni.news_info_id = na.news_info_id
+	        JOIN stocks s
+	            ON ns.stock_code = s.stock_code
+	    )
+	    WHERE rn <![CDATA[ <= ]]> 3
+	</select>
+	
+	<insert id="mergeStockAiSummary" parameterType="StockAiSummaryDto">
+	    MERGE INTO stock_ai_summary sas
+	    USING dual
+	    ON (sas.stock_code = #{stockCode})
+	
+	    WHEN MATCHED THEN
+	        UPDATE SET
+	            sentiment = #{sentiment},
+	            summary = #{summary},
+	            score = #{score},
+	            updated_at = SYSDATE
+	
+	    WHEN NOT MATCHED THEN
+	        INSERT (
+	            stock_code,
+	            sentiment,
+	            summary,
+	            score,
+	            updated_at
+	        )
+	        VALUES (
+	            #{stockCode},
+	            #{sentiment},
+	            #{summary},
+	            #{score},
+	            SYSDATE
+	        )
+	</insert>
+	
+</mapper>

@@ -14,6 +14,7 @@ type Stock = {
   tradingValue: number;
   aiSentiment: string;
   aiSummary: string;
+  aiScore: number;
 };
 
 export default function StockClient({
