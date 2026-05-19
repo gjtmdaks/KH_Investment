@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   createOrder,
   type OrderKind,
   type OrderType,
 } from "@/lib/order";
+import { snapPriceToTick } from "@/lib/stock/koreanStockPriceTick";
+import { parseNumeric } from "@/lib/stock/stockDetailFormat";
 import type { PriceResponse } from "@/lib/stock/stockDetailTypes";
 
 export function useStockDetailOrderForm(
@@ -20,6 +22,22 @@ export function useStockDetailOrderForm(
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const current = parseNumeric(price?.currentPrice);
+
+    if (orderType !== "LIMIT" || current === null || current <= 0) {
+      return;
+    }
+
+    setOrderPrice((prev) => {
+      if (prev.trim()) {
+        return prev;
+      }
+
+      return Math.round(snapPriceToTick(current)).toLocaleString("ko-KR");
+    });
+  }, [orderType, price?.currentPrice]);
+
   const handleCreateOrder = useCallback(async () => {
     setOrderMessage(null);
 
@@ -30,7 +48,7 @@ export function useStockDetailOrderForm(
         ? currentPrice
         : Number(orderPrice.replaceAll(",", ""));
 
-    const orderQuantity = Number(quantity);
+    const orderQuantity = Number(quantity.replaceAll(",", ""));
 
     if (!requestPrice || requestPrice <= 0) {
       setOrderMessage("주문 가격을 입력해주세요.");
@@ -62,7 +80,12 @@ export function useStockDetailOrderForm(
       setQuantity("");
 
       if (orderType === "LIMIT") {
-        setOrderPrice("");
+        const current = parseNumeric(price?.currentPrice);
+        setOrderPrice(
+          current !== null && current > 0
+            ? Math.round(snapPriceToTick(current)).toLocaleString("ko-KR")
+            : ""
+        );
       }
     } catch (error) {
       console.error(error);
