@@ -27,6 +27,7 @@ public class AuthCookieClearer {
 
 	public void clearAuthCookies(HttpServletResponse response) {
 		for (String cookiePath : resolveCookiePaths()) {
+			expireCookie(response, AccessTokenCookieWriter.ACCESS_TOKEN_COOKIE_NAME, cookiePath);
 			expireCookie(response, RefreshTokenCookieWriter.REFRESH_COOKIE_NAME, cookiePath);
 			expireCookie(response, SESSION_COOKIE_NAME, cookiePath);
 		}

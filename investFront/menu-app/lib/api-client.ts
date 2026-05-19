@@ -1,10 +1,6 @@
 "use client";
 
-import axios, {
-  AxiosHeaders,
-  type AxiosError,
-  type AxiosResponse,
-} from "axios";
+import axios, { type AxiosError, type AxiosResponse } from "axios";
 
 import { API_BASE_URL } from "@/lib/api-base";
 
@@ -66,18 +62,6 @@ function redirectToLogin(payload?: Record<string, unknown>) {
   }
   window.location.assign("/sign-in");
 }
-
-apiClient.interceptors.request.use((config) => {
-  if (typeof window === "undefined") return config;
-
-  const accessToken = window.localStorage.getItem("accessToken");
-  if (!accessToken) return config;
-
-  const headers = AxiosHeaders.from(config.headers);
-  headers.set("Authorization", `Bearer ${accessToken}`);
-  config.headers = headers;
-  return config;
-});
 
 console.log("API_BASE_URL =", API_BASE_URL);
 

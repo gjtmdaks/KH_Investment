@@ -12,16 +12,11 @@ import { completeLogoutFromQuery } from "@/lib/auth-user";
 const apiBase = API_BASE_URL;
 
 async function fetchMainJson(): Promise<unknown> {
-  const headers = new Headers({ Accept: "application/json" });
-  const token = window.localStorage.getItem("accessToken");
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
   const res = await fetch(`${apiBase}/api/main`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
     cache: "no-store",
     credentials: "include",
-    headers,
   });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);

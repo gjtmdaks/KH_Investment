@@ -26,6 +26,9 @@ import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.service.SignupEmailVerificationService;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
+import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
+import com.kh.investSpring.global.jwt.JwtTokenProvider;
+import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,6 +42,9 @@ public class UserController {
 	private final UserService us;
 	private final AuthLogoutService authLogoutService;
 	private final SignupEmailVerificationService signupEmailVerificationService;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final AccessTokenCookieWriter accessTokenCookieWriter;
+	private final RefreshTokenCookieWriter refreshTokenCookieWriter;
 
     @PostMapping("/signup/email/send-code")
     public ApiResponse<Void> sendSignupEmailCode(@RequestBody EmailSendCodeRequest request) {
@@ -63,14 +69,15 @@ public class UserController {
     // 로그인
     @PostMapping("/signin")
     public ApiResponse<UserSignInResponse> login(
-            @RequestBody UserSignInRequest request
-    ) {
-        System.out.println("로그인 컨트롤러 진입");
-        System.out.println("userId = " + request.getUserId());
-
+            @RequestBody UserSignInRequest request,
+            HttpServletResponse httpResponse) {
         UserSignInResponse response = us.signIn(request);
 
-        System.out.println("로그인 서비스 처리 완료");
+        long userNo = response.getUserNo();
+        String accessToken = jwtTokenProvider.createAccessToken(userNo);
+        String refreshToken = jwtTokenProvider.createRefreshToken(userNo);
+        accessTokenCookieWriter.addCookie(httpResponse, accessToken);
+        refreshTokenCookieWriter.addCookie(httpResponse, refreshToken);
 
         return ApiResponse.success(response, "로그인 성공");
     }

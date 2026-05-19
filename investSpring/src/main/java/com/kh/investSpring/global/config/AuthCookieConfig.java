@@ -9,8 +9,12 @@ public class AuthCookieConfig {
 
 	@Bean
 	public RefreshCookieSettings refreshCookieSettings(
+			@Value("${app.auth.cross-origin-cookies:true}") boolean crossOriginCookies,
 			@Value("${app.auth.refresh-cookie-secure:false}") boolean secure,
 			@Value("${app.auth.refresh-cookie-same-site:Lax}") String sameSite) {
+		if (crossOriginCookies) {
+			return new RefreshCookieSettings(true, "None");
+		}
 		return new RefreshCookieSettings(secure, sameSite);
 	}
 }
