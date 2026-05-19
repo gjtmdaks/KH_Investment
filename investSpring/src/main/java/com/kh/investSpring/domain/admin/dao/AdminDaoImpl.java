@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.admin.dao;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,10 +45,11 @@ public class AdminDaoImpl implements AdminDao {
     }
 
     @Override
-    public int updateAdminUserAccountStatus(Long userNo, String status) {
+    public int updateAdminUserAccountStatus(Long userNo, String status, LocalDate stopEndAt) {
         Map<String, Object> param = new HashMap<>();
         param.put("userNo", userNo);
         param.put("status", status);
+        param.put("stopEndAt", stopEndAt);
 
         return session.update("adminMapper.updateAdminUserAccountStatus", param);
     }

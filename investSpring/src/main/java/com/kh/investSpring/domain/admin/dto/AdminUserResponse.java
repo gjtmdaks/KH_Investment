@@ -54,4 +54,30 @@ public class AdminUserResponse {
 
         return "알 수 없음";
     }
+    
+    private Long accountNo;
+
+    private String accountStatus;
+
+    private LocalDateTime stopEndAt;
+
+    public String getAccountStatusName() {
+        if (accountStatus == null) {
+            return "계좌 없음";
+        }
+
+        if ("ACTIVE".equals(accountStatus)) {
+            return "거래 가능";
+        }
+
+        if ("STOP".equals(accountStatus)) {
+            return "거래 정지";
+        }
+
+        if ("CLOSE".equals(accountStatus)) {
+            return "계좌 폐쇄";
+        }
+
+        return "알 수 없음";
+    }
 }

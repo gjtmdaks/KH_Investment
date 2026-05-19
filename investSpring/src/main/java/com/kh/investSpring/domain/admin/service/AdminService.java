@@ -88,7 +88,15 @@ public class AdminService {
             throw new IllegalArgumentException("허용되지 않는 계좌 상태입니다.");
         }
 
-        int result = adminDao.updateAdminUserAccountStatus(userNo, status);
+        if ("STOP".equals(status) && request.getStopEndAt() == null) {
+            throw new IllegalArgumentException("거래 정지 종료일이 필요합니다.");
+        }
+
+        int result = adminDao.updateAdminUserAccountStatus(
+                userNo,
+                status,
+                request.getStopEndAt()
+        );
 
         if (result == 0) {
             throw new IllegalArgumentException("변경할 계좌를 찾을 수 없습니다.");

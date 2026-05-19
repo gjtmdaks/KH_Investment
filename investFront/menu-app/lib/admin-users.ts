@@ -64,7 +64,8 @@ export async function getAdminUsers(
 
 export async function updateAdminUserAccountStatus(
   userNo: number,
-  status: "ACTIVE" | "STOP" | "CLOSE"
+  status: "ACTIVE" | "STOP" | "CLOSE",
+  stopEndAt?: string
 ): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/admin/api/users/${userNo}/account-status`,
@@ -73,11 +74,18 @@ export async function updateAdminUserAccountStatus(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, stopEndAt }),
     }
   );
 
   if (!response.ok) {
+    const errorText = await response.text();
+
+    console.error("회원 계좌 상태 변경 실패", {
+      status: response.status,
+      body: errorText,
+    });
+
     throw new Error(`회원 계좌 상태 변경 실패 (${response.status})`);
   }
 }

@@ -10,35 +10,40 @@
             resultType="com.kh.investSpring.domain.admin.dto.AdminUserResponse">
 
         SELECT
-            USER_NO AS userNo,
-            USER_NAME AS userName,
-            EMAIL AS email,
-            PHONE AS phone,
-            PROVIDER AS provider,
-            CREATED_AT AS createdAt,
-            STATUS AS status,
-            DELETE_AT AS deleteAt,
-            AUTH AS auth
-        FROM USERS
-        WHERE 1 = 1
+		    U.USER_NO AS userNo,
+		    U.USER_NAME AS userName,
+		    U.EMAIL AS email,
+		    U.PHONE AS phone,
+		    U.PROVIDER AS provider,
+		    U.CREATED_AT AS createdAt,
+		    U.STATUS AS status,
+		    U.DELETE_AT AS deleteAt,
+		    U.AUTH AS auth,
+		    A.ACCOUNT_NO AS accountNo,
+		    A.STATUS AS accountStatus,
+		    A.STOP_END_AT AS stopEndAt
+		FROM USERS U
+		LEFT JOIN ACCOUNTS A
+		    ON U.USER_NO = A.USER_NO
+		WHERE 1 = 1
 
         <if test="keyword != null and keyword != ''">
 		    AND (
-		        USER_NAME LIKE '%' || #{keyword} || '%'
-		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
-		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		        U.USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(U.EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(U.PHONE, '') LIKE '%' || #{keyword} || '%'
 		    )
 		</if>
-
-        <if test="status != null and status != '' and status != 'ALL'">
-            AND STATUS = #{status}
-        </if>
-
-        <if test="auth != null">
-            AND AUTH = #{auth}
-        </if>
-
-        ORDER BY USER_NO DESC
+		
+		<if test="status != null and status != '' and status != 'ALL'">
+		    AND U.STATUS = #{status}
+		</if>
+		
+		<if test="auth != null">
+		    AND U.AUTH = #{auth}
+		</if>
+		
+		ORDER BY U.USER_NO DESC
 
     </select>
 
@@ -136,7 +141,13 @@
     
     <update id="updateAdminUserAccountStatus" parameterType="map">
 	    UPDATE ACCOUNTS
-	    SET STATUS = #{status}
+	    SET
+	        STATUS = #{status},
+	        STOP_END_AT =
+	            CASE
+	                WHEN #{status} = 'STOP' THEN #{stopEndAt}
+	                ELSE NULL
+	            END
 	    WHERE USER_NO = #{userNo}
 	</update>
 
@@ -152,5 +163,6 @@
 	            END
 	    WHERE USER_NO = #{userNo}
 	</update>
-
+	
+	
 </mapper>
