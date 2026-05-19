@@ -2,11 +2,15 @@ package com.kh.investSpring.domain.admin.controller;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.api.kis.service.KisHistoryService;
+import com.kh.investSpring.domain.admin.dto.AdminUserListResponse;
+import com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest;
 import com.kh.investSpring.domain.admin.service.AdminService;
 
 import lombok.RequiredArgsConstructor;
@@ -60,5 +64,12 @@ public class AdminController {
         } catch (Exception e) {
             log.error("과거 시세 동기화 중지 실패", e);
         }
+    }
+    
+    @GetMapping("/api/users")
+    public AdminUserListResponse selectAdminUserList(
+            @ModelAttribute AdminUserSearchRequest request
+    ) {
+        return adminService.selectAdminUserList(request);
     }
 }

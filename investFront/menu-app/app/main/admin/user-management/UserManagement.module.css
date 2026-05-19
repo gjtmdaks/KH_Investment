@@ -1,0 +1,242 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 32px;
+  background: #0b1020;
+  color: #f8fafc;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.subTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.primaryButton {
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 12px;
+  padding: 12px 18px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+}
+
+.primaryButton:hover {
+  background: #1d4ed8;
+}
+
+.searchSection {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.searchInput {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #243047;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #e5e7eb;
+  background: #111827;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #64748b;
+}
+
+.searchInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.selectBox {
+  width: 160px;
+  height: 44px;
+  border: 1px solid #243047;
+  border-radius: 12px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #e5e7eb;
+  background: #111827;
+  outline: none;
+}
+
+.selectBox:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  padding: 20px;
+  background: linear-gradient(180deg, #111a2e 0%, #0f172a 100%);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.summaryCard span {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.summaryCard strong {
+  font-size: 28px;
+  color: #ffffff;
+}
+
+.tableSection {
+  overflow: hidden;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  background: #0f172a;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+}
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.userTable thead {
+  background: #111827;
+}
+
+.userTable th,
+.userTable td {
+  padding: 15px 16px;
+  border-bottom: 1px solid #1f2a3d;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.userTable th {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.userTable td {
+  color: #f8fafc;
+}
+
+.userTable tbody tr {
+  transition: background 0.15s ease;
+}
+
+.userTable tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.userTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.statusACTIVE {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.28);
+}
+
+.statusSTOP {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fb7185;
+  border: 1px solid rgba(251, 113, 133, 0.28);
+}
+
+.statusDELETE {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+  border: 1px solid rgba(203, 213, 225, 0.25);
+}
+
+.tableButton {
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 7px 12px;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tableButton:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 20px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .searchSection {
+    flex-direction: column;
+  }
+
+  .selectBox {
+    width: 100%;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableSection {
+    overflow-x: auto;
+  }
+}
+
+.emptyCell {
+  padding: 36px 16px;
+  text-align: center !important;
+  color: #94a3b8 !important;
+}
