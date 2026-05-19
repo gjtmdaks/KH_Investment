@@ -5,6 +5,47 @@
 
   width: 100%;
   min-width: 0;
+  max-height: clamp(320px, calc(100vh - 360px), 500px);
+  min-height: 0;
+}
+
+.summaryBar,
+.ratioBarWrap {
+  flex-shrink: 0;
+}
+
+.ladderSection {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+
+  border: 1px solid var(--stock-border-soft);
+  border-radius: var(--stock-radius-md);
+  background: rgba(2, 6, 23, 0.28);
+}
+
+.ladderScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ladderScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ladderScroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.ladderScroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .summaryBar {
@@ -47,7 +88,8 @@
   display: grid;
   grid-template-columns: minmax(72px, 1fr) minmax(100px, 140px) minmax(72px, 1fr);
   gap: 8px;
-  padding: 0 4px;
+  flex-shrink: 0;
+  padding: 10px 16px 6px;
 
   color: var(--stock-text-muted);
   font-size: 11px;
@@ -68,11 +110,7 @@
   flex-direction: column;
   gap: 4px;
 
-  padding: 10px 12px;
-
-  border: 1px solid var(--stock-border-soft);
-  border-radius: var(--stock-radius-md);
-  background: rgba(2, 6, 23, 0.28);
+  padding: 4px 12px 10px;
 }
 
 .ladderRow {
@@ -236,6 +274,12 @@
   font-weight: 800;
 }
 
+.spreadAnchor {
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .ratioBarWrap {
   display: flex;
   flex-direction: column;
@@ -321,7 +365,11 @@
   }
 
   .ladderBody {
-    padding: 8px;
+    padding: 4px 8px 8px;
+  }
+
+  .ladderHeader {
+    padding: 8px 12px 4px;
   }
 
   .ladderHeader,
