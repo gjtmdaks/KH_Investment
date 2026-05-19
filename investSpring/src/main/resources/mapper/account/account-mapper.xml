@@ -165,10 +165,12 @@
 	
 	        NVL(sh.AVG_PRICE, 0) AS avgPrice,
 	
-	        NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS currentPrice,
+	        src.CURRENT_PRICE AS currentPrice,
 	
 	        NVL(sh.STOCK_RESERVES, 0)
-	        * NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS stockValue
+	        * NVL(src.CURRENT_PRICE, sh.AVG_PRICE) AS stockValue,
+	
+	        src.CHANGE_RATE AS dailyChangeRate
 	
 	    FROM ACCOUNTS a
 	

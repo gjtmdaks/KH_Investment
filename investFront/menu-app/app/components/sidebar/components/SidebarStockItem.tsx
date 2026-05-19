@@ -20,43 +20,38 @@ export default function SidebarStockItem({
 }: Props) {
   const liked = watchlist.includes(stock.stockCode);
   const isUp = stock.changeRate >= 0;
-  const {toggleWatchlist,} = useToggleWatchlist();
+  const { toggleWatchlist } = useToggleWatchlist();
 
   return (
-    <Link
-      href={`/main/stock/${stock.stockCode}`}
-      className={styles.stockItem}
-    >
-      <div className={styles.stockLogo}>
-        {stock.stockName.slice(0, 1)}
-      </div>
+    <div className={styles.stockItem}>
+      <Link
+        href={`/main/stock/${stock.stockCode}`}
+        className={styles.stockItemLink}
+      >
+        <div className={styles.stockLogo}>
+          {stock.stockName.slice(0, 1)}
+        </div>
 
-      <div className={styles.stockName}>
-        {stock.stockName}
-      </div>
+        <div className={styles.stockName}>
+          {stock.stockName}
+        </div>
 
-      <div className={styles.stockPrice}>
-        <strong>
-          {Number(
-            stock.currentPrice
-          ).toLocaleString()}원
-        </strong>
+        <div className={styles.stockPrice}>
+          <strong>
+            {Number(stock.currentPrice).toLocaleString()}원
+          </strong>
 
-        <span
-          className={
-            isUp
-              ? styles.up
-              : styles.down
-          }
-        >
-          {isUp ? "+" : ""}
-          {stock.changeRate}%
-        </span>
-      </div>
+          <span className={isUp ? styles.up : styles.down}>
+            {isUp ? "+" : ""}
+            {stock.changeRate}%
+          </span>
+        </div>
+      </Link>
 
       <button
         type="button"
         className={styles.heartButton}
+        aria-label={liked ? "관심 종목 해제" : "관심 종목 추가"}
         onClick={(e) =>
           toggleWatchlist(e, {
             stockCode: stock.stockCode,
@@ -68,6 +63,6 @@ export default function SidebarStockItem({
       >
         {liked ? "❤️" : "♡"}
       </button>
-    </Link>
+    </div>
   );
 }
