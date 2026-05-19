@@ -1,7 +1,6 @@
 import { API_BASE_URL, apiClient } from "@/lib/api-client";
 
 export type LoginUser = {
-  accessToken?: string;
   userNo: number;
   userId?: string | null;
   userName: string;
@@ -38,12 +37,6 @@ function redirectToLoggedOutHome(): void {
 
 export async function getCurrentUser(): Promise<LoginUser | null> {
   if (typeof window === "undefined") {
-    return null;
-  }
-
-  const token = window.localStorage.getItem("accessToken");
-
-  if (!token) {
     return null;
   }
 

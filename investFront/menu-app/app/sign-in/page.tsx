@@ -12,7 +12,6 @@ import styles from "./signIn.module.css";
 const kakaoOAuthStartUrl = `${API_BASE_URL}/oauth2/authorization/kakao?prompt=login`;
 
 type SignInResponse = {
-  accessToken: string;
   userNo: number;
   userId: string;
   userName: string;
@@ -59,12 +58,11 @@ export default function SignInPage() {
       { userId, password }
     );
 
-    if (!data.success || !data.data?.accessToken) {
+    if (!data.success || !data.data?.userNo) {
       setError(normalizeLoginErrorMessage(data.message ?? "로그인에 실패했습니다."));
       return;
     }
 
-    window.localStorage.setItem("accessToken", data.data.accessToken);
     window.localStorage.setItem("user", JSON.stringify(data.data));
 
     router.push("/main");

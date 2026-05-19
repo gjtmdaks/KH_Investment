@@ -9,6 +9,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.kh.investSpring.domain.auth.service.AuthUserService;
+import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
 import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
 
@@ -17,24 +18,28 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * OAuth2 Authorization Code Grant 성공 시 JWT(Access)를 발급,
- * Refresh -> HttpOnly 쿠키로 내려준 뒤 프론트엔드 콜백 URL로 JWT를 쿼리 파라미터로 담아 리다이렉트.
+ * 카카오 OAuth2 Authorization Code는 Spring Security 클라이언트가 서버에서만 교환합니다.
+ * 성공 시 앱 JWT(Access)와 Refresh를 HttpOnly·Secure·SameSite 쿠키로 설정하고,
+ * 프론트 콜백으로는 파라미터 없이 리다이렉트(URL에 토큰 미포함, OAuth BCP 권장).
  */
 public class OAuth2JwtAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final AuthUserService authUserService;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RefreshTokenCookieWriter refreshTokenCookieWriter;
+	private final AccessTokenCookieWriter accessTokenCookieWriter;
 	private final String oauth2FrontendCallbackUri;
 
 	public OAuth2JwtAuthenticationSuccessHandler(
 			AuthUserService authUserService,
 			JwtTokenProvider jwtTokenProvider,
 			RefreshTokenCookieWriter refreshTokenCookieWriter,
+			AccessTokenCookieWriter accessTokenCookieWriter,
 			String oauth2FrontendCallbackUri) {
 		this.authUserService = authUserService;
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.refreshTokenCookieWriter = refreshTokenCookieWriter;
+		this.accessTokenCookieWriter = accessTokenCookieWriter;
 		this.oauth2FrontendCallbackUri = oauth2FrontendCallbackUri;
 		setAlwaysUseDefaultTargetUrl(true);
 	}
@@ -62,10 +67,10 @@ public class OAuth2JwtAuthenticationSuccessHandler extends SimpleUrlAuthenticati
 
 		String accessToken = jwtTokenProvider.createAccessToken(userNo);
 		String refreshToken = jwtTokenProvider.createRefreshToken(userNo);
+		accessTokenCookieWriter.addCookie(response, accessToken);
 		refreshTokenCookieWriter.addCookie(response, refreshToken);
 
 		String redirectUrl = UriComponentsBuilder.fromUriString(oauth2FrontendCallbackUri)
-				.queryParam("accessToken", accessToken)
 				.build()
 				.encode()
 				.toUriString();

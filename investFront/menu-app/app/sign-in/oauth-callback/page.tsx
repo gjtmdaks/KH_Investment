@@ -8,13 +8,27 @@ import { getCurrentUser } from "@/lib/auth-user";
 
 import styles from "./oauthCallback.module.css";
 
+const OAUTH_MESSAGE_SOURCE = "kh-investment-oauth";
+
 type Phase = "pending" | "working" | "done" | "error";
 
-function looksLikeJwt(token: string): boolean {
-  const parts = token.split(".");
-  return (
-    parts.length === 3 && parts.every((p) => p.length > 0 && !p.includes(" "))
-  );
+function tryNotifyOAuthPopupSuccess(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(
+        { source: OAUTH_MESSAGE_SOURCE, ok: true },
+        window.location.origin
+      );
+      window.close();
+      return true;
+    }
+  } catch {
+    // ignore
+  }
+  return false;
 }
 
 function OAuthCallbackBody() {
@@ -31,13 +45,19 @@ function OAuthCallbackBody() {
     () => searchParams.get("error_description"),
     [searchParams]
   );
-  const accessToken = useMemo(
-    () => searchParams.get("accessToken"),
-    [searchParams]
-  );
 
   useEffect(() => {
     if (phase !== "pending") {
+      return;
+    }
+
+    if (searchParams.has("accessToken")) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("accessToken");
+      const query = next.toString();
+      router.replace(
+        query ? `/sign-in/oauth-callback?${query}` : "/sign-in/oauth-callback"
+      );
       return;
     }
 
@@ -50,49 +70,37 @@ function OAuthCallbackBody() {
       return;
     }
 
-    const raw = accessToken?.trim();
-    if (!raw) {
-      setErrorMessage(
-        "로그인 정보가 전달되지 않았습니다. 다시 로그인해 주세요."
-      );
-      setPhase("error");
-      return;
-    }
-
-    if (!looksLikeJwt(raw)) {
-      setErrorMessage("유효하지 않은 토큰입니다. 다시 로그인해 주세요.");
-      setPhase("error");
-      return;
-    }
-
     setPhase("working");
 
     async function completeLogin() {
       try {
-        window.localStorage.setItem("accessToken", raw);
+        const user = await getCurrentUser();
+        if (!user) {
+          setErrorMessage(
+            "로그인 정보를 불러오지 못했습니다. 다시 로그인해 주세요."
+          );
+          setPhase("error");
+          return;
+        }
+
+        setPhase("done");
+        if (tryNotifyOAuthPopupSuccess()) {
+          return;
+        }
+        router.replace("/main");
       } catch {
         setErrorMessage(
-          "브라우저 저장소에 접근할 수 없습니다. 쿠키·저장 설정을 확인해 주세요."
+          "로그인 처리 중 오류가 발생했습니다. 다시 로그인해 주세요."
         );
         setPhase("error");
-        return;
       }
-
-      const user = await getCurrentUser();
-      if (!user) {
-        setErrorMessage("로그인 정보를 불러오지 못했습니다. 다시 로그인해 주세요.");
-        setPhase("error");
-        return;
-      }
-
-      setPhase("done");
-      router.replace("/main");
     }
 
     void completeLogin();
-  }, [phase, accessToken, oauthError, oauthErrorDescription, router]);
+  }, [phase, oauthError, oauthErrorDescription, router, searchParams]);
 
-  const showSpinner = phase === "pending" || phase === "working" || phase === "done";
+  const showSpinner =
+    phase === "pending" || phase === "working" || phase === "done";
 
   return (
     <main className={styles.container}>

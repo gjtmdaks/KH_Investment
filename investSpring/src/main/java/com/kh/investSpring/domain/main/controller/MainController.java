@@ -19,30 +19,7 @@ public class MainController {
 
     @GetMapping
     public MainResponse getMain(HttpServletRequest request) {
-
-        String token = extractToken(request);
-
-        // 비로그인 상태
-        if (token == null) {
-            return mainService.getMain(null);
-        }
-
-        // 무효·만료 JWT는 게스트처럼 응답 (프런트 localStorage 등에 남은 토큰 대응)
-        try {
-            Long userNo = (Long) request.getAttribute("userNo");
-            return mainService.getMain(userNo);
-        } catch (Exception e) {
-            return mainService.getMain(null);
-        }
-    }
-
-    private String extractToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-
-        return null;
+        Long userNo = (Long) request.getAttribute("userNo");
+        return mainService.getMain(userNo);
     }
 }

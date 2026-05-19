@@ -18,27 +18,6 @@ export type BoardCreateRequest = {
   parentId: number | null;
 };
 
-function getAuthHeaders(): HeadersInit {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  const token =
-    localStorage.getItem("kh_access_token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("jwt") ||
-    localStorage.getItem("access_token");
-
-  if (!token) {
-    return {};
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 async function handleJsonResponse<T>(
   response: Response,
   errorMessage: string
@@ -65,9 +44,6 @@ export async function getStockBoardPosts(
     method: "GET",
     credentials: "include",
     cache: "no-store",
-    headers: {
-      ...getAuthHeaders(),
-    },
   });
 
   return handleJsonResponse<BoardPost[]>(
@@ -85,7 +61,6 @@ export async function createStockBoardPost(
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders(),
     },
     body: JSON.stringify(request),
   });
@@ -100,9 +75,6 @@ export async function deleteBoardPost(boardNo: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/board/${boardNo}`, {
     method: "DELETE",
     credentials: "include",
-    headers: {
-      ...getAuthHeaders(),
-    },
   });
 
   if (!response.ok) {
@@ -114,9 +86,6 @@ export async function likeBoardPost(boardNo: number): Promise<BoardPost> {
   const response = await fetch(`${API_BASE_URL}/api/board/${boardNo}/like`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      ...getAuthHeaders(),
-    },
   });
 
   return handleJsonResponse<BoardPost>(
@@ -129,9 +98,6 @@ export async function unlikeBoardPost(boardNo: number): Promise<BoardPost> {
   const response = await fetch(`${API_BASE_URL}/api/board/${boardNo}/like`, {
     method: "DELETE",
     credentials: "include",
-    headers: {
-      ...getAuthHeaders(),
-    },
   });
 
   return handleJsonResponse<BoardPost>(

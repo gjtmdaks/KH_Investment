@@ -184,10 +184,7 @@ public class UserServiceImpl implements UserService {
 	        throw new IllegalArgumentException("로컬 로그인 계정이 아닙니다.");
 	    }
 
-	    String accessToken = jwtTokenProvider.createAccessToken((long) user.getUserNo());
-
 	    return new UserSignInResponse(
-	            accessToken,
 	            user.getUserNo(),
 	            localUser.getUserId(),
 	            user.getUserName(),
