@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="adminMapper">
+
+    <select id="selectAdminUserList"
+            parameterType="com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest"
+            resultType="com.kh.investSpring.domain.admin.dto.AdminUserResponse">
+
+        SELECT
+            USER_NO AS userNo,
+            USER_NAME AS userName,
+            EMAIL AS email,
+            PHONE AS phone,
+            PROVIDER AS provider,
+            CREATED_AT AS createdAt,
+            STATUS AS status,
+            DELETE_AT AS deleteAt,
+            AUTH AS auth
+        FROM USERS
+        WHERE 1 = 1
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
+                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
+                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="status != null and status != '' and status != 'ALL'">
+            AND STATUS = #{status}
+        </if>
+
+        <if test="auth != null">
+            AND AUTH = #{auth}
+        </if>
+
+        ORDER BY USER_NO DESC
+
+    </select>
+
+    <select id="selectAdminUserTotalCount"
+            parameterType="com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE 1 = 1
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
+                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
+                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="status != null and status != '' and status != 'ALL'">
+            AND STATUS = #{status}
+        </if>
+
+        <if test="auth != null">
+            AND AUTH = #{auth}
+        </if>
+
+    </select>
+
+    <select id="selectAdminUserActiveCount"
+            parameterType="com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE STATUS = 'ACTIVE'
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
+                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
+                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="auth != null">
+            AND AUTH = #{auth}
+        </if>
+
+    </select>
+
+    <select id="selectAdminUserStopCount"
+            parameterType="com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE STATUS = 'STOP'
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
+                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
+                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="auth != null">
+            AND AUTH = #{auth}
+        </if>
+
+    </select>
+
+    <select id="selectAdminUserDeleteCount"
+            parameterType="com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE STATUS = 'DELETE'
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
+                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
+                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="auth != null">
+            AND AUTH = #{auth}
+        </if>
+
+    </select>
+
+</mapper>

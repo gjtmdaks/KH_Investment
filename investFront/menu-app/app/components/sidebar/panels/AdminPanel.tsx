@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "../MainSidebar.module.css";
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const apiBase = rawBase.trim() || "http://localhost:8081/final";
 
 export default function AdminPanel() {
+  const router = useRouter();
+  
   const [companyLoading, setCompanyLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyStop, setHistoryStop] = useState(false);
@@ -125,6 +128,13 @@ export default function AdminPanel() {
         disabled={historyStop}
       >
         과거 시세 동기화 중지
+      </button>
+
+      <button
+        className={styles.addButton}
+        onClick={() => router.push("/main/admin/user-management")}
+      >
+        회원 관리
       </button>
     </div>
   );
