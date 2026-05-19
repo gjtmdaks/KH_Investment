@@ -41,9 +41,12 @@ export async function getCurrentUser(): Promise<LoginUser | null> {
   }
 
   try {
-    const { data } = await apiClient.get<ApiEnvelope<LoginUser>>("/users/me");
+    const { data } = await apiClient.get<ApiEnvelope<LoginUser>>("/users/me", {
+      skipAuthRedirect: true,
+    });
 
     if (!data.success || !data.data) {
+      window.localStorage.removeItem("user");
       return null;
     }
 
@@ -51,17 +54,8 @@ export async function getCurrentUser(): Promise<LoginUser | null> {
 
     return data.data;
   } catch {
-    const savedUser = window.localStorage.getItem("user");
-
-    if (!savedUser) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(savedUser);
-    } catch {
-      return null;
-    }
+    window.localStorage.removeItem("user");
+    return null;
   }
 }
 

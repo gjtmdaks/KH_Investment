@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/app/context/AuthContext";
 import { WatchlistProvider } from "@/app/context/WatchlistContext";
 import "./globals.css";
 
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <WatchlistProvider>{children}</WatchlistProvider>
+        <AuthProvider>
+          <WatchlistProvider>{children}</WatchlistProvider>
+        </AuthProvider>
       </body>
     </html>
   );

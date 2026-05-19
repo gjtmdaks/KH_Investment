@@ -4,32 +4,37 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { SidebarStock } from "../types";
 
-export default function useRecentStocks() {
-  const [loading, setLoading] = useState(true);
+export default function useRecentStocks(enabled: boolean) {
+  const [loading, setLoading] = useState(enabled);
   const [stocks, setStocks] = useState<SidebarStock[]>([]);
 
   useEffect(() => {
+    if (!enabled) {
+      setStocks([]);
+      setLoading(false);
+      return;
+    }
+
     let interval: NodeJS.Timeout;
 
     async function fetchRecentStocks() {
       try {
-        const response =
-          await apiClient.get(
-            "/watchlist/recent"
-          );
+        const response = await apiClient.get("/watchlist/recent", {
+          skipAuthRedirect: true,
+        });
 
         setStocks(response.data.data || []);
       } catch (e) {
         console.error(e);
+        setStocks([]);
       } finally {
         setLoading(false);
       }
     }
 
-    // 최초 실행
+    setLoading(true);
     fetchRecentStocks();
 
-    // 3초 polling
     interval = setInterval(() => {
       fetchRecentStocks();
     }, 3000);
@@ -37,7 +42,7 @@ export default function useRecentStocks() {
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [enabled]);
 
   return {
     loading,

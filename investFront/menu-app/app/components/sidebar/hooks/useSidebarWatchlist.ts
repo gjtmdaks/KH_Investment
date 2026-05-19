@@ -22,9 +22,9 @@ export default function useSidebarWatchlist() {
 
   async function fetchSidebarStocks() {
     try {
-      const response = await apiClient.get(
-        "/watchlist/sidebar/stocks"
-      );
+      const response = await apiClient.get("/watchlist/sidebar/stocks", {
+        skipAuthRedirect: true,
+      });
 
       const data = response.data.data;
 

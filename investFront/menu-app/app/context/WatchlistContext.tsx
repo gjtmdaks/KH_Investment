@@ -2,11 +2,13 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
 
+import { useAuth } from "@/app/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 
 interface WatchlistContextValue {
@@ -29,31 +31,35 @@ export function WatchlistProvider({
 }: {
   children: React.ReactNode;
 }) {
-
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [watchlist, setWatchlist] =
     useState<string[]>([]);
 
-  async function refreshWatchlist() {
+  const refreshWatchlist = useCallback(async () => {
+    if (!isAuthenticated) {
+      setWatchlist([]);
+      return;
+    }
+
     try {
+      const { data } = await apiClient.get("/watchlist", {
+        skipAuthRedirect: true,
+      });
 
-      const { data } =
-        await apiClient.get("/watchlist");
-
-      setWatchlist(
-        data?.data?.watchlist || []
-      );
-
+      setWatchlist(data?.data?.watchlist || []);
     } catch (e) {
-
       console.error(e);
-
       setWatchlist([]);
     }
-  }
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     refreshWatchlist();
-  }, []);
+  }, [authLoading, refreshWatchlist]);
 
   return (
     <WatchlistContext.Provider

@@ -1,15 +1,30 @@
 "use client";
 
-import axios, { type AxiosError, type AxiosResponse } from "axios";
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from "axios";
 
 import { API_BASE_URL } from "@/lib/api-base";
 
 export { API_BASE_URL };
 
+export type ApiRequestConfig = AxiosRequestConfig & {
+  skipAuthRedirect?: boolean;
+};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 });
+
+function readSkipAuthRedirect(
+  config: InternalAxiosRequestConfig | undefined
+): boolean {
+  return (config as ApiRequestConfig | undefined)?.skipAuthRedirect === true;
+}
 
 type AuthErrorBody = {
   code?: string;
@@ -79,6 +94,11 @@ apiClient.interceptors.response.use(
 
     if (status === 401 && code === "AUTH_REQUIRED") {
       const cfg = error.config;
+
+      if (readSkipAuthRedirect(cfg)) {
+        return Promise.reject(error);
+      }
+
       const reqUrl =
         cfg != null ? `${cfg.baseURL ?? ""}${cfg.url ?? ""}` : "(unknown)";
       redirectToLogin({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/app/context/AuthContext";
 import styles from "./MainSidebar.module.css";
 import { SidebarMenu } from "./types";
 import InterestPanel from "./panels/InterestPanel";
@@ -44,9 +45,8 @@ export default function MainSidebar({
 
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
-  const [localUser, setLocalUser] = useState<any>(null);
-  const isLogin = !!data?.header?.userName || !!localUser?.userName;
-  const isAdmin = localUser?.auth === 1;
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.auth === 1;
   const visibleMenus = isAdmin ? [...baseMenus, adminMenu] : baseMenus;
 
   useEffect(() => {
@@ -69,23 +69,6 @@ export default function MainSidebar({
         handleResize
       );
     };
-  }, []);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-
-    if (!savedUser) {
-      setLocalUser(null);
-      return;
-    }
-
-    try {
-      setLocalUser(
-        JSON.parse(savedUser)
-      );
-    } catch {
-      setLocalUser(null);
-    }
   }, []);
 
   return (
@@ -115,10 +98,7 @@ export default function MainSidebar({
           </div>
 
           {activeMenu === "myInvestment" && (
-            <MyInvestmentPanel
-              data={data}
-              isLogin={isLogin}
-            />
+            <MyInvestmentPanel data={data} />
           )}
 
           {activeMenu === "interest" && (
@@ -126,7 +106,7 @@ export default function MainSidebar({
           )}
 
           {activeMenu === "recent" && (
-            <RecentPanel isLogin={isLogin} />
+            <RecentPanel />
           )}
 
           {activeMenu === "liveTime" && (

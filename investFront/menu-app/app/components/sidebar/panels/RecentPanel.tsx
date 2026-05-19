@@ -5,32 +5,27 @@ import SidebarEmpty from "../components/SidebarEmpty";
 import SidebarSectionTitle from "../components/SidebarSectionTitle";
 import SidebarStockItem from "../components/SidebarStockItem";
 import useRecentStocks from "../hooks/useRecentStocks";
+import { useAuth } from "@/app/context/AuthContext";
 import { useWatchlist } from "@/app/context/WatchlistContext";
 
-interface Props {
-  isLogin: boolean;
-}
+const LOGIN_REQUIRED_TEXT = "로그인하면 이용할 수 있어요";
 
-export default function RecentPanel({
-  isLogin,
-}: Props) {
+export default function RecentPanel() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { loading, stocks } = useRecentStocks(isAuthenticated);
+  const { watchlist, setWatchlist } = useWatchlist();
 
-  // 비로그인
-  if (!isLogin) {
+  if (authLoading) {
     return (
-      <SidebarEmpty text="로그인이 필요해요" />
+      <div className={styles.panelContent}>
+        로딩중...
+      </div>
     );
   }
 
-  const {
-    loading,
-    stocks,
-  } = useRecentStocks();
-
-  const {
-    watchlist,
-    setWatchlist,
-  } = useWatchlist();
+  if (!isAuthenticated) {
+    return <SidebarEmpty text={LOGIN_REQUIRED_TEXT} />;
+  }
 
   if (loading) {
     return (
@@ -49,7 +44,7 @@ export default function RecentPanel({
       {stocks.length === 0 ? (
         <SidebarEmpty text="최근 본 종목이 없어요" />
       ) : (
-        stocks.map(stock => (
+        stocks.map((stock) => (
           <SidebarStockItem
             key={stock.stockCode}
             stock={stock}

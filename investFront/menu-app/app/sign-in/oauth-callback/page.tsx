@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
-import { getCurrentUser } from "@/lib/auth-user";
+import { useAuth } from "@/app/context/AuthContext";
 
 import styles from "./oauthCallback.module.css";
 
@@ -33,6 +33,7 @@ function tryNotifyOAuthPopupSuccess(): boolean {
 
 function OAuthCallbackBody() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>("pending");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -74,7 +75,7 @@ function OAuthCallbackBody() {
 
     async function completeLogin() {
       try {
-        const user = await getCurrentUser();
+        const user = await refreshUser();
         if (!user) {
           setErrorMessage(
             "로그인 정보를 불러오지 못했습니다. 다시 로그인해 주세요."
@@ -97,7 +98,7 @@ function OAuthCallbackBody() {
     }
 
     void completeLogin();
-  }, [phase, oauthError, oauthErrorDescription, router, searchParams]);
+  }, [phase, oauthError, oauthErrorDescription, refreshUser, router, searchParams]);
 
   const showSpinner =
     phase === "pending" || phase === "working" || phase === "done";
