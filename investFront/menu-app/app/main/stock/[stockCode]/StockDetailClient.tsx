@@ -18,6 +18,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useStockDetailData } from "./useStockDetailData";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
+import { StockDetailAiPanel } from "@/app/components/stock/detail/StockDetailAiPanel";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -98,65 +99,71 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
   return (
     <main className={styles.page}>
-      <StockDetailHero
-        marketBadge={profile?.marketType || "VTS"}
-        displayName={displayName}
-        stockCode={stockCode}
-        price={price}
-        isUp={isUp}
-        marketCap={marketCap}
-      />
-
-      {error ? <div className={styles.error}>{error}</div> : null}
-
       <div className={styles.layout}>
-        <section className={styles.mainPanel}>
-          <nav className={styles.tabs}>
-            {stockDetailTabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                className={activeTab === tab.key ? styles.activeTab : ""}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+        {/* LEFT */}
+        <div className={styles.mainColumn}>
+          <StockDetailHero
+            marketBadge={profile?.marketType || "VTS"}
+            displayName={displayName}
+            stockCode={stockCode}
+            price={price}
+            isUp={isUp}
+            marketCap={marketCap}
+          />
 
-          <div className={styles.panelBody}>
-            {activeTab === "chart" ? (
-              <StockDetailChartShell stockCode={stockCode} fetchJson={fetchJson} />
-            ) : null}
-            {orderbookLoading && activeTab === "orderbook" ? (
-              <StockDetailEmptyState title="호가 정보를 불러오는 중입니다." />
-            ) : null}
-            {!orderbookLoading && activeTab === "orderbook" ? (
-              <StockDetailOrderbookPanel
-                orderbook={orderbook}
-                price={price}
-                onSelectPrice={handleOrderbookPriceSelect}
-              />
-            ) : null}
-            {detailLoading && activeTab === "summary" ? (
-              <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />
-            ) : null}
-            {!detailLoading && activeTab === "summary" ? (
-              <StockDetailSummaryPanel profile={profile} price={price} />
-            ) : null}
-            {activeTab === "news" && newsPhase !== "done" ? (
-              <StockDetailEmptyState title="뉴스를 불러오는 중입니다." />
-            ) : null}
-            {activeTab === "news" && newsPhase === "done" ? (
-              <StockDetailNewsPanel news={news} />
-            ) : null}
-            {activeTab === "community" ? (
-              <StockDetailCommunityPanel stockCode={stockCode} />
-            ) : null}
-          </div>
-        </section>
+          {error ? <div className={styles.error}>{error}</div> : null}
 
+          <section className={styles.mainPanel}>
+            <nav className={styles.tabs}>
+              {stockDetailTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={activeTab === tab.key ? styles.activeTab : ""}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className={styles.panelBody}>
+              {activeTab === "chart" ? (
+                <StockDetailChartShell stockCode={stockCode} fetchJson={fetchJson} />
+              ) : null}
+              {orderbookLoading && activeTab === "orderbook" ? (
+                <StockDetailEmptyState title="호가 정보를 불러오는 중입니다." />
+              ) : null}
+              {!orderbookLoading && activeTab === "orderbook" ? (
+                <StockDetailOrderbookPanel
+                  orderbook={orderbook}
+                  price={price}
+                  onSelectPrice={handleOrderbookPriceSelect}
+                />
+              ) : null}
+              {detailLoading && activeTab === "summary" ? (
+                <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />
+              ) : null}
+              {!detailLoading && activeTab === "summary" ? (
+                <StockDetailSummaryPanel profile={profile} price={price} />
+              ) : null}
+              {activeTab === "news" && newsPhase !== "done" ? (
+                <StockDetailEmptyState title="뉴스를 불러오는 중입니다." />
+              ) : null}
+              {activeTab === "news" && newsPhase === "done" ? (
+                <StockDetailNewsPanel news={news} />
+              ) : null}
+              {activeTab === "community" ? (
+                <StockDetailCommunityPanel stockCode={stockCode} />
+              ) : null}
+            </div>
+          </section>
+        </div>
+
+        {/* RIGHT */}
         <aside className={styles.sidePanel}>
+          <StockDetailAiPanel />
+          
           <StockDetailOrderCard
             stockCode={stockCode}
             orderKind={orderKind}

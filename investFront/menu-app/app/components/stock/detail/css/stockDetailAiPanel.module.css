@@ -1,0 +1,42 @@
+.card {
+  padding: 18px;
+
+  border: 1px solid var(--stock-border);
+  border-radius: var(--stock-radius-lg);
+
+  background: var(--stock-panel-bg);
+
+  backdrop-filter: blur(18px);
+}
+
+.header {
+  font-size: 15px;
+  font-weight: 900;
+
+  margin-bottom: 14px;
+}
+
+.sentiment {
+  font-size: 22px;
+  font-weight: 900;
+
+  margin-bottom: 12px;
+
+  color: #fb7185;
+}
+
+.summary {
+  line-height: 1.6;
+  font-size: 14px;
+
+  color: var(--stock-text-sub);
+
+  margin-bottom: 14px;
+}
+
+.score {
+  font-size: 13px;
+  font-weight: 800;
+
+  color: var(--stock-text-muted);
+}
