@@ -158,6 +158,7 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
         <aside className={styles.sidePanel}>
           <StockDetailOrderCard
+            stockCode={stockCode}
             orderKind={orderKind}
             setOrderKind={setOrderKind}
             orderType={orderType}
@@ -172,10 +173,6 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
             price={price}
           />
 
-          <div className={styles.snapshotCard}>
-            <h3>내 주식 요약</h3>
-            <p>기능 X.</p>
-          </div>
         </aside>
       </div>
     </main>

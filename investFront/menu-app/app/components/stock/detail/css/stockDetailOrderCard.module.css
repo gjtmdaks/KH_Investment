@@ -1,6 +1,6 @@
 .orderCard {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 
   width: 100%;
   min-width: 0;
@@ -70,27 +70,86 @@
   color: var(--stock-blue) !important;
 }
 
-.orderCard label {
+.fieldBlock {
   display: grid;
   gap: 8px;
-
-  margin: 0;
   min-width: 0;
+}
 
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldLabel {
   color: #9db6da;
   font-size: 13px;
   font-weight: 900;
 }
 
-.orderCard input,
-.orderCard select {
+.orderTypeToggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  min-width: 0;
+  padding: 3px;
+
+  border: 1px solid var(--stock-border-soft);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.45);
+}
+
+.orderTypeToggle button {
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 10px;
+
+  background: transparent;
+  color: var(--stock-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.orderTypeToggle button:hover {
+  color: #cbd5e1;
+}
+
+.orderTypeActive {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: var(--stock-text-main) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.inputWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.inputWrap input {
   width: 100%;
   min-width: 0;
   height: 46px;
 
   border: 1px solid var(--stock-border);
   border-radius: 14px;
-  padding: 0 13px;
+  padding: 0 42px 0 13px;
 
   background: rgba(2, 6, 23, 0.56);
   color: var(--stock-text-main);
@@ -105,20 +164,167 @@
     box-shadow 0.15s ease;
 }
 
-.orderCard input::placeholder {
+.inputWrap input::placeholder {
   color: var(--stock-text-muted);
 }
 
-.orderCard input:focus,
-.orderCard select:focus {
+.inputWrap input:focus {
   border-color: rgba(96, 165, 250, 0.55);
   background: rgba(2, 6, 23, 0.78);
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
 }
 
-.orderCard input[readonly] {
+.inputWrap input[readonly] {
   color: #cbd5e1;
   cursor: default;
+}
+
+.inputSuffix {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+
+  color: var(--stock-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: stretch;
+  overflow: hidden;
+
+  min-width: 72px;
+  height: 46px;
+
+  border: 1px solid var(--stock-border);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.56);
+}
+
+.stepper button {
+  border: 0;
+  padding: 0;
+
+  background: transparent;
+  color: var(--stock-text-main);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background-color 0.15s ease;
+}
+
+.stepper button:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stepperDivider {
+  width: 1px;
+  background: var(--stock-border-soft);
+}
+
+.percentRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.percentRow button {
+  height: 36px;
+
+  border: 1px solid var(--stock-border-soft);
+  border-radius: 10px;
+  padding: 0 4px;
+
+  background: rgba(2, 6, 23, 0.4);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.percentRow button:hover {
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #e2e8f0;
+}
+
+.summaryBlock {
+  display: grid;
+  gap: 4px;
+  padding: 2px 2px 0;
+}
+
+.totalAmount {
+  margin: 0;
+  color: var(--stock-text-main);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.availableCash {
+  margin: 0;
+  color: var(--stock-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.holdingPanel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+
+  border: 1px solid var(--stock-border-soft);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.38);
+}
+
+.holdingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.holdingLabel {
+  color: var(--stock-text-sub);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.holdingValue {
+  color: var(--stock-text-main);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.profitUp {
+  color: var(--stock-red);
+}
+
+.profitDown {
+  color: var(--stock-blue);
+}
+
+.profitFlat {
+  color: var(--stock-text-sub);
 }
 
 .buyButton,
@@ -166,6 +372,69 @@
   transform: none;
 }
 
+.sellEmptyState {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.sellEmptyIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+
+  border: 1px solid var(--stock-border-soft);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.35);
+
+  color: var(--stock-text-muted);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.sellEmptyText {
+  margin: 0;
+  color: var(--stock-text-sub);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sellTotalRow {
+  display: grid;
+  gap: 8px;
+}
+
+.sellTotalWrap {
+  width: 100%;
+}
+
+.sellTotalField {
+  width: 100%;
+  height: 46px;
+
+  border: 1px solid var(--stock-border);
+  border-radius: 14px;
+  padding: 0 42px 0 13px;
+
+  background: rgba(2, 6, 23, 0.56);
+  color: var(--stock-text-main);
+
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 46px;
+}
+
+.sellTotalFieldEmpty {
+  color: var(--stock-text-muted);
+}
+
+.inputWrap input.marketPricePlaceholder {
+  color: var(--stock-text-muted);
+}
+
 .orderMessage {
   margin: 0;
   padding: 12px 13px;
@@ -191,8 +460,8 @@
     font-size: 14px;
   }
 
-  .orderCard input,
-  .orderCard select {
+  .inputWrap input,
+  .stepper {
     height: 44px;
   }
 
@@ -204,7 +473,7 @@
 
 @media (max-width: 520px) {
   .orderCard {
-    gap: 14px;
+    gap: 12px;
     padding: 14px;
     border-radius: 18px;
   }
@@ -220,15 +489,20 @@
     font-size: 13px;
   }
 
-  .orderCard label {
+  .fieldLabel {
     font-size: 12px;
   }
 
-  .orderCard input,
-  .orderCard select {
+  .inputWrap input,
+  .stepper {
     height: 42px;
     border-radius: 12px;
     font-size: 13px;
+  }
+
+  .stepper {
+    min-width: 64px;
+    border-radius: 12px;
   }
 
   .buyButton,

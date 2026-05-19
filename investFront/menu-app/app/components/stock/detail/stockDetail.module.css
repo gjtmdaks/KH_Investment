@@ -136,32 +136,6 @@
   top: 84px;
 }
 
-.snapshotCard {
-  min-width: 0;
-  padding: 18px;
-
-  border: 1px solid var(--stock-border);
-  border-radius: var(--stock-radius-lg);
-  background: var(--stock-panel-bg);
-}
-
-.snapshotCard h3 {
-  margin: 0 0 10px;
-
-  color: var(--stock-text-main);
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.snapshotCard p {
-  margin: 0;
-
-  color: var(--stock-text-sub);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
 @media (max-width: 1440px) {
   .page {
     padding: 22px 24px 52px;
@@ -202,8 +176,7 @@
     margin-top: 14px;
   }
 
-  .mainPanel,
-  .snapshotCard {
+  .mainPanel {
     border-radius: 18px;
   }
 
