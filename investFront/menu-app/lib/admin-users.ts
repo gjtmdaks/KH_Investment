@@ -61,3 +61,43 @@ export async function getAdminUsers(
 
   return response.json();
 }
+
+export async function updateAdminUserAccountStatus(
+  userNo: number,
+  status: "ACTIVE" | "STOP" | "CLOSE"
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/api/users/${userNo}/account-status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`회원 계좌 상태 변경 실패 (${response.status})`);
+  }
+}
+
+export async function updateAdminUserStatus(
+  userNo: number,
+  status: "ACTIVE" | "DELETE"
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/api/users/${userNo}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`회원 상태 변경 실패 (${response.status})`);
+  }
+}

@@ -23,12 +23,12 @@
         WHERE 1 = 1
 
         <if test="keyword != null and keyword != ''">
-            AND (
-                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
-                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
-                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
-            )
-        </if>
+		    AND (
+		        USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		    )
+		</if>
 
         <if test="status != null and status != '' and status != 'ALL'">
             AND STATUS = #{status}
@@ -52,10 +52,10 @@
 
         <if test="keyword != null and keyword != ''">
             AND (
-                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
-                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
-                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
-            )
+		        USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		    )
         </if>
 
         <if test="status != null and status != '' and status != 'ALL'">
@@ -78,10 +78,10 @@
 
         <if test="keyword != null and keyword != ''">
             AND (
-                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
-                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
-                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
-            )
+		        USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		    )
         </if>
 
         <if test="auth != null">
@@ -100,10 +100,10 @@
 
         <if test="keyword != null and keyword != ''">
             AND (
-                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
-                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
-                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
-            )
+		        USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		    )
         </if>
 
         <if test="auth != null">
@@ -122,10 +122,10 @@
 
         <if test="keyword != null and keyword != ''">
             AND (
-                USER_NAME LIKE CONCAT('%', #{keyword}, '%')
-                OR EMAIL LIKE CONCAT('%', #{keyword}, '%')
-                OR PHONE LIKE CONCAT('%', #{keyword}, '%')
-            )
+		        USER_NAME LIKE '%' || #{keyword} || '%'
+		        OR NVL(EMAIL, '') LIKE '%' || #{keyword} || '%'
+		        OR NVL(PHONE, '') LIKE '%' || #{keyword} || '%'
+		    )
         </if>
 
         <if test="auth != null">
@@ -133,5 +133,24 @@
         </if>
 
     </select>
+    
+    <update id="updateAdminUserAccountStatus" parameterType="map">
+	    UPDATE ACCOUNTS
+	    SET STATUS = #{status}
+	    WHERE USER_NO = #{userNo}
+	</update>
+
+	<update id="updateAdminUserStatus" parameterType="map">
+	    UPDATE USERS
+	    SET
+	        STATUS = #{status},
+	        DELETE_AT =
+	            CASE
+	                WHEN #{status} = 'DELETE' THEN SYSDATE
+	                WHEN #{status} = 'ACTIVE' THEN NULL
+	                ELSE DELETE_AT
+	            END
+	    WHERE USER_NO = #{userNo}
+	</update>
 
 </mapper>

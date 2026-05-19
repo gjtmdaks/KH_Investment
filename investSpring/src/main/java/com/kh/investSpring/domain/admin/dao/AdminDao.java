@@ -16,4 +16,8 @@ public interface AdminDao {
     int selectAdminUserStopCount(AdminUserSearchRequest request);
 
     int selectAdminUserDeleteCount(AdminUserSearchRequest request);
+
+	int updateAdminUserAccountStatus(Long userNo, String status);
+
+	int updateAdminUserStatus(Long userNo, String status);
 }

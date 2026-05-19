@@ -1,6 +1,8 @@
 package com.kh.investSpring.domain.admin.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
@@ -39,5 +41,23 @@ public class AdminDaoImpl implements AdminDao {
     @Override
     public int selectAdminUserDeleteCount(AdminUserSearchRequest request) {
         return session.selectOne("adminMapper.selectAdminUserDeleteCount", request);
+    }
+
+    @Override
+    public int updateAdminUserAccountStatus(Long userNo, String status) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("userNo", userNo);
+        param.put("status", status);
+
+        return session.update("adminMapper.updateAdminUserAccountStatus", param);
+    }
+
+    @Override
+    public int updateAdminUserStatus(Long userNo, String status) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("userNo", userNo);
+        param.put("status", status);
+
+        return session.update("adminMapper.updateAdminUserStatus", param);
     }
 }

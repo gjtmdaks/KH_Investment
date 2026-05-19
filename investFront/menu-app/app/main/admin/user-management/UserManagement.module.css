@@ -240,3 +240,166 @@
   text-align: center !important;
   color: #94a3b8 !important;
 }
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.userModal {
+  width: min(560px, 100%);
+  border: 1px solid #243047;
+  border-radius: 22px;
+  padding: 24px;
+  background: #0f172a;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  color: #f8fafc;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.modalSubTitle {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.closeButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.modalInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.modalInfoGrid div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #243047;
+  border-radius: 14px;
+  padding: 14px;
+  background: #111827;
+}
+
+.modalInfoGrid span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.modalInfoGrid strong {
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.warningText {
+  margin: 0 0 20px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: rgba(251, 191, 36, 0.08);
+  color: #fbbf24;
+  font-size: 13px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.warningButton {
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+  padding: 11px 16px;
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.warningButton:hover {
+  background: rgba(251, 191, 36, 0.22);
+}
+
+.dangerButton {
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  border-radius: 12px;
+  padding: 11px 16px;
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dangerButton:hover {
+  background: rgba(244, 63, 94, 0.28);
+}
+
+.cancelButton {
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 11px 16px;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+@media (max-width: 700px) {
+  .modalInfoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+}
