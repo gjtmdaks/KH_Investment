@@ -15,12 +15,16 @@
 	            NVL(c.current_price, 0) AS price,
 	            NVL(c.change_rate, 0) AS changeRate,
 	            NVL(c.volume, 0) AS volume,
-	            NVL(c.current_price * c.volume, 0) AS tradingValue
+	            NVL(c.current_price * c.volume, 0) AS tradingValue,
+	            ai.sentiment AS aiSentiment,
+	            ai.summary AS aiSummary
 	            
 	        FROM stocks s
 	
 	        LEFT JOIN stock_realtime_current c
 	            ON s.stock_code = c.stock_code
+	        LEFT JOIN stock_ai_summary ai
+            	ON s.stock_code = ai.stock_code
 	
 	        WHERE s.status = 'ACTIVE'
 	          AND c.current_price IS NOT NULL

@@ -22,7 +22,27 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public List<StockDto> getStockList() {
-        return stockDao.getStockList();
+        List<StockDto> stocks = stockDao.getStockList();
+
+        if (stocks == null) {
+            return List.of();
+        }
+
+        return stocks.stream()
+                .map(stock -> {
+                    // AI 분석 없을 경우 기본값
+                    if (stock.getAiSentiment() == null) {
+                        stock.setAiSentiment("NEUTRAL");
+                    }
+
+                    if (stock.getAiSummary() == null
+                            || stock.getAiSummary().isBlank()) {
+                        stock.setAiSummary("AI 분석 대기중");
+                    }
+
+                    return stock;
+                })
+                .toList();
     }
 
     @Override

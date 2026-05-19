@@ -158,40 +158,23 @@
   font-weight: 700;
 }
 
-/* 버튼 */
-.actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+/* ai분석 */
+.aiSummary {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.buyBtn,
-.sellBtn {
-  border: none;
-
-  border-radius: 10px;
-
-  padding: 9px 14px;
-
-  font-size: 13px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition: opacity 0.15s;
+.positive {
+  color: #ff4d4f;
 }
 
-.buyBtn:hover,
-.sellBtn:hover {
-  opacity: 0.6;
+.negative {
+  color: #1677ff;
 }
 
-.buyBtn {
-  background: #ef4444;
-  color: white;
-}
-
-.sellBtn {
-  background: #2563eb;
-  color: white;
+.neutral {
+  color: #999;
 }

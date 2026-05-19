@@ -21,7 +21,7 @@ export default function StockRow({
 }: Props) {
   const liked = watchlist.includes(stock.stockCode);
   const isUp = stock.changeRate >= 0;
-  const {toggleWatchlist,} = useToggleWatchlist();
+  const { toggleWatchlist, } = useToggleWatchlist();
 
   return (
     <Link
@@ -30,11 +30,10 @@ export default function StockRow({
     >
       {/* 관심종목 */}
       <div
-        className={`${styles.favorite} ${
-          liked
+        className={`${styles.favorite} ${liked
             ? styles.favoriteActive
             : ""
-        }`}
+          }`}
         onClick={(e) =>
           toggleWatchlist(e, {
             stockCode: stock.stockCode,
@@ -89,29 +88,24 @@ export default function StockRow({
         {stock.tradingValue?.toLocaleString()}
       </div>
 
-      {/* 버튼 */}
-      <div className={styles.actions}>
-
-        <button
-          className={styles.buyBtn}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+      {/* ai분석 */}
+      <div className={styles.aiSummary}>
+        <span
+          className={
+            stock.aiSentiment === "POSITIVE"
+              ? styles.positive
+              : stock.aiSentiment === "NEGATIVE"
+                ? styles.negative
+                : styles.neutral
+          }
         >
-          매수
-        </button>
-
-        <button
-          className={styles.sellBtn}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          매도
-        </button>
-
+          {stock.aiSentiment === "POSITIVE"
+            ? "🟢"
+            : stock.aiSentiment === "NEGATIVE"
+              ? "🔴"
+              : "🟡"}
+        </span>
+        {stock.aiSummary}발표 관망세
       </div>
 
     </Link>
