@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.admin.dao;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.kh.investSpring.domain.admin.dto.AdminUserResponse;
@@ -17,7 +18,7 @@ public interface AdminDao {
 
     int selectAdminUserDeleteCount(AdminUserSearchRequest request);
 
-	int updateAdminUserAccountStatus(Long userNo, String status);
+	int updateAdminUserAccountStatus(Long userNo, String status, LocalDate localDate);
 
 	int updateAdminUserStatus(Long userNo, String status);
 }

@@ -60,6 +60,17 @@ function formatDate(value: string) {
   });
 }
 
+function getDateAfterDays(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export default function UserManagementPage() {
   const router = useRouter();
 
@@ -69,6 +80,8 @@ export default function UserManagementPage() {
   const [status, setStatus] = useState("ALL");
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [stopEndAt, setStopEndAt] = useState("");
+  const [customStopDays, setCustomStopDays] = useState("");
 
   const users = data.users ?? [];
 
@@ -77,7 +90,7 @@ export default function UserManagementPage() {
 
     if (!user) {
       alert("잘못된 url입니다.");
-      router.replace("/login");
+      router.replace("/main/stock");
       return;
     }
 
@@ -124,13 +137,36 @@ export default function UserManagementPage() {
     loadUsers();
   }
 
+  function handleSelectStopDays(days: number) {
+    setStopEndAt(getDateAfterDays(days));
+    setCustomStopDays("");
+  }
+
+  function handleCustomStopDaysChange(value: string) {
+    setCustomStopDays(value);
+
+    const days = Number(value);
+
+    if (!Number.isInteger(days) || days <= 0) {
+      setStopEndAt("");
+      return;
+    }
+
+    setStopEndAt(getDateAfterDays(days));
+  }
+
   async function handleUpdateAccountStatus(
     userNo: number,
     status: "ACTIVE" | "STOP" | "CLOSE"
   ) {
+    if (status === "STOP" && !stopEndAt) {
+      alert("거래 정지 기간을 선택해주세요.");
+      return;
+    }
+
     const message =
       status === "STOP"
-        ? "해당 회원의 거래를 정지하시겠습니까?"
+        ? `${stopEndAt}까지 해당 회원의 거래를 정지하시겠습니까?`
         : "해당 회원의 거래 정지를 해제하시겠습니까?";
 
     if (!confirm(message)) {
@@ -138,10 +174,16 @@ export default function UserManagementPage() {
     }
 
     try {
-      await updateAdminUserAccountStatus(userNo, status);
+      await updateAdminUserAccountStatus(
+        userNo,
+        status,
+        status === "STOP" ? stopEndAt : undefined
+      );
 
       alert("계좌 상태가 변경되었습니다.");
       setSelectedUser(null);
+      setStopEndAt("");
+      setCustomStopDays("");
       loadUsers();
     } catch (error) {
       console.error(error);
@@ -342,23 +384,72 @@ export default function UserManagementPage() {
               </div>
             </div>
 
-            <p className={styles.warningText}>
+                        <p className={styles.warningText}>
               회원 상태를 변경하면 해당 회원의 서비스 이용 가능 여부가 변경됩니다.
             </p>
 
             <div className={styles.modalActions}>
               {selectedUser.status === "ACTIVE" && (
                 <>
+                  <div className={styles.stopPeriodBox}>
+                  <p className={styles.stopPeriodTitle}>거래 정지 기간</p>
+
+                  <div className={styles.stopPeriodButtons}>
+                    <button
+                      type="button"
+                      className={styles.periodButton}
+                      onClick={() => handleSelectStopDays(1)}
+                    >
+                      1일
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.periodButton}
+                      onClick={() => handleSelectStopDays(7)}
+                    >
+                      7일
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.periodButton}
+                      onClick={() => handleSelectStopDays(30)}
+                    >
+                      30일
+                    </button>
+
+                    <input
+                      className={styles.periodInput}
+                      type="number"
+                      min="1"
+                      placeholder="직접 입력"
+                      value={customStopDays}
+                      onChange={(e) => handleCustomStopDaysChange(e.target.value)}
+                    />
+                  </div>
+
+                  <p className={styles.stopEndText}>
+                    {stopEndAt
+                      ? `정지 종료일: ${stopEndAt}`
+                      : "정지 기간을 선택해주세요."}
+                  </p>
+                </div>
+
                   <button
                     className={styles.warningButton}
-                    onClick={() => handleUpdateAccountStatus(selectedUser.userNo, "STOP")}
+                    onClick={() =>
+                      handleUpdateAccountStatus(selectedUser.userNo, "STOP")
+                    }
                   >
                     거래 정지
                   </button>
 
                   <button
                     className={styles.dangerButton}
-                    onClick={() => handleUpdateUserStatus(selectedUser.userNo, "DELETE")}
+                    onClick={() =>
+                      handleUpdateUserStatus(selectedUser.userNo, "DELETE")
+                    }
                   >
                     삭제
                   </button>
@@ -369,14 +460,18 @@ export default function UserManagementPage() {
                 <>
                   <button
                     className={styles.primaryButton}
-                    onClick={() => handleUpdateAccountStatus(selectedUser.userNo, "ACTIVE")}
+                    onClick={() =>
+                      handleUpdateAccountStatus(selectedUser.userNo, "ACTIVE")
+                    }
                   >
                     거래 정지 해제
                   </button>
 
                   <button
                     className={styles.dangerButton}
-                    onClick={() => handleUpdateUserStatus(selectedUser.userNo, "DELETE")}
+                    onClick={() =>
+                      handleUpdateUserStatus(selectedUser.userNo, "DELETE")
+                    }
                   >
                     삭제
                   </button>
@@ -386,7 +481,9 @@ export default function UserManagementPage() {
               {selectedUser.status === "DELETE" && (
                 <button
                   className={styles.primaryButton}
-                  onClick={() => handleUpdateUserStatus(selectedUser.userNo, "ACTIVE")}
+                  onClick={() =>
+                    handleUpdateUserStatus(selectedUser.userNo, "ACTIVE")
+                  }
                 >
                   복구
                 </button>
@@ -394,7 +491,10 @@ export default function UserManagementPage() {
 
               <button
                 className={styles.cancelButton}
-                onClick={() => setSelectedUser(null)}
+                onClick={() => {
+                  setSelectedUser(null);
+                  setStopEndAt("");
+                }}
               >
                 닫기
               </button>
