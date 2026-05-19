@@ -9,6 +9,7 @@ import com.kh.investSpring.api.dart.service.DartCorpCodeService;
 import com.kh.investSpring.api.dart.service.DartMinorityShareholderService;
 import com.kh.investSpring.api.dart.service.DartStockService;
 import com.kh.investSpring.domain.admin.dao.AdminDao;
+import com.kh.investSpring.domain.admin.dto.AdminStatusUpdateRequest;
 import com.kh.investSpring.domain.admin.dto.AdminUserListResponse;
 import com.kh.investSpring.domain.admin.dto.AdminUserSearchRequest;
 
@@ -70,5 +71,49 @@ public class AdminService {
         response.setDeleteCount(adminDao.selectAdminUserDeleteCount(request));
 
         return response;
+    }
+
+    public void updateAdminUserAccountStatus(Long userNo, AdminStatusUpdateRequest request) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("회원 번호가 없습니다.");
+        }
+
+        if (request == null || request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new IllegalArgumentException("계좌 상태값이 없습니다.");
+        }
+
+        String status = request.getStatus().trim().toUpperCase();
+
+        if (!"ACTIVE".equals(status) && !"STOP".equals(status) && !"CLOSE".equals(status)) {
+            throw new IllegalArgumentException("허용되지 않는 계좌 상태입니다.");
+        }
+
+        int result = adminDao.updateAdminUserAccountStatus(userNo, status);
+
+        if (result == 0) {
+            throw new IllegalArgumentException("변경할 계좌를 찾을 수 없습니다.");
+        }
+    }
+
+    public void updateAdminUserStatus(Long userNo, AdminStatusUpdateRequest request) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("회원 번호가 없습니다.");
+        }
+
+        if (request == null || request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new IllegalArgumentException("회원 상태값이 없습니다.");
+        }
+
+        String status = request.getStatus().trim().toUpperCase();
+
+        if (!"ACTIVE".equals(status) && !"DELETE".equals(status)) {
+            throw new IllegalArgumentException("허용되지 않는 회원 상태입니다.");
+        }
+
+        int result = adminDao.updateAdminUserStatus(userNo, status);
+
+        if (result == 0) {
+            throw new IllegalArgumentException("변경할 회원을 찾을 수 없습니다.");
+        }
     }
 }

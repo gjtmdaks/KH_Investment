@@ -82,7 +82,7 @@
     <update id="updateUserStatusDelete" parameterType="long">
 	    UPDATE USERS
 	    SET
-	        STATUS = 'DELETED',
+	        STATUS = 'DELETE',
 	        DELETE_AT = SYSDATE
 	    WHERE USER_NO = #{userNo}
 	      AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'
