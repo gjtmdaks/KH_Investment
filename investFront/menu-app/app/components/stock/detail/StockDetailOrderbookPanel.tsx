@@ -1,5 +1,7 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
+
 import {
   formatNumber,
   formatPercent,
@@ -141,6 +143,23 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+function scrollChildToVerticalCenter(
+  scrollContainer: HTMLElement,
+  target: HTMLElement
+) {
+  const containerRect = scrollContainer.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const targetOffset =
+    targetRect.top - containerRect.top + scrollContainer.scrollTop;
+  const nextScrollTop =
+    targetOffset - scrollContainer.clientHeight / 2 + target.offsetHeight / 2;
+
+  scrollContainer.scrollTop = Math.max(
+    0,
+    Math.min(nextScrollTop, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+  );
+}
+
 export function StockDetailOrderbookPanel({
   orderbook,
   price,
@@ -161,6 +180,33 @@ export function StockDetailOrderbookPanel({
     return <StockDetailEmptyState title="호가 정보를 불러오지 못했습니다." />;
   }
 
+  return (
+    <StockDetailOrderbookPanelView
+      orderbook={orderbook}
+      price={price}
+      asks={asks}
+      bids={bids}
+      onSelectPrice={onSelectPrice}
+    />
+  );
+}
+
+function StockDetailOrderbookPanelView({
+  orderbook,
+  price,
+  asks,
+  bids,
+  onSelectPrice,
+}: {
+  orderbook: OrderbookResponse;
+  price: PriceResponse | null;
+  asks: OrderbookLevel[];
+  bids: OrderbookLevel[];
+  onSelectPrice?: (price: string) => void;
+}) {
+  const ladderScrollRef = useRef<HTMLDivElement>(null);
+  const centerAnchorRef = useRef<HTMLDivElement>(null);
+
   const asksDesc = [...asks].sort((a, b) => b.level - a.level);
   const bidsAsc = [...bids].sort((a, b) => a.level - b.level);
   const maxQuantity = calcMaxQuantity([...asks, ...bids]);
@@ -179,6 +225,25 @@ export function StockDetailOrderbookPanel({
   const currentInBids = bids.some((level) =>
     isCurrentPriceRow(getLevelPrice(level), currentPrice)
   );
+
+  const showCurrentOnlyRow =
+    !currentInAsks && !currentInBids && currentPrice !== null;
+
+  useLayoutEffect(() => {
+    const scrollEl = ladderScrollRef.current;
+    const anchorEl = centerAnchorRef.current;
+    if (!scrollEl || !anchorEl) {
+      return;
+    }
+
+    const centerScroll = () => {
+      scrollChildToVerticalCenter(scrollEl, anchorEl);
+    };
+
+    centerScroll();
+    const rafId = requestAnimationFrame(centerScroll);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   return (
     <div className={styles.panel}>
@@ -207,14 +272,16 @@ export function StockDetailOrderbookPanel({
         ) : null}
       </div>
 
-      <div className={styles.ladderHeader}>
-        <span>매도잔량</span>
-        <span>호가</span>
-        <span>매수잔량</span>
-      </div>
+      <div className={styles.ladderSection}>
+        <div className={styles.ladderHeader}>
+          <span>매도잔량</span>
+          <span>호가</span>
+          <span>매수잔량</span>
+        </div>
 
-      <div className={styles.ladderBody}>
-        {asksDesc.map((level) => (
+        <div ref={ladderScrollRef} className={styles.ladderScroll}>
+          <div className={styles.ladderBody}>
+            {asksDesc.map((level) => (
           <OrderbookLadderRow
             key={`ask-${level.level}`}
             level={level}
@@ -227,13 +294,14 @@ export function StockDetailOrderbookPanel({
         ))}
 
         {spread !== null ? (
-          <div className={styles.spreadRow}>
+          <div ref={centerAnchorRef} className={styles.spreadRow}>
             <span>호가 공백 {formatNumber(String(spread))}원</span>
           </div>
-        ) : null}
-
-        {!currentInAsks && !currentInBids && currentPrice !== null ? (
-          <div className={`${styles.ladderRow} ${styles.currentRow} ${styles.currentOnlyRow}`}>
+        ) : showCurrentOnlyRow ? (
+          <div
+            ref={centerAnchorRef}
+            className={`${styles.ladderRow} ${styles.currentRow} ${styles.currentOnlyRow}`}
+          >
             <div className={styles.askCell} />
             <div className={styles.priceCell}>
               <span
@@ -255,7 +323,9 @@ export function StockDetailOrderbookPanel({
             </div>
             <div className={styles.bidCell} />
           </div>
-        ) : null}
+        ) : (
+          <div ref={centerAnchorRef} className={styles.spreadAnchor} aria-hidden />
+        )}
 
         {bidsAsc.map((level) => (
           <OrderbookLadderRow
@@ -268,6 +338,8 @@ export function StockDetailOrderbookPanel({
             onSelectPrice={onSelectPrice}
           />
         ))}
+          </div>
+        </div>
       </div>
 
       <div className={styles.ratioBarWrap}>
