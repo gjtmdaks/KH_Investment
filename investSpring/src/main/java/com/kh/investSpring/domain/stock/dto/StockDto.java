@@ -12,4 +12,5 @@ public class StockDto {
     private Long tradingValue;
     private String aiSentiment;
     private String aiSummary;
+    private Double aiScore;
 }

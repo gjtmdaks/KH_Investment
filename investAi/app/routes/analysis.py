@@ -6,11 +6,17 @@ from app.services.sentiment_service import analyze_sentiment
 router = APIRouter()
 
 class NewsRequest(BaseModel):
-    text: str
+    title: str
+    description: str | None = None
 
 @router.post("/sentiment")
 def sentiment(request: NewsRequest):
 
-    result = analyze_sentiment(request.text)
+    full_text = request.title
+
+    if request.description:
+        full_text += " " + request.description
+
+    result = analyze_sentiment(full_text)
 
     return result

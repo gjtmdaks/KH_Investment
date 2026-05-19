@@ -23,6 +23,10 @@ export default function StockRow({
   const isUp = stock.changeRate >= 0;
   const { toggleWatchlist, } = useToggleWatchlist();
 
+  const scorePercent = Math.round(
+    (stock.aiScore || 0) * 100
+  );
+
   return (
     <Link
       href={`/main/stock/${stock.stockCode}`}
@@ -90,22 +94,31 @@ export default function StockRow({
 
       {/* ai분석 */}
       <div className={styles.aiSummary}>
-        <span
-          className={
-            stock.aiSentiment === "POSITIVE"
-              ? styles.positive
+        {stock.aiSentiment !== null &&
+        stock.aiSentiment !== undefined && (
+          <span
+            className={
+              stock.aiSentiment === "POSITIVE"
+                ? styles.positive
+                : stock.aiSentiment === "NEGATIVE"
+                  ? styles.negative
+                  : styles.neutral
+            }
+          >
+            {stock.aiSentiment === "POSITIVE"
+              ? "🟢"
               : stock.aiSentiment === "NEGATIVE"
-                ? styles.negative
-                : styles.neutral
-          }
-        >
-          {stock.aiSentiment === "POSITIVE"
-            ? "🟢"
-            : stock.aiSentiment === "NEGATIVE"
-              ? "🔴"
-              : "🟡"}
-        </span>
-        {stock.aiSummary}발표 관망세
+                ? "🔴"
+                : "🟡"}
+
+            {" "}
+            {scorePercent}%
+          </span>
+        )}
+
+        {" "}
+
+        {stock.aiSummary}
       </div>
 
     </Link>

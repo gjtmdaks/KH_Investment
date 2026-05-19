@@ -111,6 +111,7 @@ public class MainServiceImpl implements MainService {
                                 .tradingValue(s.getTradingValue())
                                 .aiSentiment(s.getAiSentiment())
                                 .aiSummary(s.getAiSummary())
+                                .aiScore(s.getAiScore())
                                 .build()
                         ).toList();
 
