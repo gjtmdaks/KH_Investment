@@ -70,13 +70,13 @@ public class SecurityFilterChainFactory {
 						            "/users/signin/**",
 						            "/users/signup/**",
 						            "/users/logout",
-                                    "/users/me",
-                                    "/users/me/password/verify",
 						            "/users/logout/**",
 						            "/users/find_id",
 						            "/users/find_password",
+						            "/users/me",
+						            "/users/me/password/verify",
 						            "/users/me/investment-type",
-                                    "/users/me/withdraw",
+						            "/users/me/withdraw",
                                     "/watchlist/**",
                                     "/orders/**",
                                     "/recent-view/**",
@@ -97,7 +97,6 @@ public class SecurityFilterChainFactory {
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthenticationEntryPoint))
 				.authorizeHttpRequests(auth -> {
 					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
-					auth.requestMatchers(HttpMethod.GET, "/users/me").permitAll();
 					auth.requestMatchers(HttpMethod.GET, "/api/board/stocks/**").permitAll();
 					auth.requestMatchers(SecurityPathPatterns.AUTH_WHITELIST).permitAll();
 					auth.requestMatchers(SecurityPathPatterns.PUBLIC_WHITELIST).permitAll();

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import styles from "../MainSidebar.module.css";
 import SidebarEmpty from "../components/SidebarEmpty";
+import { useAuth } from "@/app/context/AuthContext";
 import { getAccountAssets } from "@/lib/account";
 import type {
   MyInvestmentHolding,
@@ -15,8 +16,9 @@ type Props = {
   data: {
     sidebar?: Partial<MyInvestmentSidebarData>;
   };
-  isLogin: boolean;
 };
+
+const LOGIN_REQUIRED_TEXT = "로그인하면 이용할 수 있어요";
 
 function formatWon(value?: number | null) {
   return `${Math.round(value ?? 0).toLocaleString()}원`;
@@ -48,8 +50,9 @@ function getProfitClass(value?: number | null) {
   return styles.profitFlat;
 }
 
-export default function MyInvestmentPanel({ data, isLogin }: Props) {
+export default function MyInvestmentPanel({ data }: Props) {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [investment, setInvestment] = useState<MyInvestmentSidebarData>({
     account: data.sidebar?.account ?? null,
@@ -64,7 +67,7 @@ export default function MyInvestmentPanel({ data, isLogin }: Props) {
   }, [data.sidebar?.account, data.sidebar?.holdings]);
 
   useEffect(() => {
-    if (!isLogin) return;
+    if (!isAuthenticated) return;
 
     let isMounted = true;
 
@@ -121,10 +124,18 @@ export default function MyInvestmentPanel({ data, isLogin }: Props) {
       isMounted = false;
       window.clearInterval(intervalId);
     };
-  }, [isLogin]);
+  }, [isAuthenticated]);
 
-  if (!isLogin) {
-    return <SidebarEmpty text="로그인이 필요해요" />;
+  if (authLoading) {
+    return (
+      <div className={styles.panelContent}>
+        로딩중...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <SidebarEmpty text={LOGIN_REQUIRED_TEXT} />;
   }
 
   const account = investment.account;

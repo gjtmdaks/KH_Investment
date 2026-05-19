@@ -1,10 +1,39 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/app/context/AuthContext";
 import type { OrderKind, OrderType } from "@/lib/order";
 import type { PriceResponse } from "@/lib/stock/stockDetailTypes";
 import { formatNumber } from "@/lib/stock/stockDetailFormat";
 
 import styles from "./css/stockDetailOrderCard.module.css";
+
+function getOrderButtonLabel(
+  isAuthenticated: boolean,
+  orderLoading: boolean,
+  orderKind: OrderKind,
+  orderType: OrderType
+): string {
+  if (orderLoading) {
+    return "처리 중...";
+  }
+
+  const actionLabel =
+    orderType === "LIMIT"
+      ? orderKind === "BUY"
+        ? "구매 예약하기"
+        : "판매 예약하기"
+      : orderKind === "BUY"
+        ? "구매하기"
+        : "판매하기";
+
+  if (!isAuthenticated) {
+    return `로그인하고 ${actionLabel}`;
+  }
+
+  return actionLabel;
+}
 
 export function StockDetailOrderCard({
   orderKind,
@@ -33,6 +62,18 @@ export function StockDetailOrderCard({
   handleCreateOrder: () => void | Promise<void>;
   price: PriceResponse | null;
 }) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  function handleOrderButtonClick() {
+    if (!isAuthenticated) {
+      router.push("/sign-in");
+      return;
+    }
+
+    void handleCreateOrder();
+  }
+
   return (
     <div className={styles.orderCard}>
       <div className={styles.orderTabs}>
@@ -107,18 +148,15 @@ export function StockDetailOrderCard({
       <button
         type="button"
         className={orderKind === "BUY" ? styles.buyButton : styles.sellButton}
-        onClick={() => void handleCreateOrder()}
+        onClick={handleOrderButtonClick}
         disabled={orderLoading}
       >
-        {orderLoading
-          ? "처리 중..."
-          : orderType === "LIMIT"
-            ? orderKind === "BUY"
-              ? "구매 예약하기"
-              : "판매 예약하기"
-            : orderKind === "BUY"
-              ? "구매하기"
-              : "판매하기"}
+        {getOrderButtonLabel(
+          isAuthenticated,
+          orderLoading,
+          orderKind,
+          orderType
+        )}
       </button>
 
       {orderMessage ? (

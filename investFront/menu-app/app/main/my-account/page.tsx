@@ -11,36 +11,25 @@ import AssetPanel from "./components/AssetPanel";
 import TradesPanel from "./components/TradesPanel";
 import OrdersPanel from "./components/OrdersPanel";
 import AccountManagePanel from "./components/AccountManagePanel";
-import { getCurrentUser, type LoginUser } from "@/lib/auth-user";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function MyAccountPage() {
   const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [activeMenu, setActiveMenu] = useState<MyAccountMenu>("asset");
-  const [user, setUser] = useState<LoginUser | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function checkLogin() {
-      try {
-        const currentUser = await getCurrentUser();
-
-        if (!currentUser) {
-          alert("로그인이 필요한 페이지입니다.");
-          router.replace("/sign-in");
-          return;
-        }
-
-        setUser(currentUser);
-      } finally {
-        setLoading(false);
-      }
+    if (authLoading) {
+      return;
     }
 
-    checkLogin();
-  }, [router]);
+    if (!isAuthenticated) {
+      router.replace("/sign-in");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <main className={styles.page}>
         <section className={styles.loadingCard}>
@@ -51,7 +40,7 @@ export default function MyAccountPage() {
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return null;
   }
 

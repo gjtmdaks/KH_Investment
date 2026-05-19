@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { useAuth } from "@/app/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { getApiErrorMessage, normalizeLoginErrorMessage } from "@/lib/api-error";
 import { API_BASE_URL } from "@/lib/api-base";
@@ -29,6 +30,7 @@ type ApiEnvelope<T> = {
 
 export default function SignInPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export default function SignInPage() {
 
     window.localStorage.setItem("user", JSON.stringify(data.data));
 
+    await refreshUser();
     router.push("/main");
   } catch (error: unknown) {
     setError(getApiErrorMessage(error));

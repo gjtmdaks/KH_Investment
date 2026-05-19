@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StockSearchBar from "./StockSearchBar";
-import {
-  getCurrentUser,
-  performLogout,
-  type LoginUser,
-} from "@/lib/auth-user";
+import { useAuth } from "@/app/context/AuthContext";
+import { performLogout } from "@/lib/auth-user";
 import styles from "./Header.module.css";
 
 type MainHeaderPayload = {
@@ -18,21 +14,13 @@ type MainHeaderPayload = {
 
 export default function Header({ data }: { data?: unknown }) {
   const header = (data as { header?: MainHeaderPayload } | null)?.header;
-  const [localUser, setLocalUser] = useState<LoginUser | null>(null);
-
-  useEffect(() => {
-    async function loadUser() {
-      const user = await getCurrentUser();
-      setLocalUser(user);
-    }
-    loadUser();
-  }, []);
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const dataUserName = header?.userName?.trim() ?? "";
-  const localUserName = localUser?.userName?.trim() ?? "";
+  const authUserName = user?.userName?.trim() ?? "";
 
-  const displayName = dataUserName || localUserName || "회원";
-  const isLogin = !!dataUserName || !!localUserName;
+  const displayName = dataUserName || authUserName || "회원";
+  const isLogin = !!dataUserName || isAuthenticated;
 
   async function handleLogout() {
     await performLogout();
@@ -42,10 +30,7 @@ export default function Header({ data }: { data?: unknown }) {
     <header className={styles.header}>
       <div className={styles.inner}>
         <div className={styles.leftArea}>
-          <Link
-            href="/main"
-            className={styles.logoArea}
-          >
+          <Link href="/main" className={styles.logoArea}>
             <Image
               src="/logo-full.png"
               alt="KH 증권 로고"
@@ -60,19 +45,15 @@ export default function Header({ data }: { data?: unknown }) {
             <Link href="/main" className={styles.navItem}>
               홈
             </Link>
-
             <Link href="/main/news" className={styles.navItem}>
               뉴스
             </Link>
-
             <Link href="/main/screener" className={styles.navItem}>
               주식 골라보기
             </Link>
-
             <Link href="/main/my-account" className={styles.navItem}>
               내 계좌
             </Link>
-
             <Link href="/main/notice" className={styles.navItem}>
               공지사항
             </Link>
@@ -84,21 +65,14 @@ export default function Header({ data }: { data?: unknown }) {
         </div>
 
         <div className={styles.rightArea}>
-          {isLogin ? (
+          {!isLoading && isLogin ? (
             <div className={styles.loggedInWrap}>
-              <Link
-                href="/main/myPage"
-                className={styles.userLink}
-              >
+              <Link href="/main/myPage" className={styles.userLink}>
                 <span className={styles.welcome}>
                   {displayName}님, 환영합니다!
                 </span>
               </Link>
-
-              <span className={styles.sep}>
-                |
-              </span>
-
+              <span className={styles.sep}>|</span>
               <button
                 type="button"
                 className={styles.logoutButton}
@@ -107,14 +81,11 @@ export default function Header({ data }: { data?: unknown }) {
                 로그아웃
               </button>
             </div>
-          ) : (
-            <Link
-              href="/sign-in"
-              className={styles.loginButton}
-            >
+          ) : !isLoading ? (
+            <Link href="/sign-in" className={styles.loginButton}>
               로그인
             </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </header>
