@@ -101,5 +101,7 @@ public class MainResponse {
         private Double changeRate;
         private Long volume;
         private Long tradingValue;
+        private String aiSentiment;
+        private String aiSummary;
     }
 }

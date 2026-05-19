@@ -12,6 +12,8 @@ type Stock = {
   changeRate: number;
   volume: number;
   tradingValue: number;
+  aiSentiment: string;
+  aiSummary: string;
 };
 
 export default function StockClient({
