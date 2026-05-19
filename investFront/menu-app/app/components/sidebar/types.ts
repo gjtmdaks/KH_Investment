@@ -40,6 +40,7 @@ export interface MyInvestmentHolding {
   stockValue: number;
   profitAmount: number;
   profitRate: number;
+  dailyChangeRate: number;
 }
 
 export interface MyInvestmentSidebarData {

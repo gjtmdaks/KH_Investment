@@ -164,6 +164,16 @@
   padding: 10px 0;
 }
 
+.stockItemLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
 .stockLogo {
   width: 34px;
   height: 34px;
@@ -358,9 +368,34 @@
 
 .investHoldingValue {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+}
+
+.investHoldingValueLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.investHoldingValueRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.investHoldingValueRight strong {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.investHoldingValueRight span {
+  font-size: 12px;
+  font-weight: 950;
 }
 
 .investHoldingValue span {
@@ -381,6 +416,12 @@
   gap: 8px;
   font-size: 12px;
   font-weight: 950;
+}
+
+.investHoldingMeta {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .profitUp {

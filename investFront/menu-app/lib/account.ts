@@ -25,6 +25,7 @@ export type HoldingStock = {
   avgPrice: number;
   currentPrice: number;
   stockValue: number;
+  dailyChangeRate?: number | null;
 };
 
 export type AccountAssetResponse = {

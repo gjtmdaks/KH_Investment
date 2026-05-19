@@ -2,6 +2,7 @@ package com.kh.investSpring.domain.account.service;
 
 import org.springframework.stereotype.Service;
 
+import com.kh.investSpring.api.kis.service.KisSidebarQuoteEnricher;
 import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
@@ -21,6 +22,7 @@ import java.util.List;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountDao accountDao;
+    private final KisSidebarQuoteEnricher kisSidebarQuoteEnricher;
     private static final BigDecimal BASE_CAPITAL = BigDecimal.valueOf(10000000); // 기본자산은 고정
     
     // 전일(장시작) 돈 자동저장
@@ -95,7 +97,9 @@ public class AccountServiceImpl implements AccountService {
         }
 
         List<AccountAssetResponse.HoldingStock> holdings =
-                accountDao.selectHoldingStocksByUserNo(userNo);
+                accountDao.selectHoldingStocksByUserNo(userNo).stream()
+                        .map(kisSidebarQuoteEnricher::enrichHolding)
+                        .toList();
 
         return AccountAssetResponse.builder()
                 .totalAsset(asset.getTotalAsset())

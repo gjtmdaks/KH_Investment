@@ -26,5 +26,6 @@ public class AccountAssetResponse {
         private BigDecimal avgPrice;     // 평균단가
         private BigDecimal currentPrice; // 현재가
         private BigDecimal stockValue;   // 평가금액
+        private Double dailyChangeRate;  // 당일 시장 등락률(%)
     }
 }

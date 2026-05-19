@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import styles from "../MainSidebar.module.css";
+import toolbarStyles from "./myInvestmentPanel.module.css";
 import SidebarEmpty from "../components/SidebarEmpty";
 import { useAuth } from "@/app/context/AuthContext";
 import { getAccountAssets } from "@/lib/account";
@@ -17,6 +18,23 @@ type Props = {
     sidebar?: Partial<MyInvestmentSidebarData>;
   };
 };
+
+type ViewMode = "price" | "valuation";
+
+type HoldingSortKey =
+  | "name"
+  | "totalReturnAsc"
+  | "totalReturnDesc"
+  | "dailyReturnAsc"
+  | "dailyReturnDesc";
+
+const SORT_OPTIONS: { key: HoldingSortKey; label: string }[] = [
+  { key: "name", label: "가나다 순" },
+  { key: "totalReturnAsc", label: "총 수익률 낮은 순" },
+  { key: "totalReturnDesc", label: "총 수익률 높은 순" },
+  { key: "dailyReturnAsc", label: "일간 수익률 낮은 순" },
+  { key: "dailyReturnDesc", label: "일간 수익률 높은 순" },
+];
 
 const LOGIN_REQUIRED_TEXT = "로그인하면 이용할 수 있어요";
 
@@ -35,6 +53,15 @@ function formatSignedWon(value?: number | null) {
   return `${sign}${numberValue.toLocaleString()}원`;
 }
 
+function parseDailyChangeRate(value: unknown) {
+  if (value == null || value === "") {
+    return 0;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatRate(value?: number | null) {
   const numberValue = value ?? 0;
   const sign = numberValue > 0 ? "+" : "";
@@ -50,14 +77,42 @@ function getProfitClass(value?: number | null) {
   return styles.profitFlat;
 }
 
+function sortHoldings(
+  holdings: MyInvestmentHolding[],
+  sortKey: HoldingSortKey
+): MyInvestmentHolding[] {
+  const list = [...holdings];
+
+  switch (sortKey) {
+    case "name":
+      return list.sort((a, b) =>
+        a.stockName.localeCompare(b.stockName, "ko")
+      );
+    case "totalReturnAsc":
+      return list.sort((a, b) => a.profitRate - b.profitRate);
+    case "totalReturnDesc":
+      return list.sort((a, b) => b.profitRate - a.profitRate);
+    case "dailyReturnAsc":
+      return list.sort((a, b) => a.dailyChangeRate - b.dailyChangeRate);
+    case "dailyReturnDesc":
+      return list.sort((a, b) => b.dailyChangeRate - a.dailyChangeRate);
+    default:
+      return list;
+  }
+}
+
 export default function MyInvestmentPanel({ data }: Props) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   const [investment, setInvestment] = useState<MyInvestmentSidebarData>({
     account: data.sidebar?.account ?? null,
     holdings: data.sidebar?.holdings ?? [],
   });
+  const [viewMode, setViewMode] = useState<ViewMode>("valuation");
+  const [sortKey, setSortKey] = useState<HoldingSortKey>("name");
+  const [sortOpen, setSortOpen] = useState(false);
 
   useEffect(() => {
     setInvestment({
@@ -65,6 +120,22 @@ export default function MyInvestmentPanel({ data }: Props) {
       holdings: data.sidebar?.holdings ?? [],
     });
   }, [data.sidebar?.account, data.sidebar?.holdings]);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        sortMenuRef.current &&
+        !sortMenuRef.current.contains(event.target as Node)
+      ) {
+        setSortOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sortOpen]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -93,6 +164,7 @@ export default function MyInvestmentPanel({ data }: Props) {
                 stockValue: holding.stockValue,
                 profitAmount,
                 profitRate,
+                dailyChangeRate: parseDailyChangeRate(holding.dailyChangeRate),
               };
             })
           : [];
@@ -126,6 +198,14 @@ export default function MyInvestmentPanel({ data }: Props) {
     };
   }, [isAuthenticated]);
 
+  const sortedHoldings = useMemo(
+    () => sortHoldings(investment.holdings, sortKey),
+    [investment.holdings, sortKey]
+  );
+
+  const activeSortLabel =
+    SORT_OPTIONS.find((option) => option.key === sortKey)?.label ?? "가나다 순";
+
   if (authLoading) {
     return (
       <div className={styles.panelContent}>
@@ -139,7 +219,7 @@ export default function MyInvestmentPanel({ data }: Props) {
   }
 
   const account = investment.account;
-  const holdings = investment.holdings;
+  const holdings = sortedHoldings;
 
   return (
     <div className={styles.panelContent}>
@@ -164,46 +244,146 @@ export default function MyInvestmentPanel({ data }: Props) {
         {holdings.length === 0 ? (
           <SidebarEmpty text="보유 주식이 없어요" />
         ) : (
-          <div className={styles.investHoldingList}>
-            {holdings.map((holding) => (
-              <article
-                key={holding.stockCode}
-                className={styles.investHoldingItem}
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/main/stock/${holding.stockCode}`)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    router.push(`/main/stock/${holding.stockCode}`);
-                  }
-                }}
+          <>
+            <div className={toolbarStyles.toolbar}>
+              <div className={toolbarStyles.sortWrap} ref={sortMenuRef}>
+                <button
+                  type="button"
+                  className={toolbarStyles.sortButton}
+                  onClick={() => setSortOpen((open) => !open)}
+                  aria-expanded={sortOpen}
+                  aria-haspopup="listbox"
+                >
+                  {activeSortLabel}
+                  <span className={toolbarStyles.sortChevron} aria-hidden>
+                    ▾
+                  </span>
+                </button>
+
+                {sortOpen && (
+                  <div
+                    className={toolbarStyles.sortMenu}
+                    role="listbox"
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        role="option"
+                        aria-selected={sortKey === option.key}
+                        className={`${toolbarStyles.sortOption} ${
+                          sortKey === option.key
+                            ? toolbarStyles.sortOptionActive
+                            : ""
+                        }`}
+                        onClick={() => {
+                          setSortKey(option.key);
+                          setSortOpen(false);
+                        }}
+                      >
+                        {option.label}
+                        {sortKey === option.key && (
+                          <span className={toolbarStyles.sortCheck}>✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={toolbarStyles.viewToggle}
+                role="group"
+                aria-label="표시 방식"
               >
-                <div className={styles.investHoldingTop}>
-                  <div>
-                    <strong>{holding.stockName}</strong>
-                    <span>{holding.stockCode}</span>
+                <button
+                  type="button"
+                  className={`${toolbarStyles.viewToggleButton} ${
+                    viewMode === "price"
+                      ? toolbarStyles.viewToggleButtonActive
+                      : ""
+                  }`}
+                  onClick={() => setViewMode("price")}
+                >
+                  현재가
+                </button>
+                <button
+                  type="button"
+                  className={`${toolbarStyles.viewToggleButton} ${
+                    viewMode === "valuation"
+                      ? toolbarStyles.viewToggleButtonActive
+                      : ""
+                  }`}
+                  onClick={() => setViewMode("valuation")}
+                >
+                  평가금
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.investHoldingList}>
+              {holdings.map((holding) => (
+                <article
+                  key={holding.stockCode}
+                  className={styles.investHoldingItem}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    router.push(`/main/stock/${holding.stockCode}`)
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      router.push(`/main/stock/${holding.stockCode}`);
+                    }
+                  }}
+                >
+                  <div className={styles.investHoldingTop}>
+                    <div>
+                      <strong>{holding.stockName}</strong>
+                      <span>{holding.stockCode}</span>
+                    </div>
+
+                    <b>{formatQuantity(holding.quantity)}</b>
                   </div>
 
-                  <b>{formatQuantity(holding.quantity)}</b>
-                </div>
+                  {viewMode === "price" ? (
+                    <div className={styles.investHoldingValue}>
+                      <div className={styles.investHoldingValueLeft}>
+                        <span>현재가</span>
+                        <span className={styles.investHoldingMeta}>
+                          내 평균 {formatWon(holding.avgPrice)}
+                        </span>
+                      </div>
+                      <div className={styles.investHoldingValueRight}>
+                        <strong>{formatWon(holding.currentPrice)}</strong>
+                        <span
+                          className={getProfitClass(holding.dailyChangeRate)}
+                        >
+                          {formatRate(holding.dailyChangeRate)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.investHoldingValue}>
+                        <span>평가금액</span>
+                        <strong>{formatWon(holding.stockValue)}</strong>
+                      </div>
 
-                <div className={styles.investHoldingValue}>
-                  <span>평가금액</span>
-                  <strong>{formatWon(holding.stockValue)}</strong>
-                </div>
-
-                <div className={styles.investHoldingProfit}>
-                  <span className={getProfitClass(holding.profitAmount)}>
-                    {formatSignedWon(holding.profitAmount)}
-                  </span>
-
-                  <span className={getProfitClass(holding.profitRate)}>
-                    {formatRate(holding.profitRate)}
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
+                      <div className={styles.investHoldingProfit}>
+                        <span className={getProfitClass(holding.profitAmount)}>
+                          {formatSignedWon(holding.profitAmount)}
+                        </span>
+                        <span className={getProfitClass(holding.profitRate)}>
+                          {formatRate(holding.profitRate)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </article>
+              ))}
+            </div>
+          </>
         )}
       </section>
     </div>
