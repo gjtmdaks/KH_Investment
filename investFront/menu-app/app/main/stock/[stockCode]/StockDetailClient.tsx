@@ -14,30 +14,30 @@ import { apiClient } from "@/lib/api-client";
 import { stockDetailTabs } from "@/lib/stock/stockDetailConstants";
 import { parseNumeric } from "@/lib/stock/stockDetailFormat";
 import type { TabKey } from "@/lib/stock/stockDetailTypes";
+import { useAuth } from "@/app/context/AuthContext";
 import { useStockDetailData } from "./useStockDetailData";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
-  useEffect(() => {
-    const user = localStorage.getItem("user");
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-    // 비로그인
-    if (!user) {
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) {
       return;
     }
 
     async function saveRecentView() {
       try {
-        await apiClient.post(
-          `/recent-view/${stockCode}`
-        );
+        await apiClient.post(`/recent-view/${stockCode}`, undefined, {
+          skipAuthRedirect: true,
+        });
       } catch (e) {
         console.error(e);
       }
     }
     saveRecentView();
-  }, [stockCode]);
+  }, [stockCode, isAuthenticated, authLoading]);
 
   const [activeTab, setActiveTab] = useState<TabKey>("chart");
   const {

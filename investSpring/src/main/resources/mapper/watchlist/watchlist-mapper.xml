@@ -114,7 +114,7 @@
 	    JOIN stocks s
 	      ON rv.stock_code = s.stock_code
 	
-	    JOIN stock_realtime_current r
+	    LEFT JOIN stock_realtime_current r
 	      ON s.stock_code = r.stock_code
 	
 	    WHERE rv.user_no = #{userNo}
