@@ -220,6 +220,58 @@
         WHERE ROWNUM <![CDATA[ <= ]]> 20
     </select>
     
+    <!-- 종목명/코드 키워드 검색 (자동완성·통합검색) -->
+    <select id="searchStocksByKeyword" parameterType="map" resultType="StockKeywordSearchDto">
+        SELECT *
+        FROM (
+            SELECT
+                s.stock_code AS stockCode,
+                s.stock_name AS stockName,
+                s.market_type AS marketType,
+                (
+                    CASE
+                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
+                             LIKE #{primaryKeyword} || '%' THEN 80
+                        WHEN s.stock_name LIKE #{primaryKeyword} || '%' THEN 70
+                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
+                             LIKE '%' || #{primaryKeyword} || '%' THEN 50
+                        WHEN s.stock_name LIKE '%' || #{primaryKeyword} || '%' THEN 40
+                        <if test="searchStockCode">
+                        WHEN s.stock_code LIKE '%' || #{primaryKeyword} || '%' THEN 30
+                        </if>
+                        ELSE 10
+                    END
+                    + CASE WHEN s.stock_name LIKE '%보통주' THEN 15 ELSE 0 END
+                    <if test="boostNames != null and boostNames.size() > 0">
+                    + CASE
+                        <foreach collection="boostNames" item="bn">
+                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
+                             LIKE #{bn} || '%' THEN 60
+                        </foreach>
+                        ELSE 0
+                      END
+                    </if>
+                ) AS matchScore,
+                NVL(r.current_price * r.volume, 0) AS tradingValue
+            FROM stocks s
+            LEFT JOIN stock_realtime_current r
+                ON s.stock_code = r.stock_code
+            WHERE s.status = 'ACTIVE'
+              AND (
+                <foreach collection="keywords" item="kw" separator=" OR ">
+                    s.stock_name LIKE '%' || #{kw} || '%'
+                    OR REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
+                       LIKE '%' || #{kw} || '%'
+                    <if test="searchStockCode">
+                    OR s.stock_code LIKE '%' || #{kw} || '%'
+                    </if>
+                </foreach>
+              )
+            ORDER BY matchScore DESC, tradingValue DESC, s.stock_name
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> #{limit}
+    </select>
+
 	<select id="searchStocks" parameterType="map" resultType="StockScreenerDto">
 	    SELECT *
 	    FROM (SELECT

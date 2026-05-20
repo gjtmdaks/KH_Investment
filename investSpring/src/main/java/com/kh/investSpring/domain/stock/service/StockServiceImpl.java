@@ -1,14 +1,18 @@
 package com.kh.investSpring.domain.stock.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
+import com.kh.investSpring.domain.stock.service.StockSearchKeywordResolver.ResolvedQuery;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class StockServiceImpl implements StockService {
 
     private final StockDao stockDao;
+    private final StockSearchKeywordResolver searchKeywordResolver;
 
     @Override
     public List<StockDto> getStockList() {
@@ -81,6 +86,35 @@ public class StockServiceImpl implements StockService {
     
     public List<StockScreenerDto> searchStocks(String market, String changeRate, String volume) {
         return stockDao.searchStocks(market, changeRate, volume);
+    }
+
+    @Override
+    public List<StockKeywordSearchDto> searchByKeyword(String keyword, int limit) {
+        ResolvedQuery query = searchKeywordResolver.resolve(keyword);
+        if (query.keywords().isEmpty()) {
+            return List.of();
+        }
+
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("primaryKeyword", query.primaryKeyword());
+        params.put("keywords", query.keywords());
+        params.put("boostNames", query.boostCanonicalNames());
+        params.put("searchStockCode", query.searchStockCode());
+        params.put("limit", safeLimit + 15);
+
+        List<StockKeywordSearchDto> raw = stockDao.searchStocksByKeyword(params);
+        if (raw == null || raw.isEmpty()) {
+            return List.of();
+        }
+
+        List<StockKeywordSearchDto> deduped =
+                StockSearchKeywordResolver.dedupePreferCommonStock(raw);
+
+        return deduped.size() <= safeLimit
+                ? deduped
+                : deduped.subList(0, safeLimit);
     }
     
     public RealtimeSectionResponseDto getRealtimeSection() {

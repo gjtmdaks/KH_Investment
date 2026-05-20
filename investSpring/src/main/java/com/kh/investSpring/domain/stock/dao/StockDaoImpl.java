@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.investSpring.domain.stock.dto.StockDto;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
+import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 
 import lombok.RequiredArgsConstructor;
@@ -78,6 +79,11 @@ public class StockDaoImpl implements StockDao {
 	    param.put("volume", volume);
 
 	    return session.selectList("stock.searchStocks", param);
+	}
+
+	@Override
+	public List<StockKeywordSearchDto> searchStocksByKeyword(Map<String, Object> params) {
+	    return session.selectList("stock.searchStocksByKeyword", params);
 	}
 	
 	@Override

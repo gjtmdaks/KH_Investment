@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
 
@@ -26,6 +27,8 @@ public interface StockService {
     public List<StockScreenerDto> getVolumeStocks();
     
     public List<StockScreenerDto> searchStocks(String market, String changeRate, String volume);
+
+    List<StockKeywordSearchDto> searchByKeyword(String keyword, int limit);
 
 	RealtimeSectionResponseDto getRealtimeSection();
     

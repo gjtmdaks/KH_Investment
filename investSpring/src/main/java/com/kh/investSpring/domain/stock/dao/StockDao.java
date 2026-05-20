@@ -1,11 +1,13 @@
 package com.kh.investSpring.domain.stock.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
 
 import com.kh.investSpring.domain.stock.dto.StockDto;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
+import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 
 public interface StockDao {
@@ -35,6 +37,8 @@ public interface StockDao {
     public List<StockScreenerDto> getVolumeStocks();
 
 	List<StockScreenerDto> searchStocks(String market, String changeRate, String volume);
+
+	List<StockKeywordSearchDto> searchStocksByKeyword(Map<String, Object> params);
 
 	List<StockScreenerDto> getRealtimeSurgingStocks();
 
