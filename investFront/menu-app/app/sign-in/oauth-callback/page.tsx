@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/context/AuthContext";
+import { consumePostLoginRedirect } from "@/lib/auth-redirect";
 
 import styles from "./oauthCallback.module.css";
 
@@ -88,7 +89,7 @@ function OAuthCallbackBody() {
         if (tryNotifyOAuthPopupSuccess()) {
           return;
         }
-        router.replace("/main");
+        router.replace(consumePostLoginRedirect("/main"));
       } catch {
         setErrorMessage(
           "로그인 처리 중 오류가 발생했습니다. 다시 로그인해 주세요."

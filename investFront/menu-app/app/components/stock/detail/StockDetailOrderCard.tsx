@@ -1,9 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuth } from "@/app/context/AuthContext";
+import {
+  buildSignInUrl,
+  storePostLoginRedirect,
+} from "@/lib/auth-redirect";
 import { getAccountAssets, type HoldingStock } from "@/lib/account";
 import type { OrderKind, OrderType } from "@/lib/order";
 import {
@@ -155,6 +159,7 @@ export function StockDetailOrderCard({
   price: PriceResponse | null;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const [availableCash, setAvailableCash] = useState(0);
   const [holding, setHolding] = useState<HoldingStock | null>(null);
@@ -402,7 +407,9 @@ export function StockDetailOrderCard({
 
   function handleOrderButtonClick() {
     if (!isAuthenticated) {
-      router.push("/sign-in");
+      const returnPath = `${pathname}${window.location.search}`;
+      storePostLoginRedirect(returnPath);
+      router.push(buildSignInUrl(returnPath));
       return;
     }
 
