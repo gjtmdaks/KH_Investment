@@ -63,6 +63,14 @@ export function useStockDetailOrderForm(
     try {
       setOrderLoading(true);
 
+      console.log("주문 요청 확인", {
+        orderKind,
+        orderType,
+        stockCode,
+        price: requestPrice,
+        quantity: orderQuantity,
+      });
+
       const response = await createOrder({
         stockCode,
         orderKind,
@@ -73,8 +81,8 @@ export function useStockDetailOrderForm(
 
       setOrderMessage(
         response.status === "PENDING"
-          ? `${response.orderKind === "BUY" ? "매수" : "매도"} 예약이 완료되었습니다.`
-          : `${response.orderKind === "BUY" ? "매수" : "매도"} 주문이 완료되었습니다.`
+          ? `${orderKind === "BUY" ? "매수" : "매도"} 예약이 완료되었습니다.`
+          : `${orderKind === "BUY" ? "매수" : "매도"} 주문이 완료되었습니다.`
       );
 
       setQuantity("");
@@ -89,7 +97,11 @@ export function useStockDetailOrderForm(
       }
     } catch (error) {
       console.error(error);
-      setOrderMessage("주문 처리에 실패했습니다.");
+
+      const message =
+        error instanceof Error ? error.message : "주문 처리에 실패했습니다.";
+
+      setOrderMessage(message);
     } finally {
       setOrderLoading(false);
     }

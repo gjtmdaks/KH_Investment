@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,11 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public List<Holding> selectSidebarHoldingsByUserNo(Long userNo) {
 	    return session.selectList("account.selectSidebarHoldingsByUserNo", userNo);
+	}
+
+	@Override
+	public AccountTradeStatusResponse selectAccountTradeStatusByUserNo(Long userNo) {
+	    return session.selectOne("account.selectAccountTradeStatusByUserNo", userNo);
 	}
 	
 }
