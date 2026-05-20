@@ -97,6 +97,14 @@
   text-decoration: none;
 }
 
+.userLink:hover .welcome {
+  color: #3182f6;
+}
+
+.userLink:hover {
+  cursor: pointer;
+}
+
 .welcome {
   font-size: 14px;
   font-weight: 600;
