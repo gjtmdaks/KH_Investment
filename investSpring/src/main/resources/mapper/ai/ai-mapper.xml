@@ -91,4 +91,117 @@
 	        )
 	</insert>
 	
+    <!-- AI 리포트 생성 대상 -->
+    <select id="getReportTargets" resultType="StockReportRequestDto">
+        SELECT *
+        FROM (SELECT 
+	            s.stock_code                         AS stockCode,
+	            s.stock_name                         AS stockName,
+	            s.sector                             AS sector,
+	            s.market_type                        AS marketType,
+	            ci.issued_stock                      AS issuedStock,
+	            ci.declined_stock                    AS declinedStock,
+	            ci.treasury_stock                    AS treasuryStock,
+	            ci.outstanding_shares                AS outstandingShares,
+	            ci.minority_shareholder_ratio        AS minorityShareholderRatio,
+	            ci.minority_ownership_ratio          AS minorityOwnershipRatio
+	        FROM stocks s
+	
+	        LEFT JOIN co_information ci
+	            ON s.stock_code = ci.stock_code
+	        LEFT JOIN stock_ai_report sar
+	            ON s.stock_code = sar.stock_code
+	
+	        WHERE s.status = 'ACTIVE'
+	        AND (
+	            sar.updated_at IS NULL
+	            OR sar.updated_at <![CDATA[ < ]]> SYSDATE - 1
+	        ))
+        WHERE ROWNUM <![CDATA[ <= ]]> 20
+    </select>
+
+    <!-- 최근 뉴스 -->
+    <select id="getRecentNews" parameterType="string" resultType="string">
+        SELECT title
+        FROM (
+            SELECT
+                n.news_title AS title
+            FROM news_info n
+            
+	        LEFT JOIN news_info_stock ns
+	            ON n.news_info_id = ns.news_info_id
+	            
+            WHERE ns.stock_code = #{stockCode}
+            ORDER BY n.published_at DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> 3
+    </select>
+
+    <!-- AI 리포트 저장 -->
+    <insert id="upsertStockReport">
+        MERGE INTO stock_ai_report target
+
+        USING (
+            SELECT
+                #{stockCode}            AS stock_code,
+                #{investmentOpinion}    AS investment_opinion,
+                #{confidenceScore}      AS confidence_score,
+                #{summary}              AS summary,
+                #{riskFactors}          AS risk_factors,
+                #{positiveFactors}      AS positive_factors,
+                #{aiSignal}             AS ai_signal
+            FROM dual
+        ) source
+
+        ON (
+            target.stock_code = source.stock_code
+        )
+
+        WHEN MATCHED THEN
+            UPDATE SET
+                investment_opinion = source.investment_opinion,
+                confidence_score = source.confidence_score,
+                summary = source.summary,
+                risk_factors = source.risk_factors,
+                positive_factors = source.positive_factors,
+                ai_signal = source.ai_signal,
+                updated_at = SYSDATE
+
+        WHEN NOT MATCHED THEN
+            INSERT (
+                stock_code,
+                investment_opinion,
+                confidence_score,
+                summary,
+                risk_factors,
+                positive_factors,
+                ai_signal,
+                updated_at
+            )
+            VALUES (
+                source.stock_code,
+                source.investment_opinion,
+                source.confidence_score,
+                source.summary,
+                source.risk_factors,
+                source.positive_factors,
+                source.ai_signal,
+                SYSDATE
+            )
+    </insert>
+    
+	<select id="selectStockReport" parameterType="string" resultType="StockAiReportDto">
+	    SELECT
+	        stock_code,
+	        investment_opinion,
+	        confidence_score,
+	        summary,
+	        risk_factors,
+	        positive_factors,
+	        ai_signal,
+	        updated_at
+	    FROM stock_ai_report
+	    WHERE stock_code = #{stockCode}
+	</select>
+	
 </mapper>

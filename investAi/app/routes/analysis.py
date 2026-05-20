@@ -23,7 +23,7 @@ def sentiment(request: NewsRequest):
 
     return result
 
-@router.post("/analysis/stock-report")
+@router.post("/stock-report")
 async def analyze_stock_report(request: StockReportRequest):
     result = generate_stock_report(request)
 

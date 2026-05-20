@@ -1,11 +1,16 @@
 import json
 
+
 def parse_json_response(content: str):
 
     try:
         return json.loads(content)
 
-    except Exception:
+    except Exception as e:
+
+        print("JSON 파싱 실패")
+        print(content)
+
         return {
             "investment_opinion": "HOLD",
             "confidence_score": 50,

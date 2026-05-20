@@ -1,12 +1,22 @@
-from transformers import pipeline
+import os
 
-pipe = pipeline(
-    "text-classification",
-    model="snunlp/KR-FinBert-SC"
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
+
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
 )
 
-result = pipe(
-    "삼성전자가 AI 반도체 수혜 기대감으로 상승했다."
+response = client.chat.completions.create(
+    model="gpt-5-mini",
+    messages=[
+        {
+            "role": "user",
+            "content": "안녕"
+        }
+    ]
 )
 
-print(result)
+print(response.choices[0].message.content)

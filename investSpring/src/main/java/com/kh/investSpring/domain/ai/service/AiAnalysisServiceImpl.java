@@ -33,8 +33,6 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
     public void analyzeNews() {
         List<NewsAnalysisTargetDto> targets = aiAnalysisDao.getUnAnalyzedNews();
 
-        log.info("분석 대상 뉴스 개수={}", targets.size());
-
         for (NewsAnalysisTargetDto news : targets) {
             try {
                 // Python 요청 DTO
@@ -57,12 +55,6 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
                     log.warn("AI 응답 없음 newsId={}", news.getNewsInfoId());
                     continue;
                 }
-
-                log.info("AI 분석 완료 newsId={} sentiment={} score={}",
-                        news.getNewsInfoId(),
-                        response.getSentiment(),
-                        response.getScore()
-                );
 
                 // DB 저장
                 aiAnalysisDao.insertNewsAnalysis(
@@ -87,13 +79,10 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
     public void analyzeStocks() {
         List<StockNewsAnalysisDto> rows = aiAnalysisDao.getStockNewsAnalysisTargets();
 
-        log.info("종목 AI 분석 대상 rows={}", rows.size());
-
-        Map<String, List<StockNewsAnalysisDto>> grouped =
-                rows.stream()
-                        .collect(Collectors.groupingBy(
-                                StockNewsAnalysisDto::getStockCode
-                        ));
+        Map<String, List<StockNewsAnalysisDto>> grouped = rows.stream()
+										                        .collect(Collectors.groupingBy(
+										                                StockNewsAnalysisDto::getStockCode
+										                        ));
 
         for (String stockCode : grouped.keySet()) {
             try {
@@ -156,12 +145,6 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
                                 .summary(summary)
                                 .score(avgScore)
                                 .build()
-                );
-
-                log.info("종목 AI 저장 완료 stockCode={} sentiment={} score={}",
-                        stockCode,
-                        finalSentiment,
-                        avgScore
                 );
 
             } catch (Exception e) {
