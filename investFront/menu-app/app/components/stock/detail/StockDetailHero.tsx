@@ -4,8 +4,8 @@ import type { PriceResponse } from "@/lib/stock/stockDetailTypes";
 import {
   formatChange,
   formatExecutionStrength,
+  formatKoreanLargeShares,
   formatKoreanLargeWon,
-  formatNumber,
   formatPercent,
   formatWon,
 } from "@/lib/stock/stockDetailFormat";
@@ -50,7 +50,11 @@ export function StockDetailHero({
 
       <div className={styles.heroStatsClip}>
         <div className={styles.heroStats} aria-label="종목 시세 지표">
-          <StockDetailStat className={styles.heroStat} label="거래량(주)" value={formatNumber(price?.volume)} />
+          <StockDetailStat
+            className={styles.heroStat}
+            label="거래량(주)"
+            value={formatKoreanLargeShares(price?.volume)}
+          />
           <StockDetailStat className={styles.heroStat} label="거래대금" value={formatKoreanLargeWon(price?.tradingValue)} />
           <StockDetailStat className={styles.heroStat} label="시가총액" value={formatKoreanLargeWon(marketCap)} />
           <StockDetailStat
