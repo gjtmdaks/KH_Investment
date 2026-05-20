@@ -20,6 +20,12 @@ import { useStockDetailDocumentTitle } from "./useStockDetailDocumentTitle";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 import { StockAiReport, StockDetailAiPanel } from "@/app/components/stock/detail/StockDetailAiPanel";
+import StockDetailRiskAckModal from "@/app/components/stock/detail/StockDetailRiskAckModal";
+import {
+  hasHighRiskAckInSession,
+  isHighRiskStock,
+  setHighRiskAckInSession,
+} from "@/lib/stock/isHighRiskStock";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -70,6 +76,7 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
   const [aiReport, setAiReport] = useState<StockAiReport | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
+  const [riskModalOpen, setRiskModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchAiReport() {
@@ -114,7 +121,27 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
   const displayName = price?.stockName || profile?.stockName || stockCode;
 
-  useStockDetailDocumentTitle(price,displayName);
+  useStockDetailDocumentTitle(price, displayName);
+
+  useEffect(() => {
+    if (detailLoading) {
+      return;
+    }
+
+    const name = price?.stockName || profile?.stockName || displayName;
+
+    if (!isHighRiskStock(name) || hasHighRiskAckInSession()) {
+      setRiskModalOpen(false);
+      return;
+    }
+
+    setRiskModalOpen(true);
+  }, [detailLoading, displayName, price?.stockName, profile?.stockName]);
+
+  const handleRiskAckConfirm = useCallback(() => {
+    setHighRiskAckInSession();
+    setRiskModalOpen(false);
+  }, []);
 
   const marketCap = useMemo(() => {
     const currentPrice = parseNumeric(price?.currentPrice);
@@ -128,6 +155,12 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   }, [price?.currentPrice, profile?.outstandingShares]);
 
   return (
+    <>
+      <StockDetailRiskAckModal
+        open={riskModalOpen}
+        stockName={displayName}
+        onConfirm={handleRiskAckConfirm}
+      />
     <main className={styles.page}>
       <div className={styles.layout}>
         {/* LEFT */}
@@ -216,5 +249,6 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
         </aside>
       </div>
     </main>
+    </>
   );
 }
