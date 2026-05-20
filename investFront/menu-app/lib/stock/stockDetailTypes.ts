@@ -9,6 +9,7 @@ export type PriceResponse = {
   openPrice?: string | null;
   highPrice?: string | null;
   lowPrice?: string | null;
+  executionStrength?: string | null;
 };
 
 export type OrderbookLevel = {

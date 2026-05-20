@@ -16,6 +16,7 @@ import { parseNumeric } from "@/lib/stock/stockDetailFormat";
 import type { TabKey } from "@/lib/stock/stockDetailTypes";
 import { useAuth } from "@/app/context/AuthContext";
 import { useStockDetailData } from "./useStockDetailData";
+import { useStockDetailDocumentTitle } from "./useStockDetailDocumentTitle";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
 import { StockAiReport, StockDetailAiPanel } from "@/app/components/stock/detail/StockDetailAiPanel";
@@ -112,6 +113,8 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   }, [price]);
 
   const displayName = price?.stockName || profile?.stockName || stockCode;
+
+  useStockDetailDocumentTitle(price,displayName);
 
   const marketCap = useMemo(() => {
     const currentPrice = parseNumeric(price?.currentPrice);

@@ -26,6 +26,10 @@ import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
 import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse;
 import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
 import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
+import com.kh.investSpring.api.kis.http.KisInquireCcnlHttpResponse;
+import com.kh.investSpring.api.kis.http.KisInquirePriceHttpResponse;
+import com.kh.investSpring.api.kis.http.KisOrderbookHttpResponse;
+import com.kh.investSpring.api.kis.http.KisSearchStockInfoHttpResponse;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 
@@ -78,7 +82,7 @@ public class KisStockService {
                 + "?FID_COND_MRKT_DIV_CODE=J"
                 + "&FID_INPUT_ISCD=" + stockCode;
 
-        KisInquirePriceResponse response = kisApiRequestCoordinator.execute(
+        KisInquirePriceHttpResponse response = kisApiRequestCoordinator.execute(
                 () -> restClient.get()
                         .uri(url)
                         .header("content-type", "application/json; charset=utf-8")
@@ -87,7 +91,7 @@ public class KisStockService {
                         .header("appsecret", kisProperties.getAppSecret())
                         .header("tr_id", "FHKST01010100")
                         .retrieve()
-                        .body(KisInquirePriceResponse.class));
+                        .body(KisInquirePriceHttpResponse.class));
 
         if (response == null) {
             throw new IllegalStateException("한국투자증권 현재가 응답이 없습니다.");
@@ -98,6 +102,7 @@ public class KisStockService {
         }
 
         Map<String, Object> output = safeMap(response.output());
+        String executionStrength = fetchExecutionStrength(stockCode, accessToken);
 
         KisStockPriceResponse result = new KisStockPriceResponse(
                 stockCode,
@@ -109,9 +114,53 @@ public class KisStockService {
                 valueToString(output.get("acml_tr_pbmn")),
                 valueToString(output.get("stck_oprc")),
                 valueToString(output.get("stck_hgpr")),
-                valueToString(output.get("stck_lwpr")));
+                valueToString(output.get("stck_lwpr")),
+                executionStrength);
         putCached(priceCache, stockCode, result);
         return result;
+    }
+
+    /**
+     * 당일 체결강도(tday_rltv)는 inquire-price가 아닌 inquire-ccnl(FHKST01010300) 응답에 포함된다.
+     */
+    private String fetchExecutionStrength(String stockCode, String accessToken) {
+        try {
+            String url = kisProperties.getBaseUrl()
+                    + "/uapi/domestic-stock/v1/quotations/inquire-ccnl"
+                    + "?FID_COND_MRKT_DIV_CODE=J"
+                    + "&FID_INPUT_ISCD=" + stockCode;
+
+            KisInquireCcnlHttpResponse ccnlResponse = kisApiRequestCoordinator.execute(
+                    () -> restClient.get()
+                            .uri(url)
+                            .headers(headers -> addKisHeaders(headers, "FHKST01010300", accessToken))
+                            .retrieve()
+                            .body(KisInquireCcnlHttpResponse.class));
+
+            if (ccnlResponse == null || !"0".equals(ccnlResponse.rt_cd())) {
+                return null;
+            }
+
+            List<Map<String, Object>> rows = ccnlResponse.output();
+            if (rows == null || rows.isEmpty()) {
+                return null;
+            }
+
+            for (Map<String, Object> row : rows) {
+                if (row == null) {
+                    continue;
+                }
+
+                String strength = firstNonBlank(row, "tday_rltv", "cttr");
+                if (strength != null && !strength.isBlank()) {
+                    return strength;
+                }
+            }
+
+            return null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     /**
@@ -205,12 +254,12 @@ public class KisStockService {
                 + "?FID_COND_MRKT_DIV_CODE=J"
                 + "&FID_INPUT_ISCD=" + stockCode;
 
-        KisOrderbookApiResponse response = kisApiRequestCoordinator.execute(
+        KisOrderbookHttpResponse response = kisApiRequestCoordinator.execute(
                 () -> restClient.get()
                         .uri(url)
                         .headers(headers -> addKisHeaders(headers, "FHKST01010200", bearer))
                         .retrieve()
-                        .body(KisOrderbookApiResponse.class));
+                        .body(KisOrderbookHttpResponse.class));
 
         if (response == null) {
             throw new IllegalStateException("한국투자증권 호가 응답이 없습니다.");
@@ -247,12 +296,12 @@ public class KisStockService {
                 + "?PRDT_TYPE_CD=300"
                 + "&PDNO=" + stockCode;
 
-        KisSearchStockInfoResponse response = kisApiRequestCoordinator.execute(
+        KisSearchStockInfoHttpResponse response = kisApiRequestCoordinator.execute(
                 () -> restClient.get()
                         .uri(url)
                         .headers(headers -> addKisHeaders(headers, "CTPF1002R", bearer))
                         .retrieve()
-                        .body(KisSearchStockInfoResponse.class));
+                        .body(KisSearchStockInfoHttpResponse.class));
 
         if (response == null) {
             throw new IllegalStateException("한국투자증권 종목 요약 응답이 없습니다.");
@@ -412,28 +461,6 @@ public class KisStockService {
     private record CachedValue<T>(
             T value,
             long createdAtMillis) {
-    }
-
-    private record KisInquirePriceResponse(
-            String rt_cd,
-            String msg_cd,
-            String msg1,
-            Map<String, Object> output) {
-    }
-
-    private record KisOrderbookApiResponse(
-            String rt_cd,
-            String msg_cd,
-            String msg1,
-            Map<String, Object> output1,
-            Map<String, Object> output2) {
-    }
-
-    private record KisSearchStockInfoResponse(
-            String rt_cd,
-            String msg_cd,
-            String msg1,
-            Map<String, Object> output) {
     }
 
 }

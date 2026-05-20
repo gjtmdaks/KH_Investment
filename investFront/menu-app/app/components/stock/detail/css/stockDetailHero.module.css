@@ -1,14 +1,15 @@
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 
   width: 100%;
   min-width: 0;
   overflow: hidden;
 
-  padding: 30px 32px;
+  padding: 18px 22px;
   border: 1px solid var(--stock-border);
   border-radius: var(--stock-radius-xl);
 
@@ -20,14 +21,15 @@
 }
 
 .heroPrimary {
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .heroNameRow {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 12px;
+  flex-wrap: nowrap;
+  gap: 8px 10px;
   min-width: 0;
 }
 
@@ -37,14 +39,14 @@
   justify-content: center;
   flex-shrink: 0;
 
-  min-height: 34px;
-  padding: 0 13px;
+  min-height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
 
   background: var(--stock-blue-bg);
   color: var(--stock-text-blue);
 
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: -0.02em;
 }
@@ -59,7 +61,7 @@
   white-space: nowrap;
 
   color: var(--stock-text-main);
-  font-size: clamp(30px, 2.5vw, 22px);
+  font-size: clamp(30px, 2.2vw, 55px);
   font-weight: 950;
   line-height: 1.1;
   letter-spacing: -0.06em;
@@ -69,112 +71,126 @@
   flex-shrink: 0;
 
   color: #9db6da;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .heroPriceRow {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px 10px;
+  flex-wrap: nowrap;
+  gap: 6px 8px;
 
   min-width: 0;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .heroPriceRow strong {
   color: #ffffff;
-  font-size: clamp(34px, 3vw, 28px);
+  font-size: clamp(34px, 2.6vw, 28px);
   font-weight: 950;
   line-height: 1;
   letter-spacing: -0.07em;
+  white-space: nowrap;
 }
 
 .priceDot {
   color: var(--stock-text-muted);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
 }
 
 .yesterdayLabel {
   color: #9db6da;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .up {
   color: var(--stock-red);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .down {
   color: var(--stock-blue);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
+  white-space: nowrap;
+}
+
+.heroStatsClip {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .heroStats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(92px, auto));
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  grid-template-rows: repeat(2, auto);
+  gap: 6px;
 
-  min-width: 0;
-  justify-content: end;
-  align-items: center;
+  flex-shrink: 0;
+  width: max-content;
 }
 
-@media (max-width: 1280px) {
-  .hero {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-  }
+.heroStats .heroStat {
+  min-width: 0;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 12px;
+}
 
-  .heroStats {
-    width: 100%;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    justify-content: stretch;
-  }
+.heroStats .heroStat span {
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.heroStats .heroStat strong {
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 @media (max-width: 860px) {
   .hero {
-    padding: 24px 22px;
+    padding: 16px 18px;
     border-radius: 22px;
+    gap: 12px;
   }
 
-  .heroStats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .heroPriceRow strong {
+    font-size: clamp(24px, 6vw, 28px);
   }
 }
 
 @media (max-width: 560px) {
   .hero {
-    padding: 22px 18px;
+    padding: 14px 16px;
+  }
+
+  .heroNameRow {
+    flex-wrap: wrap;
   }
 
   .heroNameRow h1 {
-    width: 100%;
+    flex: 1 1 auto;
   }
 
   .heroPriceRow {
-    display: grid;
-    grid-template-columns: auto auto;
-    align-items: baseline;
-    gap: 6px 8px;
+    flex-wrap: wrap;
+    row-gap: 4px;
   }
 
   .priceDot {
     display: none;
-  }
-
-  .yesterdayLabel {
-    grid-column: 1 / 2;
-  }
-
-  .heroStats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

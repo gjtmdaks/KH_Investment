@@ -178,7 +178,11 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       const priceData = await fetchJson<PriceResponse>(
         `/api/stocks/${stockCode}/price`
       );
-      setPrice(priceData);
+      setPrice((prev) => ({
+        ...priceData,
+        executionStrength:
+          priceData.executionStrength ?? prev?.executionStrength ?? null,
+      }));
     } catch {
       return;
     }
