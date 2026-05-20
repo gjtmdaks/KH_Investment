@@ -111,7 +111,7 @@
 		    ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
 	
 	    WHERE a.USER_NO = #{userNo}
-	      AND a.STATUS = 'ACTIVE'
+	      AND a.STATUS IN ('ACTIVE', 'STOP')
 	
 	</select>
 	
@@ -149,7 +149,7 @@
 	        ON a.ACCOUNT_NO = stock_summary.ACCOUNT_NO
 	
 	    WHERE a.USER_NO = #{_parameter}
-	      AND a.STATUS = 'ACTIVE'
+	      AND a.STATUS IN ('ACTIVE', 'STOP')
 	</select>
 	
 	<!--보유주식 목록-->
@@ -184,7 +184,7 @@
 	        ON sh.STOCK_CODE = src.STOCK_CODE
 	
 	    WHERE a.USER_NO = #{_parameter}
-	      AND a.STATUS = 'ACTIVE'
+	      AND a.STATUS IN ('ACTIVE', 'STOP')
 	      AND NVL(sh.STOCK_RESERVES, 0) > 0
 	
 	    ORDER BY sh.STOCK_CODE
@@ -269,9 +269,25 @@
 	        ON sh.STOCK_CODE = src.STOCK_CODE
 	
 	    WHERE a.USER_NO = #{_parameter}
-	      AND a.STATUS = 'ACTIVE'
+	      AND a.STATUS IN ('ACTIVE', 'STOP')
 	      AND NVL(sh.STOCK_RESERVES, 0) > 0
 	
 	    ORDER BY sh.STOCK_CODE
+	</select>
+	
+	<select id="selectAccountStatusByUserNo" parameterType="long" resultType="string">
+	    SELECT STATUS
+	    FROM ACCOUNTS
+	    WHERE USER_NO = #{userNo}
+	</select>
+	
+	<select id="selectAccountTradeStatusByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse">
+	    SELECT
+	        STATUS AS status,
+	        STOP_END_AT AS stopEndAt
+	    FROM ACCOUNTS
+	    WHERE USER_NO = #{userNo}
 	</select>
 </mapper>

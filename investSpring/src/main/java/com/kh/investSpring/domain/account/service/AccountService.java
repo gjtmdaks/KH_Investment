@@ -11,11 +11,13 @@ public interface AccountService {
 
 	AccountSummaryDto getAccountSummary(Long userNo);
 
-	int updatePreviousTotalAssetForAllActiveAccounts();
+    int updatePreviousTotalAssetForAllActiveAccounts();
 
-	AccountAssetResponse getAccountAssets(Long userNo);
-	
-	MainResponse.Account getSidebarAccount(Long userNo);
+    AccountAssetResponse getAccountAssets(Long userNo);
 
-	List<MainResponse.Holding> getSidebarHoldings(Long userNo);
+    MainResponse.Account getSidebarAccount(Long userNo);
+
+    List<MainResponse.Holding> getSidebarHoldings(Long userNo);
+
+    void validateAccountCanTrade(Long userNo);
 }

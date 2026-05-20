@@ -7,6 +7,7 @@ import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse;
 import com.kh.investSpring.domain.main.dto.MainResponse.Account;
 import com.kh.investSpring.domain.main.dto.MainResponse.Holding;
 
@@ -128,6 +129,24 @@ public class AccountServiceImpl implements AccountService {
         List<Holding> holdings = accountDao.selectSidebarHoldingsByUserNo(userNo);
 
         return holdings != null ? holdings : List.of();
+    }
+
+    @Override
+    public void validateAccountCanTrade(Long userNo) {
+        AccountTradeStatusResponse account =
+                accountDao.selectAccountTradeStatusByUserNo(userNo);
+
+        if (account == null) {
+            throw new IllegalStateException("계좌가 없습니다.");
+        }
+
+        if ("CLOSE".equals(account.getStatus())) {
+            throw new IllegalStateException("폐쇄된 계좌입니다.");
+        }
+
+        if ("STOP".equals(account.getStatus())) {
+            throw new IllegalStateException("거래가 정지된 계좌입니다.");
+        }
     }
     
 }

@@ -11,6 +11,7 @@ import com.kh.investSpring.domain.order.dto.OrderPriceUpdateRequest;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.OrderResponse;
 import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
+import com.kh.investSpring.domain.account.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,11 +20,14 @@ import lombok.RequiredArgsConstructor;
 public class OrderCommandServiceImpl implements OrderCommandService {
 
     private final OrderDao orderDao;
+    private final AccountService accountService;
 
     @Override
     @Transactional
     public OrderResponse createOrder(Long userNo, OrderRequest request) { // 매수인지 매도인지 구분
         validateOrderRequest(userNo, request);
+        
+        accountService.validateAccountCanTrade(userNo);
 
         if ("BUY".equalsIgnoreCase(request.getOrderKind())) {
             return createBuyOrder(userNo, request);

@@ -26,6 +26,7 @@ public class AccountSummaryDto {
 	private BigDecimal baseProfitAmount;
 	private BigDecimal baseProfitRate;
 	private String accountStatus;
+	private Date stopEndAt;
 	private Date createdAt;
 	
 }
