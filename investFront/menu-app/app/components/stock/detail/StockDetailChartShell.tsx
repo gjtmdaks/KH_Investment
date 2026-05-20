@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import StockCandleChart, {
   type ChartCandle,
 } from "@/app/components/stock/StockCandleChart";
-import { chartPeriods } from "@/lib/stock/stockDetailConstants";
+import {
+  barChartPeriods,
+  minuteChartPeriods,
+} from "@/lib/stock/stockDetailConstants";
 import type { ChartPeriodLabel } from "@/lib/stock/stockDetailTypes";
 import {
   aggregateYearlyCandles,
@@ -347,6 +350,80 @@ export function StockDetailChartShell({
   );
 }
 
+function ChartPeriodMenu({
+  activePeriod,
+  onSelectPeriod,
+}: {
+  activePeriod: ChartPeriodLabel;
+  onSelectPeriod: (period: ChartPeriodLabel) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const minuteActive = isMinuteChartPeriod(activePeriod);
+  const triggerLabel = minuteActive ? activePeriod : minuteChartPeriods[0];
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  return (
+    <div className={styles.minuteMenu} ref={menuRef}>
+      <button
+        type="button"
+        className={`${styles.minuteTrigger} ${minuteActive ? styles.activePeriod : ""}`}
+        aria-haspopup="listbox"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        <span>{triggerLabel}</span>
+        <span className={styles.minuteChevron} aria-hidden>
+          ▾
+        </span>
+      </button>
+      {menuOpen ? (
+        <ul className={styles.minuteDropdown} role="listbox" aria-label="분봉 주기">
+          {minuteChartPeriods.map((period) => (
+            <li key={period} role="option" aria-selected={activePeriod === period}>
+              <button
+                type="button"
+                className={activePeriod === period ? styles.minuteOptionActive : ""}
+                onClick={() => {
+                  onSelectPeriod(period);
+                  setMenuOpen(false);
+                }}
+              >
+                {period}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function ChartShellLayout(props: {
   activePeriod: ChartPeriodLabel;
   setActivePeriod: (period: ChartPeriodLabel) => void;
@@ -367,7 +444,11 @@ function ChartShellLayout(props: {
   return (
     <div className={styles.chartCard}>
       <div className={styles.periods}>
-        {chartPeriods.map((period) => (
+        <ChartPeriodMenu
+          activePeriod={props.activePeriod}
+          onSelectPeriod={props.setActivePeriod}
+        />
+        {barChartPeriods.map((period) => (
           <button
             key={period}
             type="button"

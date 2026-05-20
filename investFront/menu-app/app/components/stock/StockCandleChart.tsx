@@ -275,10 +275,11 @@ function createChartTickMarkFormatter(
 
 function getTimeScaleOptions(getIntradayMode: () => boolean) {
   const intraday = getIntradayMode();
+  const clampToData = !intraday;
 
   return {
-    fixLeftEdge: false,
-    fixRightEdge: false,
+    fixLeftEdge: clampToData,
+    fixRightEdge: clampToData,
     lockVisibleTimeRangeOnResize: true,
     rightOffset: 0,
     timeVisible: intraday,

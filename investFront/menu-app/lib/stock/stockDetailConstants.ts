@@ -12,13 +12,16 @@ export const stockDetailTabs: Array<{ key: TabKey; label: string }> = [
   { key: "community", label: "커뮤니티" },
 ];
 
-export const chartPeriods: ChartPeriodLabel[] = [
+export const minuteChartPeriods: ChartPeriodLabel[] = [
   "1분",
   "15분",
   "30분",
   "60분",
-  "일",
-  "주",
-  "월",
-  "년",
+];
+
+export const barChartPeriods: ChartPeriodLabel[] = ["일", "주", "월", "년"];
+
+export const chartPeriods: ChartPeriodLabel[] = [
+  ...minuteChartPeriods,
+  ...barChartPeriods,
 ];

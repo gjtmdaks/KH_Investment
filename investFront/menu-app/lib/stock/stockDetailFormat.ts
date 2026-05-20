@@ -21,30 +21,57 @@ export function formatNumber(value?: string | null) {
   return numeric.toLocaleString("ko-KR");
 }
 
-export function formatKoreanLargeWon(value?: string | number | null) {
+function formatKoreanLargeAmount(
+  numeric: number,
+  unitSuffix: string
+) {
+  const ONE_EOK = 100_000_000;
+  const ONE_JO = 1_000_000_000_000;
+
+  if (numeric >= ONE_JO) {
+    return `${formatScaledAmount(numeric / ONE_JO, 1)}조${unitSuffix}`;
+  }
+
+  if (numeric >= ONE_EOK) {
+    const decimals = numeric >= ONE_EOK * 100 ? 0 : 1;
+    return `${formatScaledAmount(numeric / ONE_EOK, decimals)}억${unitSuffix}`;
+  }
+
+  if (numeric >= 10_000) {
+    return `${Math.round(numeric / 10_000).toLocaleString("ko-KR")}만${unitSuffix}`;
+  }
+
+  return `${numeric.toLocaleString("ko-KR")}${unitSuffix}`;
+}
+
+function parseKoreanLargeInput(value?: string | number | null) {
   const numeric = typeof value === "number" ? value : parseNumeric(value);
+
+  if (numeric === null) {
+    return null;
+  }
+
+  return numeric;
+}
+
+export function formatKoreanLargeWon(value?: string | number | null) {
+  const numeric = parseKoreanLargeInput(value);
 
   if (numeric === null) {
     return "-";
   }
 
-  const ONE_EOK = 100_000_000;
-  const ONE_JO = 1_000_000_000_000;
+  return formatKoreanLargeAmount(numeric, "원");
+}
 
-  if (numeric >= ONE_JO) {
-    return `${formatScaledAmount(numeric / ONE_JO, 1)}조원`;
+export function formatKoreanLargeShares(value?: string | number | null) {
+  const numeric = parseKoreanLargeInput(value);
+
+  if (numeric === null) {
+    return "-";
   }
 
-  if (numeric >= ONE_EOK) {
-    const decimals = numeric >= ONE_EOK * 100 ? 0 : 1;
-    return `${formatScaledAmount(numeric / ONE_EOK, decimals)}억원`;
-  }
-
-  if (numeric >= 10_000) {
-    return `${Math.round(numeric / 10_000).toLocaleString("ko-KR")}만원`;
-  }
-
-  return `${numeric.toLocaleString("ko-KR")}원`;
+  return formatKoreanLargeAmount(numeric, "");
 }
 
 export function formatWon(value?: string | null) {
