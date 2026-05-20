@@ -73,6 +73,16 @@ export function formatPlainPercent(value?: string | null) {
   return `${numeric.toFixed(2)}%`;
 }
 
+export function formatExecutionStrength(value?: string | null) {
+  const numeric = parseNumeric(value);
+
+  if (numeric === null) {
+    return "-";
+  }
+
+  return `${numeric.toFixed(2)}%`;
+}
+
 export function formatChange(value?: string | null) {
   const numeric = Number(String(value ?? "").replaceAll(",", ""));
 

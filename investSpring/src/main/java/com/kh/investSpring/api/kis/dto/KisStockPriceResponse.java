@@ -10,7 +10,8 @@ public record KisStockPriceResponse(
         String tradingValue,
         String openPrice,
         String highPrice,
-        String lowPrice
+        String lowPrice,
+        String executionStrength
 		) {
 
 }

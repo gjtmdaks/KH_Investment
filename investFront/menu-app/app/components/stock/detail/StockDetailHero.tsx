@@ -3,6 +3,7 @@
 import type { PriceResponse } from "@/lib/stock/stockDetailTypes";
 import {
   formatChange,
+  formatExecutionStrength,
   formatKoreanLargeWon,
   formatNumber,
   formatPercent,
@@ -47,12 +48,19 @@ export function StockDetailHero({
         </div>
       </div>
 
-      <div className={styles.heroStats}>
-        <StockDetailStat label="거래량(주)" value={formatNumber(price?.volume)} />
-        <StockDetailStat label="거래대금" value={formatKoreanLargeWon(price?.tradingValue)} />
-        <StockDetailStat label="시가총액" value={formatKoreanLargeWon(marketCap)} />
-        <StockDetailStat label="고가" value={formatWon(price?.highPrice)} />
-        <StockDetailStat label="저가" value={formatWon(price?.lowPrice)} />
+      <div className={styles.heroStatsClip}>
+        <div className={styles.heroStats} aria-label="종목 시세 지표">
+          <StockDetailStat className={styles.heroStat} label="거래량(주)" value={formatNumber(price?.volume)} />
+          <StockDetailStat className={styles.heroStat} label="거래대금" value={formatKoreanLargeWon(price?.tradingValue)} />
+          <StockDetailStat className={styles.heroStat} label="시가총액" value={formatKoreanLargeWon(marketCap)} />
+          <StockDetailStat
+            className={styles.heroStat}
+            label="체결강도"
+            value={formatExecutionStrength(price?.executionStrength)}
+          />
+          <StockDetailStat className={styles.heroStat} label="고가" value={formatWon(price?.highPrice)} />
+          <StockDetailStat className={styles.heroStat} label="저가" value={formatWon(price?.lowPrice)} />
+        </div>
       </div>
     </section>
   );
