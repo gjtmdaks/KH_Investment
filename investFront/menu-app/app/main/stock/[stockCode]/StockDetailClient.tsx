@@ -6,6 +6,7 @@ import { StockDetailChartShell } from "@/app/components/stock/detail/StockDetail
 import { StockDetailEmptyState } from "@/app/components/stock/detail/StockDetailEmptyState";
 import { StockDetailHero } from "@/app/components/stock/detail/StockDetailHero";
 import { StockDetailNewsPanel } from "@/app/components/stock/detail/StockDetailNewsPanel";
+import { StockDetailOrderbookLoginGate } from "@/app/components/stock/detail/StockDetailOrderbookLoginGate";
 import { StockDetailOrderbookPanel } from "@/app/components/stock/detail/StockDetailOrderbookPanel";
 import { StockDetailOrderCard } from "@/app/components/stock/detail/StockDetailOrderCard";
 import { StockDetailSummaryPanel } from "@/app/components/stock/detail/StockDetailSummaryPanel";
@@ -198,11 +199,20 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
                 <StockDetailEmptyState title="호가 정보를 불러오는 중입니다." />
               ) : null}
               {!orderbookLoading && activeTab === "orderbook" ? (
-                <StockDetailOrderbookPanel
-                  orderbook={orderbook}
-                  price={price}
-                  onSelectPrice={handleOrderbookPriceSelect}
-                />
+                !authLoading && !isAuthenticated ? (
+                  <StockDetailOrderbookLoginGate>
+                    <StockDetailOrderbookPanel
+                      orderbook={orderbook}
+                      price={price}
+                    />
+                  </StockDetailOrderbookLoginGate>
+                ) : (
+                  <StockDetailOrderbookPanel
+                    orderbook={orderbook}
+                    price={price}
+                    onSelectPrice={handleOrderbookPriceSelect}
+                  />
+                )
               ) : null}
               {detailLoading && activeTab === "summary" ? (
                 <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />

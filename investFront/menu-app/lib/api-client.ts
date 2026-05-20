@@ -8,6 +8,7 @@ import axios, {
 } from "axios";
 
 import { API_BASE_URL } from "@/lib/api-base";
+import { buildSignInUrl } from "@/lib/auth-redirect";
 
 export { API_BASE_URL };
 
@@ -75,7 +76,7 @@ function redirectToLogin(payload?: Record<string, unknown>) {
       ...payload,
     });
   }
-  window.location.assign("/sign-in");
+  window.location.assign(buildSignInUrl(path));
 }
 
 console.log("API_BASE_URL =", API_BASE_URL);
