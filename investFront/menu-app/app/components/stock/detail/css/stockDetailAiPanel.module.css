@@ -1,42 +1,190 @@
 .card {
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  padding: 20px;
 
   border: 1px solid var(--stock-border);
   border-radius: var(--stock-radius-lg);
 
-  background: var(--stock-panel-bg);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.96),
+      rgba(15, 23, 42, 0.88)
+    );
 
   backdrop-filter: blur(18px);
+
+  overflow: hidden;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
 }
 
 .header {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
 
-  margin-bottom: 14px;
+  color: var(--stock-text-main);
 }
 
-.sentiment {
-  font-size: 22px;
+.updatedAt {
+  font-size: 12px;
+  font-weight: 700;
+
+  color: var(--stock-text-muted);
+}
+
+.topSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+.signal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 34px;
+  padding: 0 14px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.positive {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.negative {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
+}
+
+.neutral {
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde047;
+}
+
+.opinion {
+  padding: 8px 12px;
+
+  border-radius: 12px;
+
+  background: rgba(148, 163, 184, 0.12);
+
+  font-size: 13px;
   font-weight: 900;
 
-  margin-bottom: 12px;
+  color: #e2e8f0;
+}
+
+.score {
+  margin-left: auto;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  color: var(--stock-text-sub);
+}
+
+.summary {
+  line-height: 1.75;
+  white-space: pre-line;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  color: #dbe4ee;
+}
+
+.factorSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 14px;
+
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.03);
+
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.factorTitle {
+  font-size: 13px;
+  font-weight: 900;
+
+  color: #4ade80;
+}
+
+.riskTitle {
+  font-size: 13px;
+  font-weight: 900;
 
   color: #fb7185;
 }
 
-.summary {
-  line-height: 1.6;
-  font-size: 14px;
+.factorContent {
+  line-height: 1.7;
+  white-space: pre-line;
+
+  font-size: 13px;
 
   color: var(--stock-text-sub);
-
-  margin-bottom: 14px;
 }
 
-.score {
-  font-size: 13px;
-  font-weight: 800;
+.loading,
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  color: var(--stock-text-muted);
+  min-height: 160px;
+
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: var(--stock-text-sub);
+}
+
+@media (max-width: 760px) {
+
+  .card {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .topSection {
+    gap: 8px;
+  }
+
+  .summary {
+    font-size: 13px;
+  }
+
+  .factorContent {
+    font-size: 12px;
+  }
+
+  .score {
+    width: 100%;
+    margin-left: 0;
+  }
 }

@@ -18,7 +18,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useStockDetailData } from "./useStockDetailData";
 import styles from "@/app/components/stock/detail/stockDetail.module.css";
 import { useStockDetailOrderForm } from "./useStockDetailOrderForm";
-import { StockDetailAiPanel } from "@/app/components/stock/detail/StockDetailAiPanel";
+import { StockAiReport, StockDetailAiPanel } from "@/app/components/stock/detail/StockDetailAiPanel";
 
 export default function StockDetailClient({ stockCode }: { stockCode: string }) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -66,6 +66,33 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     orderMessage,
     handleCreateOrder,
   } = useStockDetailOrderForm(stockCode, price);
+
+  const [aiReport, setAiReport] = useState<StockAiReport | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAiReport() {
+
+      try {
+        setAiLoading(true);
+
+        const response =
+          await apiClient.get(
+            `/api/ai/stock-report/${stockCode}`
+          );
+
+        setAiReport(response.data);
+
+      } catch (e) {
+        console.error(e);
+
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    fetchAiReport();
+  }, [stockCode]);
 
   const handleOrderbookPriceSelect = useCallback(
     (selectedPrice: string) => {
@@ -162,7 +189,10 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
 
         {/* RIGHT */}
         <aside className={styles.sidePanel}>
-          <StockDetailAiPanel />
+          <StockDetailAiPanel
+            report={aiReport}
+            loading={aiLoading}
+          />
           
           <StockDetailOrderCard
             stockCode={stockCode}

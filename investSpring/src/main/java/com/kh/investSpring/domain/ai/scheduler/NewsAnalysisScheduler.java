@@ -17,25 +17,25 @@ public class NewsAnalysisScheduler {
 
     @Scheduled(fixedDelay = 100000)
     public void analyzeNews() {
-        log.info("뉴스 AI 분석 스케줄 시작");
+        log.info("뉴스별 AI 분석 스케줄 시작");
 
         try {
             aiAnalysisService.analyzeNews();
 
         } catch (Exception e) {
-            log.error("뉴스 AI 분석 실패", e);
+            log.error("뉴스별 AI 분석 실패", e);
         }
     }
     
     @Scheduled(fixedDelay = 100000)
     public void analyzeStocks() {
-    	log.info("종목 AI 분석 스케줄 시작");
+    	log.info("종목별 최신뉴스 AI 분석 스케줄 시작");
     	
     	try {
     		aiAnalysisService.analyzeStocks();
     		
     	} catch (Exception e) {
-    		log.error("종목 AI 분석 실패", e);
+    		log.error("종목별 최신뉴스 AI 분석 실패", e);
     	}
     }
 }
