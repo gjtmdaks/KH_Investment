@@ -398,7 +398,13 @@
   font-weight: 950;
 }
 
-.investHoldingValue span {
+.investHoldingValue > span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.investHoldingValueLeft > span:first-child {
   color: #94a3b8;
   font-size: 12px;
   font-weight: 800;
