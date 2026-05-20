@@ -17,11 +17,24 @@ type SuggestItem = {
   marketType: string;
 };
 
+function isEditableElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+    return true;
+  }
+  return target.isContentEditable;
+}
+
 export default function StockSearchBar() {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [keyword, setKeyword] = useState("");
   const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -62,6 +75,35 @@ export default function StockSearchBar() {
   }, [keyword]);
 
   useEffect(() => {
+    function handleSlashFocus(event: KeyboardEvent) {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+      if (isEditableElement(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      inputRef.current?.focus();
+      setOpen(true);
+    }
+
+    window.addEventListener("keydown", handleSlashFocus);
+
+    return () => {
+      window.removeEventListener("keydown", handleSlashFocus);
+    };
+  }, []);
+
+  function clearSearch() {
+    setKeyword("");
+    setItems([]);
+    setOpen(false);
+    setFocused(false);
+    inputRef.current?.blur();
+  }
+
+  useEffect(() => {
     function handleOutside(
       event: MouseEvent
     ) {
@@ -71,7 +113,7 @@ export default function StockSearchBar() {
           event.target as Node
         )
       ) {
-        setOpen(false);
+        clearSearch();
       }
     }
 
@@ -94,11 +136,11 @@ export default function StockSearchBar() {
     if (!q) {
       return;
     }
-    setOpen(false);
 
     router.push(
       `/main/search?q=${encodeURIComponent(q)}`
     );
+    clearSearch();
   }
 
   return (
@@ -116,18 +158,33 @@ export default function StockSearchBar() {
         />
 
         <input
+          ref={inputRef}
           type="text"
           value={keyword}
-          placeholder="종목명 또는 종목코드 검색"
+          aria-label="종목 검색"
           className={styles.searchInput}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setFocused(true);
+            setOpen(true);
+          }}
+          onBlur={() => setFocused(false)}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSubmit();
             }
+            if (e.key === "Escape") {
+              clearSearch();
+            }
           }}
         />
+
+        {!keyword && !focused && (
+          <div className={styles.inputHint} aria-hidden>
+            <kbd className={styles.shortcutKey}>/</kbd>
+            <span>를 눌러 검색하세요</span>
+          </div>
+        )}
       </div>
 
       {open && keyword.trim() && (
@@ -147,7 +204,7 @@ export default function StockSearchBar() {
                   key={item.stockCode}
                   href={`/main/stock/${item.stockCode}`}
                   className={styles.resultItem}
-                  onClick={() => setOpen(false)}
+                  onClick={clearSearch}
                 >
                   <div className={styles.leftArea}>
                     <div className={styles.stockName}>

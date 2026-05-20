@@ -7,6 +7,8 @@
 }
 
 .searchBox {
+  position: relative;
+
   display: flex;
   align-items: center;
 
@@ -58,6 +60,41 @@
 
 .searchInput::placeholder {
   color: #8b95a1;
+}
+
+.inputHint {
+  position: absolute;
+  left: 42px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  pointer-events: none;
+
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+.shortcutKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #6b7684;
+
+  background-color: #ffffff;
+  border: 1px solid #d1d6db;
+  border-radius: 5px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
 }
 
 .dropdown {
