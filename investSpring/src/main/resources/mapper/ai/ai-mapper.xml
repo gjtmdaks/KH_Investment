@@ -204,4 +204,64 @@
 	    WHERE stock_code = #{stockCode}
 	</select>
 	
+	<resultMap id="userAiProfileMap" type="UserAiProfileDto">
+	    <id property="userNo" column="user_no"/>
+	    <result property="surveyType" column="survey_type"/>
+	    <result property="actualInvestmentType" column="actual_investment_type"/>
+    	<result property="portfolioRiskAnalysisJson" column="portfolio_risk_analysis"/>
+    	<result property="aiRecommendationsJson" column="ai_recommendations"/>
+	    <result property="createdAt" column="created_at"/>
+	    <result property="updatedAt" column="updated_at"/>
+	</resultMap>
+	
+	<select id="findUserAiProfile" parameterType="long" resultMap="userAiProfileMap">
+	    SELECT
+	        user_no,
+	        survey_type,
+	        actual_investment_type,
+	        portfolio_risk_analysis,
+	        ai_recommendations,
+	        created_at,
+	        updated_at
+	    FROM user_ai_profile
+	    WHERE user_no = #{userNo}
+	</select>
+	
+	<insert id="insertUserAiProfile">
+	    INSERT INTO user_ai_profile (
+	        user_no,
+	        survey_type,
+	        actual_investment_type,
+	        portfolio_risk_analysis,
+	        ai_recommendations,
+	        created_at,
+	        updated_at
+	    ) VALUES (
+	        #{userNo},
+	        #{surveyType},
+	        #{actualInvestmentType},
+	        #{portfolioRiskAnalysisJson},
+	        #{aiRecommendationsJson},
+	        SYSDATE,
+	        SYSDATE
+	    )
+	</insert>
+	
+	<update id="updateUserAiProfile">
+	    UPDATE user_ai_profile
+	    SET
+	        survey_type = #{surveyType},
+	        actual_investment_type = #{actualInvestmentType},
+	        portfolio_risk_analysis = #{portfolioRiskAnalysisJson},
+	        ai_recommendations = #{aiRecommendationsJson},
+	        updated_at = SYSDATE
+	    WHERE user_no = #{userNo}
+	</update>
+	
+	<select id="existsUserAiProfile" parameterType="long" resultType="int">
+	    SELECT COUNT(*)
+	    FROM user_ai_profile
+	    WHERE user_no = #{userNo}
+	</select>
+	
 </mapper>

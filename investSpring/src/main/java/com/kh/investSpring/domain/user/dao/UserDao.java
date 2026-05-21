@@ -1,5 +1,6 @@
 package com.kh.investSpring.domain.user.dao;
 
+import com.kh.investSpring.domain.ai.dto.InvestmentTypeDto;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
 
@@ -36,6 +37,8 @@ public interface UserDao {
 	int insertInvestmentType(Long userNo, int calculatedTotalPoint, String resultFile);
 
 	Integer selectInvestmentTotalPointByUserNo(Long userNo);
+
+	InvestmentTypeDto selectInvestmentByUserNo(Long userNo);
 
 	
 

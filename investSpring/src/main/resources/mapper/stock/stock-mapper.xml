@@ -367,5 +367,33 @@
 		    ORDER BY COUNT(rt.tick_id) DESC)
 	    WHERE ROWNUM <![CDATA[ <= ]]> 10
 	</select>
+	
+	<select id="findByStockCode" resultType="StockDto">
+	    SELECT
+	        s.stock_code AS stockCode,
+	        s.stock_name AS stockName,
+	        s.sector AS sector,
+	        s.market_type AS marketType,
+	        NVL(c.current_price, 0) AS price,
+	        NVL(c.change_rate, 0) AS changeRate,
+	        NVL(c.volume, 0) AS volume,
+	        NVL(c.current_price * c.volume, 0) AS tradingValue,
+	        ai.sentiment AS aiSentiment,
+	        ai.summary AS aiSummary,
+	        ai.score AS aiScore
+	            
+	    FROM stocks s
+	
+	    LEFT JOIN stock_realtime_current c
+	        ON s.stock_code = c.stock_code
+	    LEFT JOIN stock_ai_summary ai
+         	ON s.stock_code = ai.stock_code
+	
+	    WHERE s.status = 'ACTIVE'
+	      AND c.current_price IS NOT NULL
+	      AND s.stock_code = #{stockCode}
+	
+	    ORDER BY tradingValue DESC
+	</select>
 
 </mapper>

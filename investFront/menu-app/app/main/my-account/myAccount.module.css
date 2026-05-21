@@ -563,3 +563,119 @@
 .clickableRow:active {
   transform: scale(0.995);
 }
+
+.aiProfileWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aiProfileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.aiProfileHeader h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.aiProfileHeader p {
+  margin-top: 6px;
+  color: var(--stock-text-sub);
+  font-size: 14px;
+}
+
+.aiSurveyType {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 15px;
+  color: var(--stock-text-sub);
+}
+
+.aiSurveyType strong {
+  font-size: 16px;
+  color: var(--stock-text);
+}
+
+.aiSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aiSection h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.aiSection p {
+  margin: 0;
+
+  line-height: 1.7;
+
+  color: var(--stock-text-sub);
+}
+
+.aiList {
+  margin: 0;
+  padding-left: 18px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  color: var(--stock-text-sub);
+}
+
+.aiProfileButton,
+.aiRefreshButton {
+  border: none;
+  cursor: pointer;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  background: var(--stock-primary);
+  color: white;
+
+  transition: 0.2s ease;
+}
+
+.aiProfileButton:hover,
+.aiRefreshButton:hover {
+  opacity: 0.9;
+}
+
+.aiProfileButton:disabled,
+.aiRefreshButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aiProfileEmpty,
+.aiProfileLoading {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.aiProfileTitle {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.aiProfileDesc {
+  line-height: 1.7;
+  color: var(--stock-text-sub);
+}

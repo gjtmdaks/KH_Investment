@@ -3,6 +3,7 @@ package com.kh.investSpring.domain.ai.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@Async("aiExecutor")
 @RequiredArgsConstructor
 public class StockReportServiceImpl implements StockReportService {
 
@@ -26,23 +28,16 @@ public class StockReportServiceImpl implements StockReportService {
 
     @Override
     public void generateReports() {
-
-        List<StockReportRequestDto> targets =
-                stockReportDao.getReportTargets();
+        List<StockReportRequestDto> targets = stockReportDao.getReportTargets();
 
         if (targets.isEmpty()) {
             log.info("AI 리포트 대상 종목 없음");
             return;
         }
-
-        log.info("AI 리포트 생성 대상 수={}", targets.size());
-
+        
         for (StockReportRequestDto stock : targets) {
-
             try {
-
-                List<String> recentNews =
-                        stockReportDao.getRecentNews(stock.getStockCode());
+                List<String> recentNews = stockReportDao.getRecentNews(stock.getStockCode());
 
                 stock.setRecentNews(recentNews);
 
@@ -69,13 +64,8 @@ public class StockReportServiceImpl implements StockReportService {
 
                 stockReportDao.upsertStockReport(report);
 
-                log.info("AI 리포트 저장 완료 stockCode={}",
-                        stock.getStockCode());
-
             } catch (Exception e) {
-
-                log.error(
-                        "AI 리포트 생성 실패 stockCode={}",
+                log.error("AI 리포트 생성 실패 stockCode={}",
                         stock.getStockCode(),
                         e
                 );

@@ -45,5 +45,7 @@ public interface StockDao {
 	List<StockScreenerDto> getRealtimeFallingStocks();
 
 	List<StockScreenerDto> getRealtimeActiveStocks();
+
+	StockDto findByStockCode(String stockCode);
     
 }

@@ -16,11 +16,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.investSpring.domain.account.dao.AccountDao;
 import com.kh.investSpring.domain.main.dto.MainResponse.Header;
 import com.kh.investSpring.domain.user.dao.UserDao;
+import com.kh.investSpring.domain.user.dto.FindPasswordRequest;
+import com.kh.investSpring.domain.user.dto.FindUserIdRequest;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeAnswerRequest;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
-import com.kh.investSpring.domain.user.dto.FindPasswordRequest;
-import com.kh.investSpring.domain.user.dto.FindUserIdRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInRequest;
 import com.kh.investSpring.domain.user.dto.UserSignInResponse;
 import com.kh.investSpring.domain.user.dto.UserSignUpRequest;
@@ -30,7 +30,6 @@ import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordRequest;
 import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
-import com.kh.investSpring.global.jwt.JwtTokenProvider;
 import com.kh.investSpring.global.validation.PasswordPolicyValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -48,7 +47,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
     private final AccountDao accountDao;
-    private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final SignupEmailVerificationService signupEmailVerificationService;
