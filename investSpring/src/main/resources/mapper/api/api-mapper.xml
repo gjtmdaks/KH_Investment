@@ -273,6 +273,23 @@
 	    )
 	</insert>
 	
+	<select id="findRealtimeCurrentByStockCode"
+	        resultType="com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto">
+	    SELECT
+	        rc.stock_code AS stockCode,
+	        s.stock_name AS stockName,
+	        rc.current_price AS currentPrice,
+	        rc.open_price AS openPrice,
+	        rc.change_price AS changePrice,
+	        rc.change_rate AS changeRate,
+	        rc.volume AS volume,
+	        rc.updated_at AS updatedAt
+	    FROM stock_realtime_current rc
+	    LEFT JOIN stocks s
+	        ON rc.stock_code = s.stock_code
+	    WHERE rc.stock_code = #{stockCode}
+	</select>
+
 	<update id="updateRealtimeCurrent">
 	    UPDATE stock_realtime_current
 	    SET

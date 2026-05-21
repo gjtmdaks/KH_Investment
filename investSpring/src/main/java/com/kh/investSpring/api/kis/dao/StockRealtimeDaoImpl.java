@@ -5,6 +5,7 @@ import java.util.List;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto;
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,11 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 	@Override
 	public void deleteOldTicks() {
 		session.delete("api.deleteOldTicks");
+	}
+
+	@Override
+	public StockRealtimeCurrentDto findRealtimeCurrentByStockCode(String stockCode) {
+		return session.selectOne("api.findRealtimeCurrentByStockCode", stockCode);
 	}
 
 }
