@@ -3,10 +3,12 @@
 import styles from "../MainSidebar.module.css";
 
 type Props = {
+  sortKey: string;
   rank: number;
   userName: string;
   profitRate: number;
   evaluationAmount: number;
+  profitAmount: number;
 };
 
 function formatMoney(value: number) {
@@ -20,10 +22,12 @@ function formatRate(value: number) {
 }
 
 export default function SidebarUserItem({
+  sortKey,
   rank,
   userName,
   profitRate,
   evaluationAmount,
+  profitAmount,
 }: Props) {
 
   const isPositive = profitRate >= 0;
@@ -49,12 +53,23 @@ export default function SidebarUserItem({
             {userName}
           </div>
 
+          {sortKey === "total" ? (
           <div className={styles.asset}>
-            ₩
-            {formatMoney(
-              evaluationAmount
-            )}
+            ₩{formatMoney(evaluationAmount)}
           </div>
+          ) : (
+          <div
+            className={`${styles.asset}
+              ${profitAmount > 0
+              ? styles.plus
+              : profitAmount < 0
+              ? styles.minus
+              : styles.soso}`}
+          >
+            {profitAmount > 0 ? "+" : ""}
+            {formatMoney(profitAmount)}
+          </div>
+          )}
         </div>
       </div>
 

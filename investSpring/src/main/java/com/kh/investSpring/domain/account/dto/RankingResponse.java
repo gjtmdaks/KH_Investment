@@ -13,6 +13,8 @@ public class RankingResponse {
 	
 	private Long evaluationAmount;
 	
+	private Long profitAmount;
+	
 	private Double profitRate;
 	
 	public enum RankingType {

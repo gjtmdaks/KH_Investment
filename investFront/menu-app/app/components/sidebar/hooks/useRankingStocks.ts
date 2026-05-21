@@ -16,6 +16,7 @@ export type RankingItem = {
   userName: string;
   evaluationAmount: number;
   profitRate: number;
+  profitAmount: number;
 };
 
 export default function useRankingStocks(
