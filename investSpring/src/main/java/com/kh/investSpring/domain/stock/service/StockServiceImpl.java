@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
@@ -41,6 +42,20 @@ public class StockServiceImpl implements StockService {
                     return stock;
                 })
                 .toList();
+    }
+
+    @Override
+    public StockInfoDto getRegisteredStockInfo(String stockCode) {
+        if (stockCode == null) {
+            return null;
+        }
+
+        String code = stockCode.trim();
+        if (code.isEmpty() || !stockDao.existsByStockCode(code)) {
+            return null;
+        }
+
+        return stockDao.getStockInfo(code);
     }
 
     @Override

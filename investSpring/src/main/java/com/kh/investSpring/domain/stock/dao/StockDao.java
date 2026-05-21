@@ -47,5 +47,7 @@ public interface StockDao {
 	List<StockScreenerDto> getRealtimeActiveStocks();
 
 	StockDto findByStockCode(String stockCode);
+	
+	boolean existsByStockCode(@Param("stockCode") String stockCode);
     
 }

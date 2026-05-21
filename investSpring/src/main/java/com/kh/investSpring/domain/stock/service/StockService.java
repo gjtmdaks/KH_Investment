@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
+import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.dto.TopStockDto;
@@ -15,6 +16,8 @@ public interface StockService {
 
     // ✅ 거래대금 1위 종목
     TopStockDto getTopVolumeStock();
+
+    StockInfoDto getRegisteredStockInfo(String stockCode);
     
     public List<StockScreenerDto> getRisingStocks();
     
