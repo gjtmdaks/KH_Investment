@@ -8,6 +8,7 @@ import { StockDetailNewsPanel } from "@/app/components/stock/detail/StockDetailN
 import { StockDetailOrderbookLoginGate } from "@/app/components/stock/detail/StockDetailOrderbookLoginGate";
 import { StockDetailOrderbookPanel } from "@/app/components/stock/detail/StockDetailOrderbookPanel";
 import { StockDetailOrderCard } from "@/app/components/stock/detail/StockDetailOrderCard";
+import { StockDetailInvestorTrendPanel } from "@/app/components/stock/detail/StockDetailInvestorTrendPanel";
 import { StockDetailSummaryPanel } from "@/app/components/stock/detail/StockDetailSummaryPanel";
 import { StockDetailCommunityPanel } from "@/app/components/stock/detail/StockDetailCommunityPanel";
 import { apiClient } from "@/lib/api-client";
@@ -53,9 +54,11 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     orderbook,
     profile,
     news,
+    investorTrend,
     detailLoading,
     orderbookLoading,
     newsPhase,
+    investorLoading,
     error,
     fetchJson,
   } = useStockDetailData(stockCode, activeTab);
@@ -212,6 +215,12 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
                     onSelectPrice={handleOrderbookPriceSelect}
                   />
                 )
+              ) : null}
+              {investorLoading && activeTab === "investor" ? (
+                <StockDetailEmptyState title="매매동향을 불러오는 중입니다." />
+              ) : null}
+              {!investorLoading && activeTab === "investor" ? (
+                <StockDetailInvestorTrendPanel data={investorTrend} />
               ) : null}
               {detailLoading && activeTab === "summary" ? (
                 <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />

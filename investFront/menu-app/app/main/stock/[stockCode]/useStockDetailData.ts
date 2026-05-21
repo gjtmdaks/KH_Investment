@@ -8,11 +8,13 @@ import {
   HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS,
   ORDERBOOK_REFRESH_INTERVAL_MS,
   ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS,
+  STOCK_INVESTOR_TREND_DAYS,
   STOCK_NEWS_PAGE_SIZE,
 } from "@/lib/stock/stockDetailConstants";
 import { mergePriceResponse } from "@/lib/stock/stockDetailPrice";
 import { normalizeOrderbookResponse } from "@/lib/stock/stockDetailOrderbook";
 import type {
+  InvestorTrendResponse,
   NewsLoadPhase,
   NewsResponse,
   OrderbookResponse,
@@ -27,14 +29,20 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   const [orderbook, setOrderbook] = useState<OrderbookResponse | null>(null);
   const [profile, setProfile] = useState<StaticProfileResponse | null>(null);
   const [news, setNews] = useState<NewsResponse[]>([]);
+  const [investorTrend, setInvestorTrend] = useState<InvestorTrendResponse | null>(
+    null
+  );
   const [detailLoading, setDetailLoading] = useState(true);
   const [orderbookLoading, setOrderbookLoading] = useState(true);
   const [newsPhase, setNewsPhase] = useState<NewsLoadPhase>("idle");
+  const [investorLoading, setInvestorLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const snapshotSessionRef = useRef(0);
   const newsFetchInFlightRef = useRef(false);
   const newsDoneSessionRef = useRef<number | null>(null);
+  const investorFetchInFlightRef = useRef(false);
+  const investorDoneSessionRef = useRef<number | null>(null);
 
   const fetchJson = useCallback(async <T,>(path: string): Promise<T> => {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -95,6 +103,52 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     [fetchJson, stockCode]
   );
 
+  const runInvestorFetch = useCallback(
+    async (session: number) => {
+      if (session !== snapshotSessionRef.current) {
+        return;
+      }
+
+      if (investorFetchInFlightRef.current) {
+        return;
+      }
+
+      if (investorDoneSessionRef.current === session) {
+        return;
+      }
+
+      investorFetchInFlightRef.current = true;
+      setInvestorLoading(true);
+
+      try {
+        const data = await fetchJson<InvestorTrendResponse>(
+          `/api/stocks/${stockCode}/investor-trend?days=${STOCK_INVESTOR_TREND_DAYS}`
+        );
+
+        if (session !== snapshotSessionRef.current) {
+          return;
+        }
+
+        setInvestorTrend(data);
+        investorDoneSessionRef.current = session;
+      } catch {
+        if (session !== snapshotSessionRef.current) {
+          return;
+        }
+
+        setInvestorTrend(null);
+        investorDoneSessionRef.current = session;
+      } finally {
+        investorFetchInFlightRef.current = false;
+
+        if (session === snapshotSessionRef.current) {
+          setInvestorLoading(false);
+        }
+      }
+    },
+    [fetchJson, stockCode]
+  );
+
   const loadSnapshot = useCallback(async () => {
     setError(null);
 
@@ -104,6 +158,9 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     newsDoneSessionRef.current = null;
     setNewsPhase("idle");
     setNews([]);
+    investorDoneSessionRef.current = null;
+    setInvestorTrend(null);
+    setInvestorLoading(false);
     setPrice(null);
     setProfile(null);
     setOrderbook(null);
@@ -291,14 +348,24 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     void runNewsFetch(snapshotSessionRef.current);
   }, [activeTab, runNewsFetch, detailLoading, orderbookLoading]);
 
+  useEffect(() => {
+    if (activeTab !== "investor") {
+      return;
+    }
+
+    void runInvestorFetch(snapshotSessionRef.current);
+  }, [activeTab, runInvestorFetch]);
+
   return {
     price,
     orderbook,
     profile,
     news,
+    investorTrend,
     detailLoading,
     orderbookLoading,
     newsPhase,
+    investorLoading,
     error,
     fetchJson,
   };

@@ -1,0 +1,137 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.summaryLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--stock-text-main, #f8fafc);
+  white-space: nowrap;
+}
+
+.summaryLabelUp {
+  color: var(--stock-red, #fb7185);
+}
+
+.summaryLabelDown {
+  color: var(--stock-blue, #60a5fa);
+}
+
+.barTrack {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  overflow: hidden;
+}
+
+.barCenter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.35);
+  transform: translateX(-50%);
+}
+
+.barFillLeft,
+.barFillRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.barFillLeft {
+  right: 50%;
+  border-radius: 999px 0 0 999px;
+  background: var(--stock-blue-strong, #2563eb);
+}
+
+.barFillRight {
+  left: 50%;
+  border-radius: 0 999px 999px 0;
+  background: var(--stock-red-strong, #f43f5e);
+}
+
+.tableSection {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 88px repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 12px 10px;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--stock-text-muted, #64748b);
+}
+
+.tableHeaderCell {
+  text-align: right;
+}
+
+.tableHeaderDate {
+  text-align: left;
+}
+
+.tableBody {
+  max-height: 360px;
+  overflow-y: auto;
+  border-radius: var(--stock-radius-md, 16px);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 88px repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 11px 12px;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tableRow:nth-child(even) {
+  background: var(--stock-panel-bg-soft, rgba(15, 23, 42, 0.72));
+}
+
+.tableDate {
+  color: var(--stock-text-sub, #94a3b8);
+  font-weight: 600;
+}
+
+.tableCell {
+  text-align: right;
+}
+
+.cellUp {
+  color: var(--stock-red, #fb7185);
+}
+
+.cellDown {
+  color: var(--stock-blue, #60a5fa);
+}
+
+.cellNeutral {
+  color: var(--stock-text-sub, #94a3b8);
+}
