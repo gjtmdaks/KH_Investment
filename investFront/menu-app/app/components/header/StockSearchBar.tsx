@@ -409,7 +409,6 @@ export default function StockSearchBar() {
       </div>
 
 
-
       {showRecentPanel && (
 
         <div className={styles.dropdown}>
