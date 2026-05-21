@@ -1,3 +1,5 @@
+export type StockPriceSource = "LOCAL" | "REDIS" | "DB" | "KIS";
+
 export type PriceResponse = {
   stockCode: string;
   stockName?: string | null;
@@ -10,6 +12,10 @@ export type PriceResponse = {
   highPrice?: string | null;
   lowPrice?: string | null;
   executionStrength?: string | null;
+  /** KIS H0STCNT0 구독 풀 포함 여부 (서버 WS 활성 시) */
+  wsSubscribed?: boolean;
+  /** 시세 조회 경로: local / redis / db(WS tick) / kis(REST) */
+  priceSource?: StockPriceSource;
 };
 
 export type OrderbookLevel = {
@@ -19,6 +25,8 @@ export type OrderbookLevel = {
   quantityChange?: string | null;
 };
 
+export type OrderbookSource = "WS" | "REST";
+
 export type OrderbookResponse = {
   stockCode: string;
   asks: OrderbookLevel[];
@@ -27,6 +35,8 @@ export type OrderbookResponse = {
   totalBidQuantity?: string | null;
   expectedPrice?: string | null;
   expectedQuantity?: string | null;
+  wsSubscribed?: boolean;
+  orderbookSource?: OrderbookSource;
 };
 
 export type StaticProfileResponse = {

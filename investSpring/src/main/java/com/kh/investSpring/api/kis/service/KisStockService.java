@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,6 +26,10 @@ import com.kh.investSpring.api.dart.service.StockStaticProfileService;
 import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.api.kis.dao.StockRealtimeDao;
 import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
+import com.kh.investSpring.api.kis.dto.StockOrderbookSource;
+import com.kh.investSpring.api.kis.dto.StockOrderbookViewResponse;
+import com.kh.investSpring.api.kis.dto.StockPriceSource;
+import com.kh.investSpring.api.kis.dto.StockPriceViewResponse;
 import com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto;
 import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse;
 import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
@@ -51,8 +56,14 @@ public class KisStockService {
     private final StockRealtimeDao stockRealtimeDao;
     private final StockStaticProfileService stockStaticProfileService;
     private final KisStockPriceSharedCache priceSharedCache;
+    private final KisSubscriptionPoolService subscriptionPoolService;
+    private final KisOrderbookRealtimeCache orderbookRealtimeCache;
+    private final KisOrderbookDemandSubscriptionService orderbookDemandSubscriptionService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+
+    private record ResolvedStockPrice(KisStockPriceResponse body, StockPriceSource source) {
+    }
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> priceCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> referencePriceCache =
             new ConcurrentHashMap<>();
@@ -68,6 +79,9 @@ public class KisStockService {
             StockRealtimeDao stockRealtimeDao,
             StockStaticProfileService stockStaticProfileService,
             KisStockPriceSharedCache priceSharedCache,
+            KisSubscriptionPoolService subscriptionPoolService,
+            KisOrderbookRealtimeCache orderbookRealtimeCache,
+            KisOrderbookDemandSubscriptionService orderbookDemandSubscriptionService,
             StringRedisTemplate stringRedisTemplate,
             ObjectMapper objectMapper) {
         this.restClient = restClient;
@@ -78,8 +92,19 @@ public class KisStockService {
         this.stockRealtimeDao = stockRealtimeDao;
         this.stockStaticProfileService = stockStaticProfileService;
         this.priceSharedCache = priceSharedCache;
+        this.subscriptionPoolService = subscriptionPoolService;
+        this.orderbookRealtimeCache = orderbookRealtimeCache;
+        this.orderbookDemandSubscriptionService = orderbookDemandSubscriptionService;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    public boolean subscribeOrderbookDemand(String stockCode) {
+        return orderbookDemandSubscriptionService.subscribeDemand(stockCode);
+    }
+
+    public void unsubscribeOrderbookDemand(String stockCode) {
+        orderbookDemandSubscriptionService.unsubscribeDemand(stockCode);
     }
 
     /**
@@ -120,49 +145,78 @@ public class KisStockService {
     }
 
     public KisStockPriceResponse getStockPrice(String stockCode) {
+        return resolveStockPrice(stockCode).body();
+    }
+
+    public StockPriceViewResponse getStockPriceView(String stockCode) {
         String code = cacheKey(stockCode);
         if (code.isBlank()) {
             throw new IllegalArgumentException("종목코드가 비어 있습니다.");
         }
 
-        KisStockPriceResponse cached = resolvePriceFromCaches(code);
-        if (cached != null) {
-            return cached;
+        ResolvedStockPrice resolved = resolveStockPrice(stockCode);
+        return StockPriceViewResponse.from(
+                resolved.body(),
+                isWsSubscribed(code),
+                resolved.source());
+    }
+
+    private ResolvedStockPrice resolveStockPrice(String stockCode) {
+        String code = cacheKey(stockCode);
+        if (code.isBlank()) {
+            throw new IllegalArgumentException("종목코드가 비어 있습니다.");
+        }
+
+        KisStockPriceResponse local = getCached(
+                priceCache,
+                code,
+                kisProperties.getPriceLocalCacheTtlMs());
+        if (local != null) {
+            return new ResolvedStockPrice(local, StockPriceSource.LOCAL);
+        }
+
+        Optional<KisStockPriceResponse> redis = priceSharedCache.get(code);
+        if (redis.isPresent()) {
+            return new ResolvedStockPrice(redis.get(), StockPriceSource.REDIS);
         }
 
         Object lock = priceInflightLocks.computeIfAbsent(code, ignored -> new Object());
         synchronized (lock) {
             try {
-                cached = resolvePriceFromCaches(code);
-                if (cached != null) {
-                    return cached;
+                local = getCached(
+                        priceCache,
+                        code,
+                        kisProperties.getPriceLocalCacheTtlMs());
+                if (local != null) {
+                    return new ResolvedStockPrice(local, StockPriceSource.LOCAL);
+                }
+
+                Optional<KisStockPriceResponse> redisAfterLock = priceSharedCache.get(code);
+                if (redisAfterLock.isPresent()) {
+                    return new ResolvedStockPrice(redisAfterLock.get(), StockPriceSource.REDIS);
                 }
 
                 KisStockPriceResponse fromDb = resolvePriceFromDbIfFresh(code);
                 if (fromDb != null) {
                     storePriceCaches(code, fromDb);
-                    return fromDb;
+                    return new ResolvedStockPrice(fromDb, StockPriceSource.DB);
                 }
 
                 KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
                 storeReferencePriceCache(code, fromKis);
                 storePriceCaches(code, fromKis);
-                return fromKis;
+                return new ResolvedStockPrice(fromKis, StockPriceSource.KIS);
             } finally {
                 priceInflightLocks.remove(code, lock);
             }
         }
     }
 
-    private KisStockPriceResponse resolvePriceFromCaches(String stockCode) {
-        KisStockPriceResponse local = getCached(
-                priceCache,
-                stockCode,
-                kisProperties.getPriceLocalCacheTtlMs());
-        if (local != null) {
-            return local;
+    private boolean isWsSubscribed(String stockCode) {
+        if (!kisProperties.isWebsocketEnabled()) {
+            return false;
         }
-        return priceSharedCache.get(stockCode).orElse(null);
+        return subscriptionPoolService.getSubscribedCodes().contains(stockCode);
     }
 
     private void storePriceCaches(String stockCode, KisStockPriceResponse response) {
@@ -465,7 +519,26 @@ public class KisStockService {
         }
     }
 
-    public KisStockOrderbookResponse getStockOrderbook(String stockCode) {
+    public StockOrderbookViewResponse getStockOrderbookView(String stockCode) {
+        String code = cacheKey(stockCode);
+        if (code.isBlank()) {
+            throw new IllegalArgumentException("종목코드가 비어 있습니다.");
+        }
+
+        boolean wsSubscribed = orderbookDemandSubscriptionService.isDemandSubscribed(code);
+
+        Optional<KisStockOrderbookResponse> fromWs = orderbookRealtimeCache.getFresh(
+                code,
+                kisProperties.getOrderbookWsFreshTtlMs());
+        if (fromWs.isPresent()) {
+            return StockOrderbookViewResponse.from(fromWs.get(), wsSubscribed, StockOrderbookSource.WS);
+        }
+
+        KisStockOrderbookResponse fromRest = fetchStockOrderbookFromRest(stockCode);
+        return StockOrderbookViewResponse.from(fromRest, wsSubscribed, StockOrderbookSource.REST);
+    }
+
+    private KisStockOrderbookResponse fetchStockOrderbookFromRest(String stockCode) {
         KisStockOrderbookResponse cached = getCached(orderbookCache, stockCode, ORDERBOOK_CACHE_TTL_MS);
         if (cached != null) {
             return cached;
@@ -556,7 +629,7 @@ public class KisStockService {
 
     public KisStockDetailResponse getStockDetail(String stockCode) {
         return new KisStockDetailResponse(
-                getStockPrice(stockCode),
+                getStockPriceView(stockCode),
                 stockStaticProfileService.getStaticProfile(stockCode));
     }
 

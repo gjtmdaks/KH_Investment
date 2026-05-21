@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.api.kis.dto.KisStockCandleResponse;
 import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
-import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse;
-import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
+import com.kh.investSpring.api.kis.dto.OrderbookSubscribeResponse;
+import com.kh.investSpring.api.kis.dto.StockOrderbookViewResponse;
+import com.kh.investSpring.api.kis.dto.StockPriceViewResponse;
 import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
 import com.kh.investSpring.api.kis.dto.StockBatchPriceRequest;
 import com.kh.investSpring.api.kis.service.KisStockService;
@@ -40,8 +42,8 @@ public class KisStockController {
     }
 
     @GetMapping("/api/stocks/{stockCode}/price")
-    public KisStockPriceResponse getStockPrice(@PathVariable String stockCode) {
-        return kisStockService.getStockPrice(stockCode);
+    public StockPriceViewResponse getStockPrice(@PathVariable String stockCode) {
+        return kisStockService.getStockPriceView(stockCode);
     }
 
     @PostMapping("/api/stocks/prices/batch")
@@ -51,8 +53,19 @@ public class KisStockController {
     }
 
     @GetMapping("/api/stocks/{stockCode}/orderbook")
-    public KisStockOrderbookResponse getStockOrderbook(@PathVariable String stockCode) {
-        return kisStockService.getStockOrderbook(stockCode);
+    public StockOrderbookViewResponse getStockOrderbook(@PathVariable String stockCode) {
+        return kisStockService.getStockOrderbookView(stockCode);
+    }
+
+    @PostMapping("/api/stocks/{stockCode}/orderbook/subscribe")
+    public OrderbookSubscribeResponse subscribeOrderbook(@PathVariable String stockCode) {
+        boolean subscribed = kisStockService.subscribeOrderbookDemand(stockCode);
+        return new OrderbookSubscribeResponse(subscribed);
+    }
+
+    @DeleteMapping("/api/stocks/{stockCode}/orderbook/subscribe")
+    public void unsubscribeOrderbook(@PathVariable String stockCode) {
+        kisStockService.unsubscribeOrderbookDemand(stockCode);
     }
 
     @GetMapping("/api/stocks/{stockCode}/summary")

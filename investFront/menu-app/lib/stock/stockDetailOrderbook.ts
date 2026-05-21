@@ -19,6 +19,8 @@ export function normalizeOrderbookResponse(data: unknown): OrderbookResponse | n
     totalBidQuantity: raw.totalBidQuantity ?? null,
     expectedPrice: raw.expectedPrice ?? null,
     expectedQuantity: raw.expectedQuantity ?? null,
+    wsSubscribed: raw.wsSubscribed,
+    orderbookSource: raw.orderbookSource,
   };
 }
 
