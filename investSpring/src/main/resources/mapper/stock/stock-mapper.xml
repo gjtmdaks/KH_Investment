@@ -307,14 +307,14 @@
                 s.market_type AS marketType,
                 (
                     CASE
-                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
-                             LIKE #{primaryKeyword} || '%' THEN 80
-                        WHEN s.stock_name LIKE #{primaryKeyword} || '%' THEN 70
-                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
-                             LIKE '%' || #{primaryKeyword} || '%' THEN 50
-                        WHEN s.stock_name LIKE '%' || #{primaryKeyword} || '%' THEN 40
+                        WHEN UPPER(REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', ''))
+                             LIKE UPPER(#{primaryKeyword}) || '%' THEN 80
+                        WHEN UPPER(s.stock_name) LIKE UPPER(#{primaryKeyword}) || '%' THEN 70
+                        WHEN UPPER(REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', ''))
+                             LIKE '%' || UPPER(#{primaryKeyword}) || '%' THEN 50
+                        WHEN UPPER(s.stock_name) LIKE '%' || UPPER(#{primaryKeyword}) || '%' THEN 40
                         <if test="searchStockCode">
-                        WHEN s.stock_code LIKE '%' || #{primaryKeyword} || '%' THEN 30
+                        WHEN UPPER(s.stock_code) LIKE '%' || UPPER(#{primaryKeyword}) || '%' THEN 30
                         </if>
                         ELSE 10
                     END
@@ -322,8 +322,8 @@
                     <if test="boostNames != null and boostNames.size() > 0">
                     + CASE
                         <foreach collection="boostNames" item="bn">
-                        WHEN REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
-                             LIKE #{bn} || '%' THEN 60
+                        WHEN UPPER(REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', ''))
+                             LIKE UPPER(#{bn}) || '%' THEN 60
                         </foreach>
                         ELSE 0
                       END
@@ -337,10 +337,13 @@
               AND (
                 <foreach collection="keywords" item="kw" separator=" OR ">
                     s.stock_name LIKE '%' || #{kw} || '%'
+                    OR UPPER(s.stock_name) LIKE '%' || UPPER(#{kw}) || '%'
                     OR REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', '')
                        LIKE '%' || #{kw} || '%'
+                    OR UPPER(REGEXP_REPLACE(s.stock_name, '(보통주|[0-9]?우선주[A-Z]?)$', ''))
+                       LIKE '%' || UPPER(#{kw}) || '%'
                     <if test="searchStockCode">
-                    OR s.stock_code LIKE '%' || #{kw} || '%'
+                    OR UPPER(s.stock_code) LIKE '%' || UPPER(#{kw}) || '%'
                     </if>
                 </foreach>
               )

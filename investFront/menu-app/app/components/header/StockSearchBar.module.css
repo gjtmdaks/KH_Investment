@@ -210,6 +210,88 @@
   color: #6b7684;
 }
 
+.recentHeader {
+  padding: 14px 18px 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+}
+
+.recentChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  padding: 0 18px 16px;
+}
+
+.recentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  max-width: 100%;
+
+  padding: 4px 6px 4px 4px;
+
+  border-radius: 999px;
+
+  background-color: #f2f4f6;
+
+  transition: background-color 0.12s ease;
+}
+
+.recentChip:hover {
+  background-color: #e8ecf0;
+}
+
+.recentChipLabel {
+  padding: 4px 6px 4px 8px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: transparent;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #333d4b;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recentChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+
+  border: none;
+
+  font-size: 14px;
+  line-height: 1;
+  color: #8b95a1;
+
+  background: transparent;
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.recentChipRemove:hover {
+  color: #4e5968;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
 @media (max-width: 1200px) {
   .searchWrap {
     max-width: 260px;
