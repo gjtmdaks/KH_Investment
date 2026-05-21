@@ -83,13 +83,13 @@ export default function RankingPanel() {
       ) : (
         rankings?.map((item, index) => (
           <SidebarUserItem
+            sortKey={sortKey}
             key={item.userNo}
             rank={index + 1}
             userName={item.userName}
             profitRate={item.profitRate}
-            evaluationAmount={
-              item.evaluationAmount
-            }
+            evaluationAmount={item.evaluationAmount}
+            profitAmount={item.profitAmount}
           />
         ))
       )}
