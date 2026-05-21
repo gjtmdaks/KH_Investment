@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,7 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.kh.investSpring.api.dart.service.StockStaticProfileService;
 import com.kh.investSpring.api.kis.config.KisProperties;
+import com.kh.investSpring.api.kis.dao.StockRealtimeDao;
 import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
+import com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto;
 import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse;
 import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
 import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
@@ -36,7 +39,6 @@ import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 @Service
 public class KisStockService {
 
-    private static final long PRICE_CACHE_TTL_MS = 1_000L;
     private static final long ORDERBOOK_CACHE_TTL_MS = 1_000L;
     private static final String BATCH_CHG_CACHE_PREFIX = "invest:kis:batch:chg:";
     private static final Duration BATCH_CHG_TTL = Duration.ofSeconds(45);
@@ -45,11 +47,14 @@ public class KisStockService {
     private final KisTokenService kisTokenService;
     private final KisApiRequestCoordinator kisApiRequestCoordinator;
     private final StockDao stockDao;
+    private final StockRealtimeDao stockRealtimeDao;
     private final StockStaticProfileService stockStaticProfileService;
+    private final KisStockPriceSharedCache priceSharedCache;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> priceCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedValue<KisStockOrderbookResponse>> orderbookCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Object> priceInflightLocks = new ConcurrentHashMap<>();
 
     public KisStockService(
             RestClient restClient,
@@ -57,7 +62,9 @@ public class KisStockService {
             KisTokenService kisTokenService,
             KisApiRequestCoordinator kisApiRequestCoordinator,
             StockDao stockDao,
+            StockRealtimeDao stockRealtimeDao,
             StockStaticProfileService stockStaticProfileService,
+            KisStockPriceSharedCache priceSharedCache,
             StringRedisTemplate stringRedisTemplate,
             ObjectMapper objectMapper) {
         this.restClient = restClient;
@@ -65,16 +72,103 @@ public class KisStockService {
         this.kisTokenService = kisTokenService;
         this.kisApiRequestCoordinator = kisApiRequestCoordinator;
         this.stockDao = stockDao;
+        this.stockRealtimeDao = stockRealtimeDao;
         this.stockStaticProfileService = stockStaticProfileService;
+        this.priceSharedCache = priceSharedCache;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
     }
 
     public KisStockPriceResponse getStockPrice(String stockCode) {
-        KisStockPriceResponse cached = getCached(priceCache, stockCode, PRICE_CACHE_TTL_MS);
+        String code = cacheKey(stockCode);
+        if (code.isBlank()) {
+            throw new IllegalArgumentException("종목코드가 비어 있습니다.");
+        }
+
+        KisStockPriceResponse cached = resolvePriceFromCaches(code);
         if (cached != null) {
             return cached;
         }
+
+        Object lock = priceInflightLocks.computeIfAbsent(code, ignored -> new Object());
+        synchronized (lock) {
+            try {
+                cached = resolvePriceFromCaches(code);
+                if (cached != null) {
+                    return cached;
+                }
+
+                KisStockPriceResponse fromDb = resolvePriceFromDbIfFresh(code);
+                if (fromDb != null) {
+                    storePriceCaches(code, fromDb);
+                    return fromDb;
+                }
+
+                KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
+                storePriceCaches(code, fromKis);
+                return fromKis;
+            } finally {
+                priceInflightLocks.remove(code, lock);
+            }
+        }
+    }
+
+    private KisStockPriceResponse resolvePriceFromCaches(String stockCode) {
+        KisStockPriceResponse local = getCached(
+                priceCache,
+                stockCode,
+                kisProperties.getPriceLocalCacheTtlMs());
+        if (local != null) {
+            return local;
+        }
+        return priceSharedCache.get(stockCode).orElse(null);
+    }
+
+    private void storePriceCaches(String stockCode, KisStockPriceResponse response) {
+        putCached(priceCache, stockCode, response);
+        priceSharedCache.put(stockCode, response);
+    }
+
+    private KisStockPriceResponse resolvePriceFromDbIfFresh(String stockCode) {
+        StockRealtimeCurrentDto row = stockRealtimeDao.findRealtimeCurrentByStockCode(stockCode);
+        if (row == null || row.getCurrentPrice() == null || row.getUpdatedAt() == null) {
+            return null;
+        }
+
+        long ageMs = Duration.between(row.getUpdatedAt(), LocalDateTime.now()).toMillis();
+        if (ageMs < 0L) {
+            ageMs = 0L;
+        }
+        if (ageMs > kisProperties.getPriceDbFreshTtlMs()) {
+            return null;
+        }
+
+        return buildPriceFromRealtimeCurrent(row);
+    }
+
+    private KisStockPriceResponse buildPriceFromRealtimeCurrent(StockRealtimeCurrentDto row) {
+        String currentPrice = formatNumber(row.getCurrentPrice());
+        String volume = formatNumber(row.getVolume());
+        String tradingValue = null;
+        if (row.getCurrentPrice() != null && row.getVolume() != null) {
+            tradingValue = String.valueOf(row.getCurrentPrice() * row.getVolume());
+        }
+
+        return new KisStockPriceResponse(
+                row.getStockCode(),
+                row.getStockName(),
+                currentPrice,
+                formatNumber(row.getChangePrice()),
+                formatChangeRate(row.getChangeRate()),
+                volume,
+                tradingValue,
+                formatNumber(row.getOpenPrice()),
+                null,
+                null,
+                null);
+    }
+
+    private KisStockPriceResponse fetchStockPriceFromKis(String stockCode) {
         String accessToken = kisTokenService.getAccessToken();
 
         String url = kisProperties.getBaseUrl()
@@ -104,7 +198,7 @@ public class KisStockService {
         Map<String, Object> output = safeMap(response.output());
         String executionStrength = fetchExecutionStrength(stockCode, accessToken);
 
-        KisStockPriceResponse result = new KisStockPriceResponse(
+        return new KisStockPriceResponse(
                 stockCode,
                 valueToString(output.get("hts_kor_isnm")),
                 valueToString(output.get("stck_prpr")),
@@ -116,8 +210,17 @@ public class KisStockService {
                 valueToString(output.get("stck_hgpr")),
                 valueToString(output.get("stck_lwpr")),
                 executionStrength);
-        putCached(priceCache, stockCode, result);
-        return result;
+    }
+
+    private static String formatNumber(Long value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static String formatChangeRate(Double value) {
+        if (value == null) {
+            return null;
+        }
+        return String.valueOf(value);
     }
 
     /**
