@@ -101,4 +101,9 @@ public class StockDaoImpl implements StockDao {
 	    return session.selectList("stock.getRealtimeActiveStocks");
 	}
 
+	@Override
+	public StockDto findByStockCode(String stockCode) {
+		return session.selectOne("stock.findByStockCode", stockCode);
+	}
+
 }

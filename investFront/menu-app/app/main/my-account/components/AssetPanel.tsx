@@ -7,6 +7,7 @@ import {
   getAccountAssets,
   type AccountAssetResponse,
 } from "@/lib/account";
+import UserAiProfilePanel from "./UserAiProfilePanel";
 
 function formatWon(value?: number | null) {
   return `${(value ?? 0).toLocaleString()}원`;
@@ -212,6 +213,10 @@ export default function AssetPanel() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className={styles.card}>
+        <UserAiProfilePanel />
       </section>
     </>
   );

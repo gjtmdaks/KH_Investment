@@ -193,4 +193,13 @@
 	    FROM INVESTMENT_TYPE
 	    WHERE USER_NO = #{userNo}
 	</select>
+	
+	<select id="selectInvestmentByUserNo" resultType="InvestmentTypeDto">
+		SELECT
+			USER_NO,
+			TOTAL_POINT,
+			RESULT_FILE
+		FROM INVESTMENT_TYPE
+		WHERE USER_NO = #{userNo}
+	</select>
 </mapper>

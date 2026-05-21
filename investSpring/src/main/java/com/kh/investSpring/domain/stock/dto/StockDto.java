@@ -13,4 +13,6 @@ public class StockDto {
     private String aiSentiment;
     private String aiSummary;
     private Double aiScore;
+    private String sector;
+    private String marketType;
 }
