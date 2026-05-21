@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@Async("aiExecutor")
 @RequiredArgsConstructor
 public class StockReportServiceImpl implements StockReportService {
 
@@ -26,6 +25,7 @@ public class StockReportServiceImpl implements StockReportService {
     @Value("${ai.base.url}")
     private String aiUrl;
 
+    @Async("aiExecutor")
     @Override
     public void generateReports() {
         List<StockReportRequestDto> targets = stockReportDao.getReportTargets();
