@@ -22,7 +22,13 @@ public class StockDaoImpl implements StockDao {
 
 	@Override
 	public List<StockDto> getStockList() {
-		return session.selectList("stock.getStockList");
+		return session.selectList("stock.getStockList", 60);
+	}
+
+	@Override
+	public List<StockDto> getStockList(int tradingWindowMinutes) {
+		int window = Math.max(1, tradingWindowMinutes);
+		return session.selectList("stock.getStockList", window);
 	}
 
 	@Override
@@ -43,6 +49,24 @@ public class StockDaoImpl implements StockDao {
 	@Override
 	public List<String> findAllStockCodes() {
 		return session.selectList("stock.findAllStockCodes");
+	}
+
+	@Override
+	public List<String> selectTopTradingValueStockCodes(int limit) {
+		return session.selectList("stock.selectTopTradingValueStockCodes", limit);
+	}
+
+	@Override
+	public List<String> selectRecentViewDemandStockCodes(int limit, int recentMinutes) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("limit", limit);
+		param.put("recentMinutes", recentMinutes);
+		return session.selectList("stock.selectRecentViewDemandStockCodes", param);
+	}
+
+	@Override
+	public List<String> selectWatchlistDemandStockCodes(int limit) {
+		return session.selectList("stock.selectWatchlistDemandStockCodes", limit);
 	}
 	
 	@Override

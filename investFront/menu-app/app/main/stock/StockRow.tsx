@@ -3,6 +3,10 @@
 import Link from "next/link";
 import styles from "./stock.module.css";
 import useToggleWatchlist from "@/app/hooks/useToggleWatchlist";
+import {
+  formatKoreanLargeShares,
+  formatKoreanLargeWon,
+} from "@/lib/stock/stockDetailFormat";
 
 interface Props {
   stock: any;
@@ -82,14 +86,14 @@ export default function StockRow({
         {stock.changeRate}%
       </div>
 
-      {/* 거래량 */}
+      {/* 거래량 (누적) */}
       <div>
-        {stock.volume?.toLocaleString()}
+        {formatKoreanLargeShares(stock.volume)}
       </div>
 
-      {/* 거래대금 */}
-      <div>
-        {stock.tradingValue?.toLocaleString()}
+      {/* 거래대금 (누적, 억 단위) */}
+      <div className={styles.tradingValue}>
+        {formatKoreanLargeWon(stock.tradingValue)}
       </div>
 
       {/* ai분석 */}

@@ -1,7 +1,5 @@
 package com.kh.investSpring.api.kis.dto;
 
-import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,15 +11,8 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockRealtimeCurrentDto {
+public class StockTradingSnapshotDto {
 
     private String stockCode;
-    private String stockName;
-    private Long currentPrice;
-    private Long openPrice;
-    private Long changePrice;
-    private Double changeRate;
-    private Long volume;
     private Long tradingValue;
-    private LocalDateTime updatedAt;
 }

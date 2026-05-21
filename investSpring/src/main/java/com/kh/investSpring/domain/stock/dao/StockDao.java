@@ -12,19 +12,29 @@ import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 
 public interface StockDao {
 
-    // ✅ 메인 리스트
+    //  메인 리스트
     List<StockDto> getStockList();
 
-    // ✅ 거래대금 1위 종목 코드
+    List<StockDto> getStockList(int tradingWindowMinutes);
+
+    // 거래대금 1위 종목 코드
     String getTopVolumeStockCode();
 
-    // ✅ 종목 기본 정보
+    //  종목 기본 정보
     StockInfoDto getStockInfo(@Param("stockCode") String stockCode);
 
-    // ✅ 미니 차트
+    //  미니 차트
     List<Long> getMiniChart(@Param("stockCode") String stockCode);
     
     List<String> findAllStockCodes();
+
+    List<String> selectTopTradingValueStockCodes(@Param("limit") int limit);
+
+    List<String> selectRecentViewDemandStockCodes(
+            @Param("limit") int limit,
+            @Param("recentMinutes") int recentMinutes);
+
+    List<String> selectWatchlistDemandStockCodes(@Param("limit") int limit);
     
     public List<StockScreenerDto> getRisingStocks();
     
