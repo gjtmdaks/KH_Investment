@@ -1,6 +1,9 @@
 package com.kh.investSpring.api.kis.dao;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
@@ -39,6 +42,20 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 	@Override
 	public StockRealtimeCurrentDto findRealtimeCurrentByStockCode(String stockCode) {
 		return session.selectOne("api.findRealtimeCurrentByStockCode", stockCode);
+	}
+
+	@Override
+	public int updateVolumeAndTradingValue(
+			String stockCode,
+			Long volume,
+			Long tradingValue,
+			LocalDateTime updatedAt) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("stockCode", stockCode);
+		param.put("volume", volume);
+		param.put("tradingValue", tradingValue);
+		param.put("updatedAt", updatedAt);
+		return session.update("api.updateVolumeAndTradingValue", param);
 	}
 
 }

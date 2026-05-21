@@ -15,7 +15,7 @@ public interface StockDao {
     //  메인 리스트
     List<StockDto> getStockList();
 
-    List<StockDto> getStockList(int tradingWindowMinutes);
+    List<StockDto> getStockList(int realtimeFreshMinutes);
 
     // 거래대금 1위 종목 코드
     String getTopVolumeStockCode();
@@ -28,7 +28,9 @@ public interface StockDao {
     
     List<String> findAllStockCodes();
 
-    List<String> selectTopTradingValueStockCodes(@Param("limit") int limit);
+    List<String> selectTopTradingValueStockCodes(
+            @Param("limit") int limit,
+            @Param("freshMinutes") int freshMinutes);
 
     List<String> selectRecentViewDemandStockCodes(
             @Param("limit") int limit,

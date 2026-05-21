@@ -60,13 +60,21 @@ public class KisProperties {
     @Value("${kis.websocket.subscribe-interval-ms:50}")
     private long websocketSubscribeIntervalMs;
 
-    /** 메인 순위·표시용 구간 거래대금 윈도우(분). 60 = 최근 1시간 */
-    @Value("${kis.main.trading-window-minutes:60}")
-    private int mainTradingWindowMinutes;
+    /** 메인·구독 랭킹에서 제외할 DB 시세 정지 허용 시간(분). updated_at 기준 */
+    @Value("${kis.main.realtime-fresh-minutes:5}")
+    private int mainRealtimeFreshMinutes;
 
-    /** 누적 거래대금 스냅샷 저장 주기(ms). 기본 5분 */
-    @Value("${kis.main.trading-snapshot-interval-ms:300000}")
-    private long mainTradingSnapshotIntervalMs;
+    /** WS 실시간 + REST 참조(고저시가 등) 병합 시 REST 참조 캐시 TTL(ms) */
+    @Value("${kis.price.reference-cache-ttl-ms:60000}")
+    private long priceReferenceCacheTtlMs;
+
+    /** demand 슬롯과 무관하게 항상 WS 구독할 당일 누적 거래대금 Top N */
+    @Value("${kis.websocket.reserved-trading-slots:10}")
+    private int websocketReservedTradingSlots;
+
+    /** 구독 종목 거래량·거래대금 KIS REST backfill 주기(ms). WS tick은 가격만 반영 */
+    @Value("${kis.realtime.volume-backfill-interval-ms:30000}")
+    private long realtimeVolumeBackfillIntervalMs;
 
     public boolean isVirtualTrading() {
         return baseUrl != null && baseUrl.contains("openapivts");

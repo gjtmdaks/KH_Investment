@@ -295,9 +295,9 @@
 	    UPDATE stock_realtime_current
 	    SET
 	        current_price = #{currentPrice},
+	        change_price = NVL(#{changePrice}, change_price),
 	        change_rate = #{changeRate},
-	        volume = #{volume},
-	        trading_value = #{tradingValue},
+	        open_price = NVL(#{openPrice}, open_price),
 	        updated_at = #{tradeTime}
 	    WHERE stock_code = #{stockCode}
 	</update>
@@ -306,7 +306,9 @@
 	    INSERT INTO stock_realtime_current (
 	        stock_code,
 	        current_price,
+	        change_price,
 	        change_rate,
+	        open_price,
 	        volume,
 	        trading_value,
 	        updated_at
@@ -314,45 +316,27 @@
 	    VALUES (
 	        #{stockCode},
 	        #{currentPrice},
+	        #{changePrice},
 	        #{changeRate},
-	        #{volume},
-	        #{tradingValue},
+	        #{openPrice},
+	        NULL,
+	        NULL,
 	        #{tradeTime}
 	    )
 	</insert>
+
+	<update id="updateVolumeAndTradingValue">
+	    UPDATE stock_realtime_current
+	    SET
+	        volume = #{volume},
+	        trading_value = #{tradingValue},
+	        updated_at = #{updatedAt}
+	    WHERE stock_code = #{stockCode}
+	</update>
 	
 	<delete id="deleteOldTicks">
 		DELETE FROM stock_realtime_tick
 		WHERE trade_time <![CDATA[ < ]]> TRUNC(SYSDATE)
-	</delete>
-
-	<!-- INSERT ALL + NEXTVAL는 Oracle에서 동일 ID가 반복되어 PK 중복(ORA-00001) 발생 -->
-	<insert id="insertTradingSnapshotsFromCurrent">
-	    INSERT INTO stock_trading_snapshot (
-	        snapshot_id,
-	        stock_code,
-	        trading_value,
-	        captured_at
-	    )
-	    SELECT
-	        SEQ_STOCK_TRADING_SNAPSHOT.NEXTVAL,
-	        stock_code,
-	        NVL(
-	            trading_value,
-	            NVL(current_price * volume, 0)
-	        ),
-	        SYSTIMESTAMP
-	    FROM stock_realtime_current
-	    WHERE current_price IS NOT NULL
-	      AND NVL(
-	            trading_value,
-	            NVL(current_price * volume, 0)
-	      ) <![CDATA[ > ]]> 0
-	</insert>
-
-	<delete id="deleteOldTradingSnapshots">
-	    DELETE FROM stock_trading_snapshot
-	    WHERE captured_at <![CDATA[ < ]]> TRUNC(SYSDATE) - #{retentionDays}
 	</delete>
 	
 	<update id="mergeFetchState">

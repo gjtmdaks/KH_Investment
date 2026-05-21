@@ -28,7 +28,8 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public List<StockDto> getStockList() {
-        List<StockDto> stocks = stockDao.getStockList(kisProperties.getMainTradingWindowMinutes());
+        List<StockDto> stocks = stockDao.getStockList(
+                kisProperties.getMainRealtimeFreshMinutes());
 
         if (stocks == null) {
             return List.of();

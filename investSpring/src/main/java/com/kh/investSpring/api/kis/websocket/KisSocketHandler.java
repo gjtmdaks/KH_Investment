@@ -114,10 +114,9 @@ public class KisSocketHandler extends TextWebSocketHandler {
             String time = data[start + 1];
 
             long currentPrice = parseLongSafe(data[start + 2]);
+            long changePrice = parseLongSafe(data[start + 4]);
             double changeRate = parseDoubleSafe(data[start + 5]);
-            long acmlVol = parseLongSafe(data[start + 12]);
-            long acmlTrPbmn = parseLongSafe(data[start + 13]);
-
+            long openPrice = parseLongSafe(data[start + 7]);
             LocalDate today = LocalDate.now();
             LocalTime localTime = LocalTime.parse(
                     time,
@@ -128,9 +127,9 @@ public class KisSocketHandler extends TextWebSocketHandler {
             StockRealtimeTickDto dto = StockRealtimeTickDto.builder()
                     .stockCode(stockCode)
                     .currentPrice(currentPrice)
+                    .changePrice(changePrice != 0L ? changePrice : null)
                     .changeRate(changeRate)
-                    .volume(acmlVol)
-                    .tradingValue(acmlTrPbmn > 0L ? acmlTrPbmn : null)
+                    .openPrice(openPrice != 0L ? openPrice : null)
                     .tradeTime(tradeTime)
                     .build();
             queueService.add(dto);
