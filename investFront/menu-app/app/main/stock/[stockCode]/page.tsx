@@ -1,4 +1,6 @@
 import StockDetailClient from "./StockDetailClient";
+import StockDetailUnavailablePage from "./StockDetailUnavailablePage";
+import { resolveStockRegistration } from "@/lib/stock/resolveStockRegistration";
 
 type StockDetailPageProps = {
   params: Promise<{
@@ -7,9 +9,13 @@ type StockDetailPageProps = {
 };
 
 export default async function StockDetailPage({ params }: StockDetailPageProps) {
-  const { stockCode } = await params;
+  const { stockCode: rawStockCode } = await params;
+  const { stockCode, registered } =
+    await resolveStockRegistration(rawStockCode);
 
-  return (
-    <StockDetailClient stockCode={stockCode} />
-  );
+  if (!registered) {
+    return <StockDetailUnavailablePage />;
+  }
+
+  return <StockDetailClient stockCode={stockCode} />;
 }

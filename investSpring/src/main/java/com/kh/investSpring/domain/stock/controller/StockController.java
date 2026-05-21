@@ -2,12 +2,15 @@ package com.kh.investSpring.domain.stock.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
+import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 import com.kh.investSpring.domain.stock.dto.StockScreenerDto;
 import com.kh.investSpring.domain.stock.service.StockService;
 
@@ -19,6 +22,19 @@ import lombok.RequiredArgsConstructor;
 public class StockController {
 
     private final StockService stockService;
+
+    @GetMapping("/{stockCode}/info")
+    public ResponseEntity<StockInfoDto> getRegisteredStockInfo(
+            @PathVariable String stockCode
+    ) {
+        StockInfoDto info = stockService.getRegisteredStockInfo(stockCode);
+
+        if (info == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(info);
+    }
 
     @GetMapping("/screener/rising")
     public List<StockScreenerDto> getRisingStocks() {

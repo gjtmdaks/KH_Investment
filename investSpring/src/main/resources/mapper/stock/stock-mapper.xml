@@ -97,6 +97,18 @@
         )
         WHERE ROWNUM <![CDATA[ <= ]]> 20
     </select>
+    
+    <!-- =========================
+         종목코드 존재 여부 (STOCKS)
+    ========================== -->
+    <select id="existsByStockCode"
+            parameterType="string"
+            resultType="int">
+        SELECT COUNT(1)
+        FROM stocks
+        WHERE stock_code = #{stockCode}
+          AND status = 'ACTIVE'
+    </select>
 
     <!-- =========================
          전체 종목 코드 조회

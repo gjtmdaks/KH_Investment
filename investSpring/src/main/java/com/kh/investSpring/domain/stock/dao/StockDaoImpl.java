@@ -105,5 +105,11 @@ public class StockDaoImpl implements StockDao {
 	public StockDto findByStockCode(String stockCode) {
 		return session.selectOne("stock.findByStockCode", stockCode);
 	}
+	
+	@Override
+    public boolean existsByStockCode(String stockCode) {
+        Integer count = session.selectOne("stock.existsByStockCode", stockCode);
+        return count != null && count > 0;
+    }
 
 }

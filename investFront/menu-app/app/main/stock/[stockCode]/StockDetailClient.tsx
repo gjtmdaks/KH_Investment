@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
-
 import { StockDetailChartShell } from "@/app/components/stock/detail/StockDetailChartShell";
 import { StockDetailEmptyState } from "@/app/components/stock/detail/StockDetailEmptyState";
 import { StockDetailHero } from "@/app/components/stock/detail/StockDetailHero";
