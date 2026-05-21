@@ -8,9 +8,12 @@ export const ORDERBOOK_REFRESH_INTERVAL_MS = 2_500;
 export const ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS = 800;
 export const STOCK_NEWS_PAGE_SIZE = 5;
 
+export const STOCK_INVESTOR_TREND_DAYS = 30;
+
 export const stockDetailTabs: Array<{ key: TabKey; label: string }> = [
   { key: "chart", label: "차트" },
   { key: "orderbook", label: "호가" },
+  { key: "investor", label: "개인·외국인·기관" },
   { key: "summary", label: "종목정보" },
   { key: "news", label: "뉴스" },
   { key: "community", label: "커뮤니티" },

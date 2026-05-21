@@ -73,6 +73,32 @@ export type NewsResponse = {
 
 export type ChartPeriodLabel = "1분" | "15분" | "30분" | "60분" | "일" | "주" | "월" | "년";
 
-export type TabKey = "chart" | "orderbook" | "summary" | "news" | "community";
+export type InvestorTrendSummary = {
+  tradeDate: string;
+  individualNetQty: number | null;
+  foreignNetQty: number | null;
+  institutionNetQty: number | null;
+};
+
+export type InvestorTrendDailyRow = {
+  tradeDate: string;
+  individualNetQty: number | null;
+  foreignNetQty: number | null;
+  institutionNetQty: number | null;
+};
+
+export type InvestorTrendResponse = {
+  stockCode: string;
+  summary: InvestorTrendSummary | null;
+  rows: InvestorTrendDailyRow[];
+};
+
+export type TabKey =
+  | "chart"
+  | "orderbook"
+  | "investor"
+  | "summary"
+  | "news"
+  | "community";
 
 export type NewsLoadPhase = "idle" | "loading" | "done";

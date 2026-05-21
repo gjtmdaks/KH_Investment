@@ -20,6 +20,8 @@ import com.kh.investSpring.api.kis.dto.StockOrderbookViewResponse;
 import com.kh.investSpring.api.kis.dto.StockPriceViewResponse;
 import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
 import com.kh.investSpring.api.kis.dto.StockBatchPriceRequest;
+import com.kh.investSpring.api.kis.dto.StockInvestorTrendResponse;
+import com.kh.investSpring.api.kis.service.KisInvestorTradeService;
 import com.kh.investSpring.api.kis.service.KisStockService;
 import com.kh.investSpring.api.kis.service.StockHistoryReadService;
 import com.kh.investSpring.api.kis.service.StockMinuteReadService;
@@ -28,15 +30,18 @@ import com.kh.investSpring.api.kis.service.StockMinuteReadService;
 public class KisStockController {
 
     private final KisStockService kisStockService;
+    private final KisInvestorTradeService kisInvestorTradeService;
     private final StockHistoryReadService stockHistoryReadService;
     private final StockMinuteReadService stockMinuteReadService;
 
     public KisStockController(
             KisStockService kisStockService,
+            KisInvestorTradeService kisInvestorTradeService,
             StockHistoryReadService stockHistoryReadService,
             StockMinuteReadService stockMinuteReadService
     ) {
         this.kisStockService = kisStockService;
+        this.kisInvestorTradeService = kisInvestorTradeService;
         this.stockHistoryReadService = stockHistoryReadService;
         this.stockMinuteReadService = stockMinuteReadService;
     }
@@ -76,6 +81,13 @@ public class KisStockController {
     @GetMapping("/api/stocks/{stockCode}/detail")
     public KisStockDetailResponse getStockDetail(@PathVariable String stockCode) {
         return kisStockService.getStockDetail(stockCode);
+    }
+
+    @GetMapping("/api/stocks/{stockCode}/investor-trend")
+    public StockInvestorTrendResponse getInvestorTrend(
+            @PathVariable String stockCode,
+            @RequestParam(required = false, defaultValue = "30") int days) {
+        return kisInvestorTradeService.getInvestorTrend(stockCode, days);
     }
 
     @GetMapping("/api/stocks/{stockCode}/candles")

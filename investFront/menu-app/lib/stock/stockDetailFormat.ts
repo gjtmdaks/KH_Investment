@@ -74,6 +74,42 @@ export function formatKoreanLargeShares(value?: string | number | null) {
   return formatKoreanLargeAmount(numeric, "");
 }
 
+export function formatSignedKoreanLargeShares(value?: number | null) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+  const absText = formatKoreanLargeShares(Math.abs(value));
+
+  if (absText === "-") {
+    return "-";
+  }
+
+  return `${sign}${absText}`;
+}
+
+export function formatSignedNumber(value?: number | null) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toLocaleString("ko-KR")}`;
+}
+
+export function formatInvestorTradeDate(tradeDate?: string | null) {
+  if (!tradeDate || tradeDate.length < 8) {
+    return "-";
+  }
+
+  const yy = tradeDate.slice(2, 4);
+  const mm = tradeDate.slice(4, 6);
+  const dd = tradeDate.slice(6, 8);
+
+  return `${yy}.${mm}.${dd}`;
+}
+
 export function formatWon(value?: string | null) {
   const formatted = formatNumber(value);
 
