@@ -149,8 +149,10 @@ public class KisStockService {
     private KisStockPriceResponse buildPriceFromRealtimeCurrent(StockRealtimeCurrentDto row) {
         String currentPrice = formatNumber(row.getCurrentPrice());
         String volume = formatNumber(row.getVolume());
-        String tradingValue = null;
-        if (row.getCurrentPrice() != null && row.getVolume() != null) {
+        String tradingValue = formatNumber(row.getTradingValue());
+        if (tradingValue == null
+                && row.getCurrentPrice() != null
+                && row.getVolume() != null) {
             tradingValue = String.valueOf(row.getCurrentPrice() * row.getVolume());
         }
 

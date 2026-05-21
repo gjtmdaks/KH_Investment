@@ -37,52 +37,21 @@ export default function StockClient({
       .then((json) => {
         const newList = json?.main?.stockList || [];
 
-        const realtimeMap =
-          new Map<string, Stock>(
-            newList.map((s: Stock) => [
-              s.stockCode,
-              s,
-            ])
-          );
+        if (newList.length === 0) {
+          return;
+        }
 
-        setStocks((prev: Stock[]) => {
-          if (prev.length === 0 && newList.length > 0) {
-            return newList;
-          }
-
-          return prev.map((oldStock) => {
-            const updated = realtimeMap.get(oldStock.stockCode);
-
-            if (!updated) {
-              return oldStock;
-            }
-
-            return {
-              ...oldStock,
-
-              price: updated.price,
-              changeRate: updated.changeRate,
-              volume: updated.volume,
-              tradingValue: updated.tradingValue,
-            };
-          });
-        });
+        setStocks(
+          [...newList].sort(
+            (a, b) => (b.tradingValue ?? 0) - (a.tradingValue ?? 0)
+          )
+        );
       })
       .catch(() => { });
     }, 1000);
 
-    // 10초마다 실제 순위 재정렬
-    const rankingInterval = setInterval(() => {
-      setStocks((prev: Stock[]) => {
-        return [...prev].sort(
-          (a, b) => b.tradingValue - a.tradingValue
-        );
-      });
-    }, 10000);
-
     return () => {
       clearInterval(realtimeInterval);
-      clearInterval(rankingInterval);
     };
   }, []);
 

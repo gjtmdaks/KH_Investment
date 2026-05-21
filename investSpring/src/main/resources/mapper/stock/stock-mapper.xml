@@ -6,7 +6,7 @@
     <!-- =========================
          메인 종목 리스트
     ========================== -->
-	<select id="getStockList" resultType="StockDto">
+	<select id="getStockList" parameterType="int" resultType="StockDto">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -15,21 +15,43 @@
 	            NVL(c.current_price, 0) AS price,
 	            NVL(c.change_rate, 0) AS changeRate,
 	            NVL(c.volume, 0) AS volume,
-	            NVL(c.current_price * c.volume, 0) AS tradingValue,
+	            CASE
+	                WHEN c.trading_value IS NOT NULL
+	                     AND snap.baseline_trading_value IS NOT NULL THEN
+	                    GREATEST(c.trading_value - snap.baseline_trading_value, 0)
+	                WHEN c.trading_value IS NOT NULL THEN
+	                    c.trading_value
+	                ELSE
+	                    NVL(c.current_price * c.volume, 0)
+	            END AS tradingValue,
 	            ai.sentiment AS aiSentiment,
 	            ai.summary AS aiSummary,
 	            ai.score AS aiScore
-	            
 	        FROM stocks s
-	
 	        LEFT JOIN stock_realtime_current c
 	            ON s.stock_code = c.stock_code
+	        LEFT JOIN (
+	            SELECT
+	                stock_code,
+	                trading_value AS baseline_trading_value
+	            FROM (
+	                SELECT
+	                    stock_code,
+	                    trading_value,
+	                    ROW_NUMBER() OVER (
+	                        PARTITION BY stock_code
+	                        ORDER BY captured_at DESC
+	                    ) AS rn
+	                FROM stock_trading_snapshot
+	                WHERE captured_at <![CDATA[ <= ]]> SYSTIMESTAMP - NUMTODSINTERVAL(#{windowMinutes}, 'MINUTE')
+	            )
+	            WHERE rn = 1
+	        ) snap
+	            ON snap.stock_code = s.stock_code
 	        LEFT JOIN stock_ai_summary ai
-            	ON s.stock_code = ai.stock_code
-	
+	            ON s.stock_code = ai.stock_code
 	        WHERE s.status = 'ACTIVE'
 	          AND c.current_price IS NOT NULL
-	
 	        ORDER BY tradingValue DESC
 	    )
 	    WHERE ROWNUM <![CDATA[ <= ]]> 50
@@ -115,11 +137,75 @@
     ========================== -->
     <select id="findAllStockCodes" resultType="string">
         SELECT stock_code
-        FROM stocks
-        WHERE status = 'ACTIVE'
-        	AND market_type IN ('KOSPI', 'KOSDAQ', 'KONEX')
-			AND ROWNUM <![CDATA[ <= ]]> 40
-        ORDER BY stock_code
+        FROM (
+            SELECT
+                s.stock_code,
+                NVL(
+                    c.trading_value,
+                    NVL(c.current_price * c.volume, 0)
+                ) AS trading_value
+            FROM stocks s
+            LEFT JOIN stock_realtime_current c
+                ON s.stock_code = c.stock_code
+            WHERE s.status = 'ACTIVE'
+              AND s.market_type IN ('KOSPI', 'KOSDAQ', 'KONEX')
+              AND c.current_price IS NOT NULL
+            ORDER BY trading_value DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> 40
+    </select>
+
+    <select id="selectTopTradingValueStockCodes" resultType="string">
+        SELECT stock_code
+        FROM (
+            SELECT
+                s.stock_code,
+                NVL(
+                    c.trading_value,
+                    NVL(c.current_price * c.volume, 0)
+                ) AS trading_value
+            FROM stocks s
+            LEFT JOIN stock_realtime_current c
+                ON s.stock_code = c.stock_code
+            WHERE s.status = 'ACTIVE'
+              AND s.market_type IN ('KOSPI', 'KOSDAQ', 'KONEX')
+              AND c.current_price IS NOT NULL
+            ORDER BY trading_value DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> #{limit}
+    </select>
+
+    <select id="selectRecentViewDemandStockCodes" resultType="string">
+        SELECT stock_code
+        FROM (
+            SELECT
+                v.stock_code,
+                COUNT(*) AS view_count
+            FROM recent_view v
+            JOIN stocks s
+                ON v.stock_code = s.stock_code
+            WHERE s.status = 'ACTIVE'
+              AND v.viewed_at >= SYSTIMESTAMP - NUMTODSINTERVAL(#{recentMinutes}, 'MINUTE')
+            GROUP BY v.stock_code
+            ORDER BY view_count DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> #{limit}
+    </select>
+
+    <select id="selectWatchlistDemandStockCodes" resultType="string">
+        SELECT stock_code
+        FROM (
+            SELECT
+                w.stock_code,
+                COUNT(w.user_no) AS watch_count
+            FROM watchlist w
+            JOIN stocks s
+                ON w.stock_code = s.stock_code
+            WHERE s.status = 'ACTIVE'
+            GROUP BY w.stock_code
+            ORDER BY watch_count DESC
+        )
+        WHERE ROWNUM <![CDATA[ <= ]]> #{limit}
     </select>
     
 	<select id="getRisingStocks" resultType="StockScreenerDto">

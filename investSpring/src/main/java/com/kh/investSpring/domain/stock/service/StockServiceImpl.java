@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.RealtimeSectionResponseDto;
 import com.kh.investSpring.domain.stock.dto.StockDto;
@@ -23,10 +24,11 @@ public class StockServiceImpl implements StockService {
 
     private final StockDao stockDao;
     private final StockSearchKeywordResolver searchKeywordResolver;
+    private final KisProperties kisProperties;
 
     @Override
     public List<StockDto> getStockList() {
-        List<StockDto> stocks = stockDao.getStockList();
+        List<StockDto> stocks = stockDao.getStockList(kisProperties.getMainTradingWindowMinutes());
 
         if (stocks == null) {
             return List.of();
