@@ -12,6 +12,7 @@ import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.PendingOrderDto;
 import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
+import com.kh.investSpring.domain.order.dto.PendingOrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -273,5 +274,10 @@ public class OrderDaoImpl implements OrderDao{
 	    param.put("newOrderAmount", newOrderAmount);
 
 	    return session.update("order.updateAccountBalanceForUpdatePendingBuyPrice", param);
+	}
+
+	@Override
+	public List<PendingOrderResponse> selectPendingOrdersByUserNo(Long userNo) {
+	    return session.selectList("order.selectPendingOrdersByUserNo", userNo);
 	}
 }

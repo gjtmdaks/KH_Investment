@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.kh.investSpring.domain.order.dao.OrderDao;
 import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
+import com.kh.investSpring.domain.order.dto.PendingOrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,15 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
 
         return orderDao.selectOrderHistoryByUserNo(userNo);
+    }
+
+    @Override
+    public List<PendingOrderResponse> selectPendingOrders(Long userNo) {
+        if (userNo == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        return orderDao.selectPendingOrdersByUserNo(userNo);
     }
 
 }
