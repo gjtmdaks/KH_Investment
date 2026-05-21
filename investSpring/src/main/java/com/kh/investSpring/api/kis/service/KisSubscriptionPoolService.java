@@ -5,23 +5,34 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.api.kis.websocket.KisRealtimeSubscriptionMessenger;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KisSubscriptionPoolService {
 
     private final KisProperties kisProperties;
     private final KisSubscriptionTargetSelector targetSelector;
     private final KisRealtimeSubscriptionMessenger subscriptionMessenger;
+    private final KisRealtimeVolumeBackfillService volumeBackfillService;
+
+    public KisSubscriptionPoolService(
+            KisProperties kisProperties,
+            KisSubscriptionTargetSelector targetSelector,
+            KisRealtimeSubscriptionMessenger subscriptionMessenger,
+            @Lazy KisRealtimeVolumeBackfillService volumeBackfillService) {
+        this.kisProperties = kisProperties;
+        this.targetSelector = targetSelector;
+        this.subscriptionMessenger = subscriptionMessenger;
+        this.volumeBackfillService = volumeBackfillService;
+    }
 
     private final Object rebalanceLock = new Object();
     private final Set<String> subscribedCodes = ConcurrentHashMap.newKeySet();
@@ -81,6 +92,10 @@ public class KisSubscriptionPoolService {
             applyDiff(session, approvalKey, toRemove, toAdd);
             subscribedCodes.clear();
             subscribedCodes.addAll(target);
+
+            if (!toAdd.isEmpty()) {
+                volumeBackfillService.backfillCodes(toAdd);
+            }
         }
     }
 
@@ -109,6 +124,7 @@ public class KisSubscriptionPoolService {
         subscribedCodes.clear();
         subscribedCodes.addAll(target);
         log.info("KIS WS 초기 구독 완료 size={}", subscribedCodes.size());
+        volumeBackfillService.backfillCodes(target);
     }
 
     private void applyDiff(

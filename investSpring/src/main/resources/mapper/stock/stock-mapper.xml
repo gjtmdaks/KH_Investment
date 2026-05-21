@@ -6,7 +6,7 @@
     <!-- =========================
          메인 종목 리스트
     ========================== -->
-	<select id="getStockList" parameterType="int" resultType="StockDto">
+	<select id="getStockList" parameterType="map" resultType="StockDto">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -15,43 +15,21 @@
 	            NVL(c.current_price, 0) AS price,
 	            NVL(c.change_rate, 0) AS changeRate,
 	            NVL(c.volume, 0) AS volume,
-	            CASE
-	                WHEN c.trading_value IS NOT NULL
-	                     AND snap.baseline_trading_value IS NOT NULL THEN
-	                    GREATEST(c.trading_value - snap.baseline_trading_value, 0)
-	                WHEN c.trading_value IS NOT NULL THEN
-	                    c.trading_value
-	                ELSE
-	                    NVL(c.current_price * c.volume, 0)
-	            END AS tradingValue,
+	            NVL(
+	                c.trading_value,
+	                NVL(c.current_price * c.volume, 0)
+	            ) AS tradingValue,
 	            ai.sentiment AS aiSentiment,
 	            ai.summary AS aiSummary,
 	            ai.score AS aiScore
 	        FROM stocks s
 	        LEFT JOIN stock_realtime_current c
 	            ON s.stock_code = c.stock_code
-	        LEFT JOIN (
-	            SELECT
-	                stock_code,
-	                trading_value AS baseline_trading_value
-	            FROM (
-	                SELECT
-	                    stock_code,
-	                    trading_value,
-	                    ROW_NUMBER() OVER (
-	                        PARTITION BY stock_code
-	                        ORDER BY captured_at DESC
-	                    ) AS rn
-	                FROM stock_trading_snapshot
-	                WHERE captured_at <![CDATA[ <= ]]> SYSTIMESTAMP - NUMTODSINTERVAL(#{windowMinutes}, 'MINUTE')
-	            )
-	            WHERE rn = 1
-	        ) snap
-	            ON snap.stock_code = s.stock_code
 	        LEFT JOIN stock_ai_summary ai
 	            ON s.stock_code = ai.stock_code
 	        WHERE s.status = 'ACTIVE'
 	          AND c.current_price IS NOT NULL
+	          AND c.updated_at <![CDATA[ >= ]]> SYSTIMESTAMP - NUMTODSINTERVAL(#{freshMinutes}, 'MINUTE')
 	        ORDER BY tradingValue DESC
 	    )
 	    WHERE ROWNUM <![CDATA[ <= ]]> 50
@@ -170,6 +148,7 @@
             WHERE s.status = 'ACTIVE'
               AND s.market_type IN ('KOSPI', 'KOSDAQ', 'KONEX')
               AND c.current_price IS NOT NULL
+              AND c.updated_at <![CDATA[ >= ]]> SYSTIMESTAMP - NUMTODSINTERVAL(#{freshMinutes}, 'MINUTE')
             ORDER BY trading_value DESC
         )
         WHERE ROWNUM <![CDATA[ <= ]]> #{limit}

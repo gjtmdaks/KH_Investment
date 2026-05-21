@@ -40,6 +40,7 @@ import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 public class KisStockService {
 
     private static final long ORDERBOOK_CACHE_TTL_MS = 1_000L;
+    private static final long REFERENCE_CACHE_FALLBACK_TTL_MS = 300_000L;
     private static final String BATCH_CHG_CACHE_PREFIX = "invest:kis:batch:chg:";
     private static final Duration BATCH_CHG_TTL = Duration.ofSeconds(45);
     private final RestClient restClient;
@@ -53,6 +54,8 @@ public class KisStockService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> priceCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> referencePriceCache =
+            new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedValue<KisStockOrderbookResponse>> orderbookCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Object> priceInflightLocks = new ConcurrentHashMap<>();
 
@@ -77,6 +80,43 @@ public class KisStockService {
         this.priceSharedCache = priceSharedCache;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * 구독 종목의 당일 누적 거래량·거래대금을 KIS REST(acml_vol, acml_tr_pbmn)로 DB에 반영한다.
+     * WS tick의 체결량(CNTG_VOL)과 혼동되지 않도록 REST 전용 경로이다.
+     */
+    public void backfillVolumeAndTradingValue(String stockCode) {
+        String code = cacheKey(stockCode);
+        if (code.isBlank()) {
+            return;
+        }
+
+        StockRealtimeCurrentDto row = stockRealtimeDao.findRealtimeCurrentByStockCode(code);
+        if (row == null) {
+            return;
+        }
+
+        try {
+            KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
+            storeReferencePriceCache(code, fromKis);
+
+            Long volume = parseLongFromString(fromKis.volume());
+            Long tradingValue = parseLongFromString(fromKis.tradingValue());
+            if (tradingValue == null
+                    && volume != null
+                    && row.getCurrentPrice() != null) {
+                tradingValue = row.getCurrentPrice() * volume;
+            }
+
+            stockRealtimeDao.updateVolumeAndTradingValue(
+                    code,
+                    volume,
+                    tradingValue,
+                    LocalDateTime.now());
+        } catch (Exception ignored) {
+            return;
+        }
     }
 
     public KisStockPriceResponse getStockPrice(String stockCode) {
@@ -105,6 +145,7 @@ public class KisStockService {
                 }
 
                 KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
+                storeReferencePriceCache(code, fromKis);
                 storePriceCaches(code, fromKis);
                 return fromKis;
             } finally {
@@ -143,7 +184,9 @@ public class KisStockService {
             return null;
         }
 
-        return buildPriceFromRealtimeCurrent(row);
+        KisStockPriceResponse realtime = buildPriceFromRealtimeCurrent(row);
+        KisStockPriceResponse reference = resolveReferencePrice(stockCode);
+        return mergeRealtimeWithReference(realtime, reference);
     }
 
     private KisStockPriceResponse buildPriceFromRealtimeCurrent(StockRealtimeCurrentDto row) {
@@ -168,6 +211,71 @@ public class KisStockService {
                 null,
                 null,
                 null);
+    }
+
+    private KisStockPriceResponse resolveReferencePrice(String stockCode) {
+        KisStockPriceResponse cached = getCached(
+                referencePriceCache,
+                stockCode,
+                kisProperties.getPriceReferenceCacheTtlMs());
+        if (cached != null) {
+            return cached;
+        }
+
+        KisStockPriceResponse fallback = getCached(
+                priceCache,
+                stockCode,
+                REFERENCE_CACHE_FALLBACK_TTL_MS);
+        if (fallback != null && hasReferenceFields(fallback)) {
+            return fallback;
+        }
+
+        try {
+            KisStockPriceResponse fromKis = fetchStockPriceFromKis(stockCode);
+            storeReferencePriceCache(stockCode, fromKis);
+            return fromKis;
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
+    private void storeReferencePriceCache(String stockCode, KisStockPriceResponse response) {
+        putCached(referencePriceCache, stockCode, response);
+    }
+
+    private static boolean hasReferenceFields(KisStockPriceResponse response) {
+        return response != null
+                && (response.highPrice() != null
+                        || response.lowPrice() != null
+                        || response.executionStrength() != null);
+    }
+
+    private static KisStockPriceResponse mergeRealtimeWithReference(
+            KisStockPriceResponse realtime,
+            KisStockPriceResponse reference) {
+        if (reference == null) {
+            return realtime;
+        }
+
+        return new KisStockPriceResponse(
+                realtime.stockCode(),
+                coalesceNonBlank(realtime.stockName(), reference.stockName()),
+                realtime.currentPrice(),
+                coalesceNonBlank(realtime.changePrice(), reference.changePrice()),
+                coalesceNonBlank(realtime.changeRate(), reference.changeRate()),
+                coalesceNonBlank(reference.volume(), realtime.volume()),
+                coalesceNonBlank(reference.tradingValue(), realtime.tradingValue()),
+                coalesceNonBlank(realtime.openPrice(), reference.openPrice()),
+                reference.highPrice(),
+                reference.lowPrice(),
+                reference.executionStrength());
+    }
+
+    private static String coalesceNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        return fallback;
     }
 
     private KisStockPriceResponse fetchStockPriceFromKis(String stockCode) {
@@ -212,6 +320,17 @@ public class KisStockService {
                 valueToString(output.get("stck_hgpr")),
                 valueToString(output.get("stck_lwpr")),
                 executionStrength);
+    }
+
+    private static Long parseLongFromString(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private static String formatNumber(Long value) {

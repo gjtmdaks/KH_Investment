@@ -17,4 +17,10 @@ public interface StockRealtimeDao {
 
 	StockRealtimeCurrentDto findRealtimeCurrentByStockCode(String stockCode);
 
+	int updateVolumeAndTradingValue(
+			String stockCode,
+			Long volume,
+			Long tradingValue,
+			java.time.LocalDateTime updatedAt);
+
 }

@@ -180,6 +180,10 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       );
       setPrice((prev) => ({
         ...priceData,
+        changePrice: priceData.changePrice ?? prev?.changePrice ?? null,
+        openPrice: priceData.openPrice ?? prev?.openPrice ?? null,
+        highPrice: priceData.highPrice ?? prev?.highPrice ?? null,
+        lowPrice: priceData.lowPrice ?? prev?.lowPrice ?? null,
         executionStrength:
           priceData.executionStrength ?? prev?.executionStrength ?? null,
       }));
