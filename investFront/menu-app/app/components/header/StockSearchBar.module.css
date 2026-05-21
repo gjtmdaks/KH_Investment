@@ -221,3 +221,21 @@
     display: none;
   }
 }
+  .popularHeader {
+  padding: 12px 16px 8px;
+}
+
+.moreLink {
+   text-decoration: none;
+
+  color: #4e5968;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: color 0.15s ease;
+}
+
+.moreLink:hover {
+  color: #3182f6;
+}

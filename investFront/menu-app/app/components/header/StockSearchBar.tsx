@@ -187,18 +187,29 @@ export default function StockSearchBar() {
         )}
       </div>
 
-      {open && keyword.trim() && (
+      {open && (
         <div className={styles.dropdown}>
+
+          {!keyword && (
+    <div className={styles.popularHeader}>
+  <Link
+    href="/main/screener"
+    className={styles.moreLink}
+  >
+    인기있는 주식 골라보기
+  </Link>
+</div>
+)}
           {loading ? (
-            <div className={styles.loading}>
-              검색 중...
-            </div>
-          ) : items?.length === 0 ? (
-            <div className={styles.empty}>
-              검색 결과가 없습니다.
-            </div>
-          ) : (
-            <div className={styles.resultList}>
+        <div className={styles.loading}>
+          검색 중...
+        </div>
+        ) : items?.length === 0 ? (
+      <div className={styles.empty}>
+        검색 결과가 없습니다.
+      </div>
+) : (
+  <div className={styles.resultList}>
               {items?.map((item) => (
                 <Link
                   key={item.stockCode}
@@ -229,3 +240,4 @@ export default function StockSearchBar() {
     </div>
   );
 }
+
