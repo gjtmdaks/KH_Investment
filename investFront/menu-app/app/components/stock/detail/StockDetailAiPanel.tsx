@@ -1,4 +1,14 @@
+"use client";
+
+import { useState } from "react";
+
+import StockDetailAiReportModal from "./StockDetailAiReportModal";
 import styles from "./css/stockDetailAiPanel.module.css";
+import {
+  formatAiReportDate,
+  getAiSignalMeta,
+  getInvestmentOpinionLabel,
+} from "./stockDetailAiPanelUtils";
 
 export type StockAiReport = {
   stockCode: string;
@@ -21,13 +31,12 @@ export function StockDetailAiPanel({
   report: StockAiReport | null;
   loading?: boolean;
 }) {
+  const [modalOpen, setModalOpen] = useState(false);
 
   if (loading) {
     return (
       <section className={styles.card}>
-        <div className={styles.loading}>
-          AI 리포트 생성 중...
-        </div>
+        <div className={styles.loadingCompact}>AI 리포트 생성 중...</div>
       </section>
     );
   }
@@ -35,100 +44,50 @@ export function StockDetailAiPanel({
   if (!report) {
     return (
       <section className={styles.card}>
-        <div className={styles.empty}>
-          AI 분석 데이터가 없습니다.
-        </div>
+        <div className={styles.emptyCompact}>AI 분석 데이터가 없습니다.</div>
       </section>
     );
   }
 
-  const signalClass =
-    report.aiSignal === "POSITIVE"
-      ? styles.positive
-      : report.aiSignal === "NEGATIVE"
-        ? styles.negative
-        : styles.neutral;
-
-  const signalLabel =
-    report.aiSignal === "POSITIVE"
-      ? "🟢 긍정"
-      : report.aiSignal === "NEGATIVE"
-        ? "🔴 부정"
-        : "🟡 중립";
+  const { signalClass, signalLabel } = getAiSignalMeta(report.aiSignal);
 
   return (
-    <section className={styles.card}>
-      <div className={styles.headerRow}>
-        <div className={styles.header}>
-          AI 종목 분석
+    <>
+      <button
+        type="button"
+        className={`${styles.card} ${styles.compactCard}`}
+        onClick={() => setModalOpen(true)}
+        aria-label="AI 종목 분석 전체 보기"
+      >
+        <div className={styles.headerRow}>
+          <div className={styles.header}>AI 종목 분석</div>
+          <div className={styles.updatedAt}>
+            {formatAiReportDate(report.updatedAt)}
+          </div>
         </div>
 
-        <div className={styles.updatedAt}>
-          {formatDate(report.updatedAt)}
-        </div>
-      </div>
+        <div className={styles.topSection}>
+          <div className={`${styles.signal} ${signalClass}`}>
+            {signalLabel}
+          </div>
 
-      <div className={styles.topSection}>
-        <div className={`${styles.signal} ${signalClass}`}>
-          {signalLabel}
-        </div>
+          <div className={styles.opinion}>
+            {getInvestmentOpinionLabel(report.investmentOpinion)}
+          </div>
 
-        <div className={styles.opinion}>
-          {
-            report.investmentOpinion === "BUY"
-              ? "매수"
-              : report.investmentOpinion === "SELL"
-                ? "매도"
-                : "관망"
-          }
+          <div className={styles.score}>
+            신뢰도 {report.confidenceScore}%
+          </div>
         </div>
 
-        <div className={styles.score}>
-          신뢰도 {report.confidenceScore}%
-        </div>
-      </div>
+        <p className={styles.summaryPreview}>{report.summary}</p>
+      </button>
 
-      <div className={styles.summary}>
-        {report.summary}
-      </div>
-
-      <div className={styles.factorSection}>
-        <div className={styles.factorTitle}>
-          긍정 요인
-        </div>
-
-        <div className={styles.factorContent}>
-          {report.positiveFactors}
-        </div>
-      </div>
-
-      <div className={styles.factorSection}>
-        <div className={styles.riskTitle}>
-          리스크
-        </div>
-
-        <div className={styles.factorContent}>
-          {report.riskFactors}
-        </div>
-      </div>
-    </section>
+      <StockDetailAiReportModal
+        open={modalOpen}
+        report={report}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
   );
-}
-
-function formatDate(date?: string | null) {
-  if (!date) return "-";
-
-  const parsed = new Date(date);
-
-  if (isNaN(parsed.getTime())) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(parsed);
 }

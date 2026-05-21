@@ -20,6 +20,38 @@
   overflow: hidden;
 }
 
+.compactCard {
+  width: 100%;
+  margin: 0;
+  gap: 10px;
+  padding: 14px 16px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.compactCard:hover {
+  border-color: rgba(148, 163, 184, 0.28);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20, 28, 48, 0.98),
+      rgba(15, 23, 42, 0.92)
+    );
+}
+
+.compactCard:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.65);
+  outline-offset: 2px;
+}
+
 .headerRow {
   display: flex;
   align-items: center;
@@ -111,6 +143,19 @@
   color: #dbe4ee;
 }
 
+.summaryPreview {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+
+  color: #dbe4ee;
+}
+
 .factorSection {
   display: flex;
   flex-direction: column;
@@ -164,11 +209,32 @@
   color: var(--stock-text-sub);
 }
 
+.loadingCompact,
+.emptyCompact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 72px;
+
+  text-align: center;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: var(--stock-text-sub);
+}
+
 @media (max-width: 760px) {
 
   .card {
     padding: 16px;
     gap: 14px;
+  }
+
+  .compactCard {
+    padding: 12px 14px;
+    gap: 8px;
   }
 
   .topSection {
