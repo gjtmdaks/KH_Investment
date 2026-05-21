@@ -36,15 +36,27 @@ export default function UserAiProfilePanel() {
       setHasSurvey(true);
 
     } catch (e: any) {
-      if (e?.response?.status === 404) {
+      const status = e?.response?.status;
+
+      /*
+      * 설문 없음
+      */
+      if (status === 400) {
+        setHasSurvey(false);
         setReport(null);
         return;
       }
 
-      if (e?.response?.status === 400) {
-        setHasSurvey(false);
+      /*
+      * 분석 결과 없음
+      */
+      if (status === 404) {
+        setHasSurvey(true);
+        setReport(null);
         return;
       }
+
+      console.error(e);
 
     } finally {
       setLoading(false);
@@ -165,7 +177,7 @@ export default function UserAiProfilePanel() {
         <h3>포트폴리오 위험 분석</h3>
 
         <ul className={styles.aiList}>
-          {report?.portfolioRiskAnalysis.map((item) => (
+          {report?.portfolioRiskAnalysis?.map((item) => (
             <li key={item}>
               {item}
             </li>
@@ -177,7 +189,7 @@ export default function UserAiProfilePanel() {
         <h3>AI 제안</h3>
 
         <ul className={styles.aiList}>
-          {report.aiRecommendations.map((item) => (
+          {report?.aiRecommendations?.map((item) => (
             <li key={item}>
               {item}
             </li>

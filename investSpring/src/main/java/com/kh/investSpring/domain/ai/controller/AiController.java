@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.ai.dto.InvestmentTypeDto;
 import com.kh.investSpring.domain.ai.dto.StockAiReportDto;
 import com.kh.investSpring.domain.ai.dto.UserAiProfileDto;
 import com.kh.investSpring.domain.ai.service.StockReportService;
 import com.kh.investSpring.domain.ai.service.UserAiProfileService;
+import com.kh.investSpring.domain.user.dao.UserDao;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class AiController {
 
     private final StockReportService stockReportService;
     private final UserAiProfileService userAiProfileService;
+    private final UserDao userDao;
 
     @GetMapping("/stock-report/{stockCode}")
     public ResponseEntity<StockAiReportDto> getStockReport(@PathVariable String stockCode) {
@@ -36,8 +39,20 @@ public class AiController {
     
     @GetMapping("/user-profile")
     public ResponseEntity<UserAiProfileDto> getUserProfile(HttpServletRequest request) {
-        Long userNo = (Long)request.getAttribute("userNo");
+        Long userNo = (Long) request.getAttribute("userNo");
 
+        /*
+         * 설문 여부 확인
+         */
+        InvestmentTypeDto investmentType = userDao.selectInvestmentByUserNo(userNo);
+
+        if (investmentType == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        /*
+         * AI 분석 조회
+         */
         UserAiProfileDto profile = userAiProfileService.getUserProfile(userNo);
 
         if (profile == null) {

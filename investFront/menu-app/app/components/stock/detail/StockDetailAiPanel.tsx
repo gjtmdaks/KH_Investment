@@ -115,11 +115,14 @@ export function StockDetailAiPanel({
   );
 }
 
-function formatDate(date: any) {
-  if (!date) return "";
-  
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return "";
+function formatDate(date?: string | null) {
+  if (!date) return "-";
+
+  const parsed = new Date(date);
+
+  if (isNaN(parsed.getTime())) {
+    return "-";
+  }
 
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
@@ -127,5 +130,5 @@ function formatDate(date: any) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(d);
+  }).format(parsed);
 }
