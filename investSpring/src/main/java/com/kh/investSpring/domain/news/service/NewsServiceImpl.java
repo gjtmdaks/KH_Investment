@@ -43,10 +43,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NewsServiceImpl implements NewsService {
 
-	private static final String CACHE_MARKET = "invest:news:market:v5";
-	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v5:";
-	private static final String CACHE_MARKET_OLD = "invest:news:market:v4";
-	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v4:";
+	private static final String CACHE_MARKET = "invest:news:market:v6";
+	private static final String CACHE_STOCK_PREFIX = "invest:news:stock:v6:";
+	private static final String CACHE_MARKET_OLD = "invest:news:market:v5";
+	private static final String CACHE_STOCK_PREFIX_OLD = "invest:news:stock:v5:";
 
 	/** 뉴스 1건당 관련 종목 칩 최대 노출 개수 */
 	private static final int RELATED_STOCKS_MAX = 5;

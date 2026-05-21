@@ -78,6 +78,8 @@ public class NewsKeywordLabelService {
 		put("SK하이닉스", KIND_STOCK, W_STOCK);
 		alias("sk하이닉스", "SK하이닉스");
 		alias("하이닉스", "SK하이닉스");
+		// STOCKS.STOCK_NAME(공식 상장명)과 정적 키워드 canonical 병합용
+		alias("에스케이하이닉스", "SK하이닉스");
 		put("현대차", KIND_STOCK, W_STOCK);
 		alias("현대자동차", "현대차");
 		put("기아", KIND_STOCK, W_STOCK);
