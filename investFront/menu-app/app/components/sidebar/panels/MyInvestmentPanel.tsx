@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { PendingOrdersSection } from "./PendingOrdersSection";
 import styles from "../MainSidebar.module.css";
 import toolbarStyles from "./myInvestmentPanel.module.css";
 import SidebarEmpty from "../components/SidebarEmpty";
@@ -19,7 +19,7 @@ type Props = {
   };
 };
 
-type ViewMode = "price" | "valuation";
+type ViewMode = "price" | "valuation" | "pending";
 
 type HoldingSortKey =
   | "name"
@@ -318,71 +318,86 @@ export default function MyInvestmentPanel({ data }: Props) {
                 >
                   평가금
                 </button>
+
+                <button
+                  type="button"
+                  className={`${toolbarStyles.viewToggleButton} ${
+                    viewMode === "pending"
+                      ? toolbarStyles.viewToggleButtonActive
+                      : ""
+                  }`}
+                  onClick={() => setViewMode("pending")}
+                >
+                  예약 주문
+                </button>
               </div>
             </div>
-
-            <div className={styles.investHoldingList}>
-              {holdings.map((holding) => (
-                <article
-                  key={holding.stockCode}
-                  className={styles.investHoldingItem}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() =>
-                    router.push(`/main/stock/${holding.stockCode}`)
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      router.push(`/main/stock/${holding.stockCode}`);
+            {viewMode === "pending" ? (
+              <PendingOrdersSection />
+            ) : (
+              <div className={styles.investHoldingList}>
+                {holdings.map((holding) => (
+                  <article
+                    key={holding.stockCode}
+                    className={styles.investHoldingItem}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      router.push(`/main/stock/${holding.stockCode}`)
                     }
-                  }}
-                >
-                  <div className={styles.investHoldingTop}>
-                    <div>
-                      <strong>{holding.stockName}</strong>
-                      <span>{holding.stockCode}</span>
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        router.push(`/main/stock/${holding.stockCode}`);
+                      }
+                    }}
+                  >
+                    <div className={styles.investHoldingTop}>
+                      <div>
+                        <strong>{holding.stockName}</strong>
+                        <span>{holding.stockCode}</span>
+                      </div>
+
+                      <b>{formatQuantity(holding.quantity)}</b>
                     </div>
 
-                    <b>{formatQuantity(holding.quantity)}</b>
-                  </div>
-
-                  {viewMode === "price" ? (
-                    <div className={styles.investHoldingValue}>
-                      <div className={styles.investHoldingValueLeft}>
-                        <span>현재가</span>
-                        <span className={styles.investHoldingMeta}>
-                          내 평균 {formatWon(holding.avgPrice)}
-                        </span>
-                      </div>
-                      <div className={styles.investHoldingValueRight}>
-                        <strong>{formatWon(holding.currentPrice)}</strong>
-                        <span
-                          className={getProfitClass(holding.dailyChangeRate)}
-                        >
-                          {formatRate(holding.dailyChangeRate)}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
+                    {viewMode === "price" ? (
                       <div className={styles.investHoldingValue}>
-                        <span>평가금액</span>
-                        <strong>{formatWon(holding.stockValue)}</strong>
+                        <div className={styles.investHoldingValueLeft}>
+                          <span>현재가</span>
+                          <span className={styles.investHoldingMeta}>
+                            내 평균 {formatWon(holding.avgPrice)}
+                          </span>
+                        </div>
+                        <div className={styles.investHoldingValueRight}>
+                          <strong>{formatWon(holding.currentPrice)}</strong>
+                          <span
+                            className={getProfitClass(holding.dailyChangeRate)}
+                          >
+                            {formatRate(holding.dailyChangeRate)}
+                          </span>
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        <div className={styles.investHoldingValue}>
+                          <span>평가금액</span>
+                          <strong>{formatWon(holding.stockValue)}</strong>
+                        </div>
 
-                      <div className={styles.investHoldingProfit}>
-                        <span className={getProfitClass(holding.profitAmount)}>
-                          {formatSignedWon(holding.profitAmount)}
-                        </span>
-                        <span className={getProfitClass(holding.profitRate)}>
-                          {formatRate(holding.profitRate)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </article>
-              ))}
-            </div>
+                        <div className={styles.investHoldingProfit}>
+                          <span className={getProfitClass(holding.profitAmount)}>
+                            {formatSignedWon(holding.profitAmount)}
+                          </span>
+                          <span className={getProfitClass(holding.profitRate)}>
+                            {formatRate(holding.profitRate)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
           </>
         )}
       </section>

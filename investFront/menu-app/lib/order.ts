@@ -48,6 +48,24 @@ type ApiFailureResponse = {
   message?: string;
 };
 
+export type PendingOrderResponse = {
+  orderId: number;
+  orderKind: OrderKind;
+  orderType: OrderType;
+  stockCode: string;
+  stockName: string | null;
+  price: number;
+  quantity: number;
+  status: string;
+  createdAt: string;
+};
+
+type ApiResponse<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
 function isApiFailureResponse(data: unknown): data is ApiFailureResponse {
   return (
     data != null &&
@@ -59,6 +77,19 @@ function isApiFailureResponse(data: unknown): data is ApiFailureResponse {
 export async function getOrderHistory() {
   const response = await apiClient.get<OrderHistoryResponse[]>("/orders/history");
   return response.data;
+}
+export async function getPendingOrders() {
+  const response = await apiClient.get<
+    PendingOrderResponse[] | ApiResponse<PendingOrderResponse[]>
+  >("/orders/pending");
+
+  const result = response.data;
+
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  return result.data ?? [];
 }
 export async function createOrder(request: OrderRequest) {
   try {

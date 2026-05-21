@@ -93,3 +93,153 @@
   color: #f1f3f5;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
+
+.pendingSection {
+  margin-top: 18px;
+}
+
+.pendingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pendingTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.pendingSubText {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.pendingRefreshButton {
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: #111827;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pendingRefreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pendingEmpty {
+  border: 1px solid #243047;
+  border-radius: 16px;
+  padding: 16px;
+  background: #111827;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.pendingList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pendingItem {
+  border: 1px solid #243047;
+  border-radius: 16px;
+  padding: 14px;
+  background: #111827;
+}
+
+.pendingItemTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pendingStockName {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.pendingStockCode {
+  margin: 4px 0 0;
+  color: #8fb4ff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pendingKindBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pendingBuy {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fb7185;
+}
+
+.pendingSell {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+}
+
+.pendingInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.pendingInfoGrid div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pendingInfoGrid span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.pendingInfoGrid strong {
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.pendingBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.pendingCancelButton {
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: rgba(244, 63, 94, 0.14);
+  color: #fb7185;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pendingCancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

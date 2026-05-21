@@ -324,4 +324,25 @@
 	      AND NVL(AVAILABLE_CASH, 0) + #{oldOrderAmount} &gt;= #{newOrderAmount}
 	</update>
 	
+	<select id="selectPendingOrdersByUserNo"
+        parameterType="long"
+        resultType="com.kh.investSpring.domain.order.dto.PendingOrderResponse">
+	    SELECT
+	        o.ORDER_ID AS orderId,
+	        o.ORDER_KIND AS orderKind,
+	        o.ORDER_TYPE AS orderType,
+	        o.STOCK_CODE AS stockCode,
+	        s.STOCK_NAME AS stockName,
+	        o.PRICE AS price,
+	        o.QUANTITY AS quantity,
+	        o.STATUS AS status,
+	        o.CREATED_AT AS createdAt
+	    FROM ORDERS o
+	    LEFT JOIN STOCKS s
+	        ON o.STOCK_CODE = s.STOCK_CODE
+	    WHERE o.USER_NO = #{userNo}
+	      AND o.ORDER_TYPE = 'LIMIT'
+	      AND o.STATUS = 'PENDING'
+	    ORDER BY o.CREATED_AT DESC
+	</select>
 </mapper>

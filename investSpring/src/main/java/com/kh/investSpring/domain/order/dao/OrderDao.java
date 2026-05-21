@@ -7,6 +7,7 @@ import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
 import com.kh.investSpring.domain.order.dto.PendingOrderDto;
 import com.kh.investSpring.domain.order.dto.PendingOrderManageDto;
+import com.kh.investSpring.domain.order.dto.PendingOrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 
 public interface OrderDao {
@@ -66,4 +67,6 @@ public interface OrderDao {
 	        BigDecimal oldOrderAmount,
 	        BigDecimal newOrderAmount
 	);
+
+	List<PendingOrderResponse> selectPendingOrdersByUserNo(Long userNo);
 }	

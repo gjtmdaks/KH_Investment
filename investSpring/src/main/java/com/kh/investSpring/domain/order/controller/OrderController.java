@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.investSpring.domain.auth.service.AuthUserService;
 import com.kh.investSpring.domain.order.dto.OrderHistoryResponse;
 import com.kh.investSpring.domain.order.dto.OrderPriceUpdateRequest;
 import com.kh.investSpring.domain.order.dto.OrderRequest;
@@ -19,6 +21,7 @@ import com.kh.investSpring.domain.order.dto.OrderResponse;
 import com.kh.investSpring.domain.order.dto.TradeResponse;
 import com.kh.investSpring.domain.order.service.OrderCommandService;
 import com.kh.investSpring.domain.order.service.OrderQueryService;
+import com.kh.investSpring.domain.order.dto.PendingOrderResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -87,5 +90,17 @@ public class OrderController {
         orderCommandService.updateOrderPrice(userNo, orderId, request);
 
         return ResponseEntity.ok().build();
+    }
+    
+    @GetMapping("/pending")
+    public ResponseEntity<List<PendingOrderResponse>> selectPendingOrders(
+            Authentication authentication
+    ) {
+        Long userNo = Long.valueOf(authentication.getName());
+
+        List<PendingOrderResponse> orders =
+                orderQueryService.selectPendingOrders(userNo);
+
+        return ResponseEntity.ok(orders);
     }
 }
