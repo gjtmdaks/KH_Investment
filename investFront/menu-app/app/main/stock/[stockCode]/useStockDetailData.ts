@@ -5,9 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/lib/api-base";
 import {
   HERO_QUOTE_REFRESH_INTERVAL_MS,
+  HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS,
   ORDERBOOK_REFRESH_INTERVAL_MS,
+  ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS,
   STOCK_NEWS_PAGE_SIZE,
 } from "@/lib/stock/stockDetailConstants";
+import { mergePriceResponse } from "@/lib/stock/stockDetailPrice";
 import { normalizeOrderbookResponse } from "@/lib/stock/stockDetailOrderbook";
 import type {
   NewsLoadPhase,
@@ -178,19 +181,16 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       const priceData = await fetchJson<PriceResponse>(
         `/api/stocks/${stockCode}/price`
       );
-      setPrice((prev) => ({
-        ...priceData,
-        changePrice: priceData.changePrice ?? prev?.changePrice ?? null,
-        openPrice: priceData.openPrice ?? prev?.openPrice ?? null,
-        highPrice: priceData.highPrice ?? prev?.highPrice ?? null,
-        lowPrice: priceData.lowPrice ?? prev?.lowPrice ?? null,
-        executionStrength:
-          priceData.executionStrength ?? prev?.executionStrength ?? null,
-      }));
+      setPrice((prev) => mergePriceResponse(priceData, prev));
     } catch {
       return;
     }
   }, [fetchJson, stockCode]);
+
+  const heroQuoteIntervalMs =
+    price?.wsSubscribed === true
+      ? HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS
+      : HERO_QUOTE_REFRESH_INTERVAL_MS;
 
   const refreshOrderbook = useCallback(async () => {
     try {
@@ -203,6 +203,39 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     }
   }, [fetchJson, stockCode]);
 
+  const orderbookPollIntervalMs =
+    orderbook?.wsSubscribed === true
+      ? ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS
+      : ORDERBOOK_REFRESH_INTERVAL_MS;
+
+  const unsubscribeOrderbookWs = useCallback(async () => {
+    try {
+      await fetch(
+        `${API_BASE_URL}/api/stocks/${stockCode}/orderbook/subscribe`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+    } catch {
+      return;
+    }
+  }, [stockCode]);
+
+  const subscribeOrderbookWs = useCallback(async () => {
+    try {
+      await fetch(
+        `${API_BASE_URL}/api/stocks/${stockCode}/orderbook/subscribe`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+    } catch {
+      return;
+    }
+  }, [stockCode]);
+
   useEffect(() => {
     void loadSnapshot();
   }, [loadSnapshot]);
@@ -210,28 +243,41 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   useEffect(() => {
     void refreshPrice();
 
-    const timer = window.setInterval(
-      refreshPrice,
-      HERO_QUOTE_REFRESH_INTERVAL_MS
-    );
+    const timer = window.setInterval(refreshPrice, heroQuoteIntervalMs);
 
     return () => window.clearInterval(timer);
-  }, [refreshPrice]);
+  }, [refreshPrice, heroQuoteIntervalMs]);
 
   useEffect(() => {
     if (activeTab !== "orderbook") {
       return;
     }
 
-    void refreshOrderbook();
+    let cancelled = false;
 
-    const timer = window.setInterval(
-      refreshOrderbook,
-      ORDERBOOK_REFRESH_INTERVAL_MS
-    );
+    const run = async () => {
+      await subscribeOrderbookWs();
+      if (!cancelled) {
+        await refreshOrderbook();
+      }
+    };
 
-    return () => window.clearInterval(timer);
-  }, [activeTab, refreshOrderbook]);
+    void run();
+
+    const timer = window.setInterval(refreshOrderbook, orderbookPollIntervalMs);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      void unsubscribeOrderbookWs();
+    };
+  }, [
+    activeTab,
+    refreshOrderbook,
+    subscribeOrderbookWs,
+    unsubscribeOrderbookWs,
+    orderbookPollIntervalMs,
+  ]);
 
   useEffect(() => {
     if (activeTab !== "news") {

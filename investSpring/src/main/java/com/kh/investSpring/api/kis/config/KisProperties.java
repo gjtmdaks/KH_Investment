@@ -76,6 +76,10 @@ public class KisProperties {
     @Value("${kis.realtime.volume-backfill-interval-ms:30000}")
     private long realtimeVolumeBackfillIntervalMs;
 
+    /** H0STASP0 호가 WS 캐시 유효 TTL(ms). 디테일 호가 탭 GET /orderbook */
+    @Value("${kis.orderbook.ws-fresh-ttl-ms:3000}")
+    private long orderbookWsFreshTtlMs;
+
     public boolean isVirtualTrading() {
         return baseUrl != null && baseUrl.contains("openapivts");
     }

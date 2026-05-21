@@ -1,7 +1,11 @@
 import type { ChartPeriodLabel, TabKey } from "@/lib/stock/stockDetailTypes";
 
 export const HERO_QUOTE_REFRESH_INTERVAL_MS = 2_500;
+/** WS 구독 풀 종목: 서버 DB/Redis/로컬 캐시 경로 — KIS REST 없이 빠른 Hero 갱신 */
+export const HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS = 800;
 export const ORDERBOOK_REFRESH_INTERVAL_MS = 2_500;
+/** 호가 H0STASP0 on-demand 구독 중: 서버 메모리 캐시 경로 — KIS REST 없이 빠른 호가 갱신 */
+export const ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS = 800;
 export const STOCK_NEWS_PAGE_SIZE = 5;
 
 export const stockDetailTabs: Array<{ key: TabKey; label: string }> = [
