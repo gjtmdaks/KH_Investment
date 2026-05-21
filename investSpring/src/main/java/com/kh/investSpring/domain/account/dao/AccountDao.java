@@ -6,6 +6,8 @@ import com.kh.investSpring.domain.account.dto.AccountAssetResponse.HoldingStock;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse.RankingType;
 import com.kh.investSpring.domain.main.dto.MainResponse.Account;
 import com.kh.investSpring.domain.main.dto.MainResponse.Holding;
 
@@ -30,5 +32,7 @@ public interface AccountDao {
 	List<Holding> selectSidebarHoldingsByUserNo(Long userNo);
 
 	AccountTradeStatusResponse selectAccountTradeStatusByUserNo(Long userNo);
+
+	List<RankingResponse> getRanking(RankingType type);
 
 }

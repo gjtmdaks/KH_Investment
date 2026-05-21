@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.account.dto.RankingResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse.RankingType;
 import com.kh.investSpring.domain.main.dto.MainResponse;
 
 public interface AccountService {
@@ -20,4 +22,6 @@ public interface AccountService {
     List<MainResponse.Holding> getSidebarHoldings(Long userNo);
 
     void validateAccountCanTrade(Long userNo);
+
+	List<RankingResponse> getRanking(RankingType type);
 }

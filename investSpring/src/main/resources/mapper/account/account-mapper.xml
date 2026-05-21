@@ -281,13 +281,66 @@
 	    WHERE USER_NO = #{userNo}
 	</select>
 	
-	<select id="selectAccountTradeStatusByUserNo"
-        parameterType="long"
-        resultType="com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse">
+	<select id="selectAccountTradeStatusByUserNo" parameterType="long" resultType="AccountTradeStatusResponse">
 	    SELECT
 	        STATUS AS status,
 	        STOP_END_AT AS stopEndAt
 	    FROM ACCOUNTS
 	    WHERE USER_NO = #{userNo}
 	</select>
+	
+<select id="getRanking" parameterType="string" resultType="RankingResponse">
+    SELECT *
+    FROM (
+        SELECT
+            ROWNUM AS rank,
+            R.*
+        FROM (
+            SELECT
+                U.USER_NO AS userNo,
+                U.USER_NAME AS userName,
+                (AB.AVAILABLE_CASH
+                	+ NVL(SUM(SH.STOCK_RESERVES
+	                	* NVL(SRC.CURRENT_PRICE, SH.AVG_PRICE)), 0)) AS evaluationAmount,
+                CASE
+                    WHEN #{type} = 'total'
+                    THEN ROUND((
+						(AB.AVAILABLE_CASH
+							+ NVL(SUM(SH.STOCK_RESERVES
+								* NVL(SRC.CURRENT_PRICE, SH.AVG_PRICE)), 0))
+								- 10000000) / 10000000 * 100, 2)
+                    WHEN #{type} = 'oneday'
+                    THEN ROUND((
+						(AB.AVAILABLE_CASH
+							+ NVL(SUM(SH.STOCK_RESERVES
+								* NVL(SRC.CURRENT_PRICE, SH.AVG_PRICE)), 0))
+								- A.INITIAL_BALANCE) / NULLIF(A.INITIAL_BALANCE, 0) * 100, 2)
+                END AS profitRate
+            FROM USERS U
+
+            INNER JOIN ACCOUNTS A
+                ON U.USER_NO = A.USER_NO
+            INNER JOIN ACCOUNT_BALANCE AB
+                ON A.ACCOUNT_NO = AB.ACCOUNT_NO
+            LEFT JOIN STOCKS_HELD SH
+                ON A.ACCOUNT_NO = SH.ACCOUNT_NO
+            LEFT JOIN STOCK_REALTIME_CURRENT SRC
+                ON SH.STOCK_CODE = SRC.STOCK_CODE
+
+            WHERE U.STATUS = 'ACTIVE'
+            AND A.STATUS = 'ACTIVE'
+
+            GROUP BY
+                U.USER_NO,
+                U.USER_NAME,
+                AB.AVAILABLE_CASH,
+                A.INITIAL_BALANCE
+
+            ORDER BY profitRate DESC
+        ) R
+
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
+    )
+</select>
+
 </mapper>

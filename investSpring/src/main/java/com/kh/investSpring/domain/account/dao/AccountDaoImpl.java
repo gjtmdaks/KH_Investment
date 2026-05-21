@@ -11,6 +11,8 @@ import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountAssetSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
 import com.kh.investSpring.domain.account.dto.AccountTradeStatusResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse.RankingType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +26,6 @@ public class AccountDaoImpl implements AccountDao {
 
 	@Override
 	public int updatePreviousTotalAssetForAllActiveAccounts() {
-		// TODO Auto-generated method stub
 		return session.update("account.updatePreviousTotalAssetForAllActiveAccounts");
 	}
 	
@@ -48,7 +49,6 @@ public class AccountDaoImpl implements AccountDao {
 	
 	@Override
 	public AccountSummaryDto selectAccountSummaryByUserNo(Long userNo) {
-		// TODO Auto-generated method stub
 		return session.selectOne("account.selectAccountSummaryByUserNo", userNo);
 	}
 
@@ -75,6 +75,11 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public AccountTradeStatusResponse selectAccountTradeStatusByUserNo(Long userNo) {
 	    return session.selectOne("account.selectAccountTradeStatusByUserNo", userNo);
+	}
+
+	@Override
+	public List<RankingResponse> getRanking(RankingType type) {
+		return session.selectList("account.getRanking", type.name());
 	}
 	
 }

@@ -3,6 +3,7 @@ export type SidebarMenu =
   | "interest"
   | "recent"
   | "liveTime"
+  | "ranking"
   | "admin";
 
 export interface SidebarStock {

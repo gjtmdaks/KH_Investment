@@ -1,13 +1,18 @@
 package com.kh.investSpring.domain.account.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.domain.account.dto.AccountAssetResponse;
 import com.kh.investSpring.domain.account.dto.AccountSummaryDto;
+import com.kh.investSpring.domain.account.dto.RankingResponse;
+import com.kh.investSpring.domain.account.dto.RankingResponse.RankingType;
 import com.kh.investSpring.domain.account.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +41,14 @@ public class AccountController {
         Long userNo = Long.valueOf(authentication.getName());
 
         AccountAssetResponse response = accountService.getAccountAssets(userNo);
+
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/ranking")
+    public ResponseEntity<List<RankingResponse>> getRanking(@RequestParam RankingType type) {
+
+    	List<RankingResponse> response = accountService.getRanking(type);
 
         return ResponseEntity.ok(response);
     }
