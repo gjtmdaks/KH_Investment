@@ -12,15 +12,24 @@ import org.springframework.stereotype.Component;
 
 import com.kh.investSpring.domain.stock.dto.StockKeywordSearchDto;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * 종목 검색어를 DB 조회에 적합한 키워드 집합으로 확장합니다.
  * 영문 약어(sk, lg), 별칭(삼전), 부분 입력(삼성) 등을 한글 종목명 후보로 변환합니다.
+ * 브랜드 LG↔엘지 등은 {@link StockSearchBrandCatalog}(STOCKS_DATA_TABLE.csv 기준)가 담당합니다.
  */
 @Component
+@RequiredArgsConstructor
 public class StockSearchKeywordResolver {
+
+    private final StockSearchBrandCatalog brandCatalog;
 
     private static final Pattern STOCK_NAME_SUFFIX =
             Pattern.compile("(?:보통주|[0-9]?우선주[A-Z]?)$");
+
+    private static final Pattern LATIN_TOKEN =
+            Pattern.compile("^[A-Za-z0-9]+$");
 
     private static final Set<String> ENGLISH_ONLY_ABBREVS = Set.of(
             "sk", "lg", "kb", "kt", "hd", "cj", "gs", "dl", "db", "ai", "posco"
@@ -67,7 +76,6 @@ public class StockSearchKeywordResolver {
             Map.entry("한미", "한미반도체"),
             Map.entry("미래", "미래에셋증권"),
             Map.entry("삼성", "삼성SDI"),
-            Map.entry("LG", "LG전자"),
             Map.entry("이노", "이노인스트루먼트"),
             Map.entry("아이", "아이로보틱스"),
             Map.entry("대한", "대한전선"),
@@ -113,6 +121,7 @@ public class StockSearchKeywordResolver {
             boost.add(aliasTarget);
         }
 
+        brandCatalog.expandBrandSynonyms(lower, compact, keywords);
         expandEnglishAbbrev(lower, keywords, boost);
         expandPartialBrand(lower, keywords, boost);
 
@@ -120,16 +129,49 @@ public class StockSearchKeywordResolver {
             keywords.remove(primary);
             keywords.remove(compact);
             keywords.remove(lower);
+            keywords.add(lower.toUpperCase(Locale.ROOT));
         }
 
-        boolean searchStockCode = shouldSearchStockCode(primary, compact, lower);
+        addLatinCaseVariants(keywords);
+        addLatinCaseVariants(boost);
+
+        String matchPrimary = resolveMatchPrimary(primary, compact);
+        boolean searchStockCode = shouldSearchStockCode(primary, compact, lower, matchPrimary);
 
         return new ResolvedQuery(
-                primary,
+                matchPrimary,
                 List.copyOf(keywords),
                 List.copyOf(boost),
                 searchStockCode
         );
+    }
+
+    private static void addLatinCaseVariants(Set<String> tokens) {
+        List<String> snapshot = List.copyOf(tokens);
+        for (String token : snapshot) {
+            if (token == null || token.isBlank()) {
+                continue;
+            }
+            String stripped = token.replace(" ", "");
+            if (!LATIN_TOKEN.matcher(stripped).matches()) {
+                continue;
+            }
+            String upper = stripped.toUpperCase(Locale.ROOT);
+            if (!upper.equals(token)) {
+                tokens.add(upper);
+            }
+            String lower = stripped.toLowerCase(Locale.ROOT);
+            if (!lower.equals(token) && !lower.equals(upper)) {
+                tokens.add(lower);
+            }
+        }
+    }
+
+    private static String resolveMatchPrimary(String primary, String compact) {
+        if (compact != null && LATIN_TOKEN.matcher(compact).matches()) {
+            return compact.toUpperCase(Locale.ROOT);
+        }
+        return primary;
     }
 
     public static String stripStockNameSuffix(String stockName) {
@@ -146,35 +188,17 @@ public class StockSearchKeywordResolver {
     ) {
         switch (lower) {
             case "sk" -> {
-                keywords.add("에스케이");
                 keywords.add("하이닉스");
                 boost.add("에스케이하이닉스");
             }
-            case "lg" -> keywords.add("엘지");
-            case "kb" -> keywords.add("케이비");
-            case "kt" -> keywords.add("케이티");
             case "hd" -> keywords.add("현대");
-            case "cj" -> keywords.add("씨제이");
-            case "gs" -> keywords.add("지에스");
-            case "dl" -> keywords.add("디엘");
-            case "db" -> keywords.add("디비");
-            case "posco" -> {
-                keywords.add("포스코");
-                boost.add("포스코홀딩스");
-            }
+            case "posco" -> boost.add("포스코홀딩스");
             default -> {
                 if (lower.startsWith("sk") && lower.length() <= 12) {
-                    keywords.add("에스케이");
-                    if (lower.contains("하이닉") || lower.contains("hynix") || lower.equals("sk")) {
+                    if (lower.contains("하이닉") || lower.contains("hynix")) {
                         keywords.add("하이닉스");
                         boost.add("에스케이하이닉스");
                     }
-                }
-                if (lower.startsWith("lg") && lower.length() <= 10) {
-                    keywords.add("엘지");
-                }
-                if (lower.startsWith("kb") && lower.length() <= 8) {
-                    keywords.add("케이비");
                 }
             }
         }
@@ -203,12 +227,22 @@ public class StockSearchKeywordResolver {
         }
     }
 
-    private static boolean shouldSearchStockCode(String primary, String compact, String lower) {
+    private static boolean shouldSearchStockCode(
+            String primary,
+            String compact,
+            String lower,
+            String matchPrimary
+    ) {
         if (compact.matches("\\d{4,8}")) {
             return true;
         }
         if (ENGLISH_ONLY_ABBREVS.contains(lower)) {
             return false;
+        }
+        if (matchPrimary != null
+                && LATIN_TOKEN.matcher(matchPrimary).matches()
+                && matchPrimary.length() >= 3) {
+            return true;
         }
         return compact.length() >= 3 && compact.matches("[a-z0-9]+");
     }
