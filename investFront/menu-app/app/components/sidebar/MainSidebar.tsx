@@ -7,6 +7,7 @@ import { SidebarMenu } from "./types";
 import InterestPanel from "./panels/InterestPanel";
 import RecentPanel from "./panels/RecentPanel";
 import LiveTimePanel from "./panels/LiveTimePanel";
+import RankingPanel from "./panels/RankingPanel";
 import AdminPanel from "./panels/AdminPanel";
 import MyInvestmentPanel from "./panels/MyInvestmentPanel";
 
@@ -30,6 +31,11 @@ const baseMenus = [
     id: "liveTime",
     label: "실시간",
     icon: "🔥",
+  },
+  {
+    id: "ranking",
+    label: "랭킹",
+    icon: "🏆",
   },
 ];
 
@@ -113,6 +119,10 @@ export default function MainSidebar({
             <LiveTimePanel />
           )}
 
+          {activeMenu === "ranking" && (
+            <RankingPanel />
+          )}
+
           {activeMenu === "admin"
             && isAdmin && (
             <AdminPanel />
@@ -165,6 +175,9 @@ function getPanelTitle(
 
     case "liveTime":
       return "실시간";
+
+    case "ranking":
+      return "랭킹";
 
     case "admin":
       return "관리자";
