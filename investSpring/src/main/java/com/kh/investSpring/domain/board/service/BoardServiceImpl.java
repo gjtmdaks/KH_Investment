@@ -125,7 +125,10 @@ public class BoardServiceImpl implements BoardService {
             );
         }
 
-        if (!Objects.equals(boardDto.getUserNo(), userNo)) {
+        int auth = boardDao.selectUserAuthByUserNo(userNo);
+        boolean isAdmin = auth == 1;
+
+        if (!isAdmin && !Objects.equals(boardDto.getUserNo(), userNo)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "본인이 작성한 댓글만 삭제할 수 있습니다."

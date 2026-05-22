@@ -84,5 +84,10 @@ public class BoardDaoImpl implements BoardDao {
         return session.update("board.updateBoardLikeCountDecrease", boardNo);
     }
 
+    @Override
+    public int selectUserAuthByUserNo(Long userNo) {
+        return session.selectOne("board.selectUserAuthByUserNo", userNo);
+    }
+
     
 }
