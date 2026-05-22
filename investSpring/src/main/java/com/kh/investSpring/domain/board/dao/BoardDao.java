@@ -23,4 +23,6 @@ public interface BoardDao {
 	int updateBoardLikeCountIncrease(Long boardNo);
 
 	int updateBoardLikeCountDecrease(Long boardNo);
+
+	int selectUserAuthByUserNo(Long userNo);
 }

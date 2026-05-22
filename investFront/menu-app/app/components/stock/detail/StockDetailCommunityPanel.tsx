@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getSavedUser, type LoginUser } from "@/lib/auth-user";
 
 import {
   createStockBoardPost,
@@ -42,6 +43,7 @@ function replacePost(posts: BoardPost[], updatedPost: BoardPost) {
 }
 
 export function StockDetailCommunityPanel({ stockCode }: Props) {
+  const [currentUser, setCurrentUser] = useState<LoginUser | null>(null);
   const [posts, setPosts] = useState<BoardPost[]>([]);
   const [content, setContent] = useState("");
   const [replyContent, setReplyContent] = useState("");
@@ -50,6 +52,12 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const isAdmin = currentUser?.auth === 1;
+
+  function canDeletePost(post: BoardPost) {
+    return isAdmin || currentUser?.userNo === post.userNo;
+  }
 
   const parentComments = useMemo(() => {
     return posts.filter((post) => post.parentId === null);
@@ -200,6 +208,10 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
   }
 
   useEffect(() => {
+    setCurrentUser(getSavedUser());
+  }, []);
+
+  useEffect(() => {
     void fetchPosts();
   }, [fetchPosts]);
 
@@ -256,117 +268,119 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
           {parentComments.map((comment) => {
             const replies = repliesByParentId.get(comment.boardNo) ?? [];
 
-            return (
-              <article key={comment.boardNo} className={styles.commentBlock}>
-                <div className={styles.communityItem}>
-                  <div className={styles.communityItemHeader}>
-                    <div>
-                      <strong>{getWriterName(comment)}</strong>
-                      <span>{formatDate(comment.createdAt)}</span>
-                    </div>
+          return (
+            <article key={comment.boardNo} className={styles.commentBlock}>
+              <div className={styles.communityItem}>
+                <div className={styles.communityItemHeader}>
+                  <div>
+                    <strong>{getWriterName(comment)}</strong>
+                    <span>{formatDate(comment.createdAt)}</span>
+                  </div>
 
+                  {canDeletePost(comment) && (
                     <button
                       type="button"
                       onClick={() => void handleDeletePost(comment.boardNo)}
                     >
                       삭제
                     </button>
-                  </div>
-
-                  <p>{comment.content}</p>
-
-                  <div className={styles.communityItemFooter}>
-                    <button
-                      type="button"
-                      className={comment.likedByMe ? styles.likedButton : ""}
-                      onClick={() => void handleToggleLike(comment)}
-                    >
-                      좋아요 {comment.likeCount ?? 0}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => openReplyForm(comment.boardNo)}
-                    >
-                      답글
-                    </button>
-                  </div>
+                  )}
                 </div>
 
-                {replyTargetId === comment.boardNo ? (
-                  <div className={styles.replyWriteBox}>
-                    <textarea
-                      value={replyContent}
-                      onChange={(event) => setReplyContent(event.target.value)}
-                      placeholder="답글을 작성해보세요."
-                      maxLength={500}
-                      rows={2}
-                    />
+                <p>{comment.content}</p>
 
-                    <div className={styles.communityWriteFooter}>
-                      <span>{replyContent.length.toLocaleString()} / 500</span>
+                <div className={styles.communityItemFooter}>
+                  <button
+                    type="button"
+                    className={comment.likedByMe ? styles.likedButton : ""}
+                    onClick={() => void handleToggleLike(comment)}
+                  >
+                    좋아요 {comment.likeCount ?? 0}
+                  </button>
 
-                      <div className={styles.replyButtonGroup}>
-                        <button
-                          type="button"
-                          className={styles.cancelButton}
-                          onClick={() => {
-                            setReplyTargetId(null);
-                            setReplyContent("");
-                          }}
-                        >
-                          취소
-                        </button>
+                  <button
+                    type="button"
+                    onClick={() => openReplyForm(comment.boardNo)}
+                  >
+                    답글
+                  </button>
+                </div>
+              </div>
 
-                        <button
-                          type="button"
-                          onClick={() => void handleCreateReply(comment.boardNo)}
-                          disabled={
-                            submitting || replyContent.trim().length === 0
-                          }
-                        >
-                          답글 등록
-                        </button>
-                      </div>
+              {replyTargetId === comment.boardNo ? (
+                <div className={styles.replyWriteBox}>
+                  <textarea
+                    value={replyContent}
+                    onChange={(event) => setReplyContent(event.target.value)}
+                    placeholder="답글을 작성해보세요."
+                    maxLength={500}
+                    rows={2}
+                  />
+
+                  <div className={styles.communityWriteFooter}>
+                    <span>{replyContent.length.toLocaleString()} / 500</span>
+
+                    <div className={styles.replyButtonGroup}>
+                      <button
+                        type="button"
+                        className={styles.cancelButton}
+                        onClick={() => {
+                          setReplyTargetId(null);
+                          setReplyContent("");
+                        }}
+                      >
+                        취소
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateReply(comment.boardNo)}
+                        disabled={submitting || replyContent.trim().length === 0}
+                      >
+                        답글 등록
+                      </button>
                     </div>
                   </div>
-                ) : null}
+                </div>
+              ) : null}
 
-                {replies.length > 0 ? (
-                  <div className={styles.replyList}>
-                    {replies.map((reply) => (
-                      <article key={reply.boardNo} className={styles.replyItem}>
-                        <div className={styles.communityItemHeader}>
-                          <div>
-                            <strong>{getWriterName(reply)}</strong>
-                            <span>{formatDate(reply.createdAt)}</span>
-                          </div>
+              {replies.length > 0 ? (
+                <div className={styles.replyList}>
+                  {replies.map((reply) => (
+                    <article key={reply.boardNo} className={styles.replyItem}>
+                      <div className={styles.communityItemHeader}>
+                        <div>
+                          <strong>{getWriterName(reply)}</strong>
+                          <span>{formatDate(reply.createdAt)}</span>
+                        </div>
 
+                        {canDeletePost(reply) && (
                           <button
                             type="button"
                             onClick={() => void handleDeletePost(reply.boardNo)}
                           >
                             삭제
                           </button>
-                        </div>
+                        )}
+                      </div>
 
-                        <p>{reply.content}</p>
+                      <p>{reply.content}</p>
 
-                        <div className={styles.communityItemFooter}>
-                          <button
-                            type="button"
-                            className={reply.likedByMe ? styles.likedButton : ""}
-                            onClick={() => void handleToggleLike(reply)}
-                          >
-                            좋아요 {reply.likeCount ?? 0}
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : null}
-              </article>
-            );
+                      <div className={styles.communityItemFooter}>
+                        <button
+                          type="button"
+                          className={reply.likedByMe ? styles.likedButton : ""}
+                          onClick={() => void handleToggleLike(reply)}
+                        >
+                          좋아요 {reply.likeCount ?? 0}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          );
           })}
         </div>
       )}

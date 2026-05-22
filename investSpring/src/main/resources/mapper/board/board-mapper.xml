@@ -175,5 +175,12 @@
         WHERE BOARD_NO = #{boardNo}
           AND DELETED_YN = 'N'
     </update>
-
+    
+	<select id="selectUserAuthByUserNo"
+	        parameterType="long"
+	        resultType="int">
+	    SELECT AUTH
+	    FROM USERS
+	    WHERE USER_NO = #{userNo}
+	</select>
 </mapper>
