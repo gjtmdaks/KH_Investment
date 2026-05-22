@@ -335,8 +335,13 @@
 	</update>
 	
 	<delete id="deleteOldTicks">
-		DELETE FROM stock_realtime_tick
-		WHERE trade_time <![CDATA[ < ]]> TRUNC(SYSDATE)
+	    DELETE FROM stock_realtime_tick
+	    WHERE tick_id IN (
+	        SELECT tick_id
+	        FROM stock_realtime_tick
+	        WHERE trade_time <![CDATA[ < ]]> TRUNC(SYSDATE)
+	        	AND ROWNUM <![CDATA[ <= ]]> 10000
+	    )
 	</delete>
 	
 	<update id="mergeFetchState">

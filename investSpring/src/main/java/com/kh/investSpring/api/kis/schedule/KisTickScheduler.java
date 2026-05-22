@@ -26,10 +26,21 @@ public class KisTickScheduler {
     /**
      * 매 10시마다 실시간 시세 데이터 비우기
      */
-    @Scheduled(cron = "0 0 10 * * *")
+    @Scheduled(cron = "0 30 9 * * *")
     public void cleanupRealtimeTick() {
+        while (true) {
+        	try {
+	            int deleted = stockRealtimeDao.deleteOldTicks();
+	
+	            if (deleted == 0) {
+	                break;
+	            }
 
-        stockRealtimeDao.deleteOldTicks();
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+        }
 
         log.info("실시간 tick 데이터 정리 완료");
     }
