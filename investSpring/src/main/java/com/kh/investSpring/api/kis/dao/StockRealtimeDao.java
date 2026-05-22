@@ -13,7 +13,7 @@ public interface StockRealtimeDao {
 	
 	void insertRealtimeCurrent(StockRealtimeTickDto dto);
 
-	void deleteOldTicks();
+	int deleteOldTicks();
 
 	StockRealtimeCurrentDto findRealtimeCurrentByStockCode(String stockCode);
 

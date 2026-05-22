@@ -35,8 +35,8 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 	}
 
 	@Override
-	public void deleteOldTicks() {
-		session.delete("api.deleteOldTicks");
+	public int deleteOldTicks() {
+		return session.delete("api.deleteOldTicks");
 	}
 
 	@Override

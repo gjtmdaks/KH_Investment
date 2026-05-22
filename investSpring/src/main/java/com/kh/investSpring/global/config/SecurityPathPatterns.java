@@ -34,6 +34,7 @@ public final class SecurityPathPatterns {
 			"/notice/{noticeId}",
 			"/search/**",
 			"/api/ai/**",
+			"/account/ranking",
 			"/admin/**" // 개발단계에서만
 	};
 
