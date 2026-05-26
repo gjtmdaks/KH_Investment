@@ -11,8 +11,17 @@ import type {
   InvestorTrendSummary,
 } from "@/lib/stock/stockDetailTypes";
 
+import {
+  INVESTOR_TREND_DATA_GUIDE,
+  isInvestorTradeDateToday,
+} from "@/lib/stock/stockDetailInvestorTrend";
+
 import styles from "./css/stockDetailInvestorTrendPanel.module.css";
 import { StockDetailEmptyState } from "./StockDetailEmptyState";
+import {
+  InvestorTrendTodayHelpButton,
+  StockDetailInvestorTrendGuide,
+} from "./StockDetailInvestorTrendGuide";
 
 type InvestorGroup = {
   key: "individual" | "foreign" | "institution";
@@ -99,7 +108,14 @@ export function StockDetailInvestorTrendPanel({
   data: InvestorTrendResponse | null;
 }) {
   if (!data?.rows?.length) {
-    return <StockDetailEmptyState title="매매동향 데이터가 없습니다." />;
+    return (
+      <div className={styles.panel}>
+        <StockDetailInvestorTrendGuide />
+        <StockDetailEmptyState
+          title={data?.notice ?? "매매동향 데이터가 없습니다."}
+        />
+      </div>
+    );
   }
 
   const summarySource = data.summary ?? data.rows[0];
@@ -111,6 +127,12 @@ export function StockDetailInvestorTrendPanel({
 
   return (
     <div className={styles.panel}>
+      <StockDetailInvestorTrendGuide />
+      {data.notice ? (
+        <p className={styles.notice} role="status">
+          {data.notice}
+        </p>
+      ) : null}
       <section className={styles.summarySection} aria-label="투자자별 순매수 요약">
         {groups.map((group) => (
           <SummaryBar key={group.key} group={group} maxAbs={maxAbs} />
@@ -126,10 +148,20 @@ export function StockDetailInvestorTrendPanel({
         </div>
 
         <div className={styles.tableBody}>
-          {data.rows.map((row) => (
+          {data.rows.map((row) => {
+            const isToday = isInvestorTradeDateToday(row.tradeDate);
+
+            return (
             <div key={row.tradeDate} className={styles.tableRow}>
               <span className={styles.tableDate}>
-                {formatInvestorTradeDate(row.tradeDate)}
+                {isToday ? (
+                  <span className={styles.todayDate}>
+                    {INVESTOR_TREND_DATA_GUIDE.todayRowLabel}
+                    <InvestorTrendTodayHelpButton />
+                  </span>
+                ) : (
+                  formatInvestorTradeDate(row.tradeDate)
+                )}
               </span>
               <span
                 className={`${styles.tableCell} ${getQtyToneClass(row.individualNetQty)}`}
@@ -147,7 +179,8 @@ export function StockDetailInvestorTrendPanel({
                 {formatSignedNumber(row.institutionNetQty)}
               </span>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
