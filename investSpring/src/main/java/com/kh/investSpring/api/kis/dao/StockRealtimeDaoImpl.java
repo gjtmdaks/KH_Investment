@@ -8,6 +8,7 @@ import java.util.Map;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
 import com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto;
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
 
@@ -25,8 +26,8 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 	}
 
 	@Override
-	public int updateRealtimeCurrent(StockRealtimeTickDto dto) {
-		return session.update("api.updateRealtimeCurrent", dto);
+	public int updateRealtimeCurrent(List<StockRealtimeTickDto> batch) {
+		return session.update("api.updateRealtimeCurrent", batch);
 	}
 
 	@Override
@@ -56,6 +57,16 @@ public class StockRealtimeDaoImpl implements StockRealtimeDao {
 		param.put("tradingValue", tradingValue);
 		param.put("updatedAt", updatedAt);
 		return session.update("api.updateVolumeAndTradingValue", param);
+	}
+
+	@Override
+	public void refreshCurrentFromRest(KisStockPriceResponse response) {
+		session.update("api.refreshCurrentFromRest", response);
+	}
+
+	@Override
+	public List<String> selectStaleStockCodes() {
+		return session.selectList("api.selectStaleStockCodes");
 	}
 
 }

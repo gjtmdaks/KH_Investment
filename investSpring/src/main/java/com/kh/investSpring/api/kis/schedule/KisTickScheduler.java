@@ -2,13 +2,14 @@ package com.kh.investSpring.api.kis.schedule;
 
 import java.util.List;
 
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.api.kis.dao.StockRealtimeDao;
+import com.kh.investSpring.api.kis.dto.KisStockPriceResponse;
 import com.kh.investSpring.api.kis.dto.StockRealtimeTickDto;
+import com.kh.investSpring.api.kis.service.KisStockService;
 import com.kh.investSpring.api.kis.service.RealtimeQueueService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class KisTickScheduler {
 
     private final KisProperties kisProperties;
+    private final KisStockService kisStockService;
     private final RealtimeQueueService queueService;
     private final StockRealtimeDao stockRealtimeDao;
     
@@ -53,7 +55,7 @@ public class KisTickScheduler {
         if (!kisProperties.isWebsocketEnabled()) {
             return;
         }
-        List<StockRealtimeTickDto> batch = queueService.pollBatch(1000);
+        List<StockRealtimeTickDto> batch = queueService.pollBatch(2000);
 
         if (!batch.isEmpty()) {
             log.info("tick save batch={}", batch.size());
@@ -78,17 +80,32 @@ public class KisTickScheduler {
             return;
         }
 
-        for (StockRealtimeTickDto dto : batch) {
-        	int updated = stockRealtimeDao.updateRealtimeCurrent(dto);
-
-        		if (updated == 0) {
-        		    try {
-        		        stockRealtimeDao.insertRealtimeCurrent(dto);
-        		    } catch (DuplicateKeyException ignored) {
-        		    }
-        		}
-        }
+        stockRealtimeDao.updateRealtimeCurrent(batch);
 
         log.info("current 갱신 완료={}", batch.size());
+    }
+    
+    /**
+     * 5초마다 유기된 realtime_current종목 최신화
+     */
+    @Scheduled(fixedDelay = 5000)
+    public void refreshStaleStocks() {
+        List<String> list = stockRealtimeDao.selectStaleStockCodes();
+
+        for (String stockCode : list) {
+            try {
+                KisStockPriceResponse response = kisStockService.fetchPriceFromKisDirect(stockCode);
+
+                stockRealtimeDao.refreshCurrentFromRest(response);
+
+                Thread.sleep(150);
+
+            } catch (Exception e) {
+                log.warn("stale refresh fail stockCode={}",
+                    stockCode,
+                    e
+                );
+            }
+        }
     }
 }

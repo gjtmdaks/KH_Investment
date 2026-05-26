@@ -155,6 +155,7 @@ public class KisStockService {
         }
 
         ResolvedStockPrice resolved = resolveStockPrice(stockCode);
+        
         return StockPriceViewResponse.from(
                 resolved.body(),
                 isWsSubscribed(code),
@@ -758,6 +759,23 @@ public class KisStockService {
     private record CachedValue<T>(
             T value,
             long createdAtMillis) {
+    }
+    
+    public KisStockPriceResponse fetchPriceFromKisDirect(String stockCode) {
+
+        String code = cacheKey(stockCode);
+
+        if (code.isBlank()) {
+            throw new IllegalArgumentException("종목코드가 비어 있습니다.");
+        }
+
+        KisStockPriceResponse response =
+                fetchStockPriceFromKis(code);
+
+        storeReferencePriceCache(code, response);
+        storePriceCaches(code, response);
+
+        return response;
     }
 
 }

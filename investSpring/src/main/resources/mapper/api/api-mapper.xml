@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="api">
-
     <!-- 실시간 체결 데이터 배치 INSERT -->
     <insert id="batchInsertTick" parameterType="list">
         INSERT INTO STOCK_REALTIME_TICK (
@@ -23,10 +20,7 @@
             A.VOLUME,
             A.TRADE_TIME
         FROM (
-            <foreach collection="list"
-                     item="item"
-                     separator="UNION ALL">
-
+            <foreach collection="list" item="item" separator="UNION ALL">
                 SELECT
                     #{item.stockCode}    AS STOCK_CODE,
                     #{item.currentPrice} AS CURRENT_PRICE,
@@ -34,11 +28,9 @@
                     #{item.volume}       AS VOLUME,
                     #{item.tradeTime}    AS TRADE_TIME
                 FROM DUAL
-
             </foreach>
         ) A
     </insert>
-
 
     <!-- 기업코드 MERGE -->
 	<update id="mergeCorpCodes" parameterType="DartCorpCodeDto">
@@ -106,7 +98,7 @@
 	    WHERE STOCK_CODE = #{stockCode}
 	</update>
 	
-	    <select id="selectStaticProfileByStockCode" parameterType="string" resultType="map">
+	<select id="selectStaticProfileByStockCode" parameterType="string" resultType="map">
         SELECT
             s.STOCK_CODE AS stockCode,
             s.STOCK_NAME AS stockName,
@@ -209,8 +201,7 @@
 	    )
 	</insert>
 
-	<select id="selectIntradayMinutesByDate"
-	        resultType="com.kh.investSpring.api.kis.dto.StockIntradayMinuteCacheDto">
+	<select id="selectIntradayMinutesByDate" resultType="StockIntradayMinuteCacheDto">
 	    SELECT
 	        CACHE_ID AS cacheId,
 	        STOCK_CODE AS stockCode,
@@ -273,8 +264,7 @@
 	    )
 	</insert>
 	
-	<select id="findRealtimeCurrentByStockCode"
-	        resultType="com.kh.investSpring.api.kis.dto.StockRealtimeCurrentDto">
+	<select id="findRealtimeCurrentByStockCode" resultType="StockRealtimeCurrentDto">
 	    SELECT
 	        rc.stock_code AS stockCode,
 	        s.stock_name AS stockName,
@@ -292,14 +282,46 @@
 	</select>
 
 	<update id="updateRealtimeCurrent">
-	    UPDATE stock_realtime_current
-	    SET
-	        current_price = #{currentPrice},
-	        change_price = NVL(#{changePrice}, change_price),
-	        change_rate = #{changeRate},
-	        open_price = NVL(#{openPrice}, open_price),
-	        updated_at = #{tradeTime}
-	    WHERE stock_code = #{stockCode}
+	    MERGE INTO stock_realtime_current t
+	    USING (
+	        <foreach collection="list" item="item" separator="UNION ALL">
+	            SELECT
+	                #{item.stockCode} AS stock_code,
+	                #{item.currentPrice} AS current_price,
+	                #{item.changePrice} AS change_price,
+	                #{item.changeRate} AS change_rate,
+	                #{item.openPrice} AS open_price,
+	                #{item.tradeTime} AS updated_at
+	            FROM dual
+	        </foreach>
+	    ) s
+	    ON (t.stock_code = s.stock_code)
+	
+	    WHEN MATCHED THEN
+	    UPDATE SET
+	        t.current_price = s.current_price,
+	        t.change_price = s.change_price,
+	        t.change_rate = s.change_rate,
+	        t.open_price = s.open_price,
+	        t.updated_at = s.updated_at
+	
+	    WHEN NOT MATCHED THEN
+	    INSERT (
+	        stock_code,
+	        current_price,
+	        change_price,
+	        change_rate,
+	        open_price,
+	        updated_at
+	    )
+	    VALUES (
+	        s.stock_code,
+	        s.current_price,
+	        s.change_price,
+	        s.change_rate,
+	        s.open_price,
+	        s.updated_at
+	    )
 	</update>
 	
 	<insert id="insertRealtimeCurrent">
@@ -390,5 +412,64 @@
 	    DELETE FROM FETCH_STATE
 	    WHERE FETCH_TYPE = 'HISTORY'
 	</delete>
+	
+	<update id="refreshCurrentFromRest">
+	    MERGE INTO stock_realtime_current t
+	    USING (
+	        SELECT
+	            #{stockCode} AS stock_code,
+	            #{currentPrice} AS current_price,
+	            #{changePrice} AS change_price,
+	            #{changeRate} AS change_rate,
+	            #{openPrice} AS open_price,
+	            #{volume} AS volume,
+	            #{tradingValue} AS trading_value
+	        FROM dual
+	    ) s
+	    ON (t.stock_code = s.stock_code)
+	
+	    WHEN MATCHED THEN
+	    UPDATE SET
+	        t.current_price = s.current_price,
+	        t.change_price = s.change_price,
+	        t.change_rate = s.change_rate,
+	        t.open_price = s.open_price,
+	        t.volume = s.volume,
+	        t.trading_value = s.trading_value,
+	        t.updated_at = SYSTIMESTAMP
+	
+	    WHEN NOT MATCHED THEN
+	    INSERT (
+	        stock_code,
+	        current_price,
+	        change_price,
+	        change_rate,
+	        open_price,
+	        volume,
+	        trading_value,
+	        updated_at
+	    )
+	    VALUES (
+	        s.stock_code,
+	        s.current_price,
+	        s.change_price,
+	        s.change_rate,
+	        s.open_price,
+	        s.volume,
+	        s.trading_value,
+	        SYSTIMESTAMP
+	    )
+	</update>
+	
+	<select id="selectStaleStockCodes" resultType="string">
+	    SELECT stock_code
+	    FROM (
+	        SELECT stock_code
+	        FROM stock_realtime_current
+	        WHERE updated_at <![CDATA[ < ]]> SYSTIMESTAMP - INTERVAL '1' MINUTE
+	        ORDER BY updated_at ASC
+	    )
+	    WHERE ROWNUM <![CDATA[ <= ]]> 20
+	</select>
 
 </mapper>

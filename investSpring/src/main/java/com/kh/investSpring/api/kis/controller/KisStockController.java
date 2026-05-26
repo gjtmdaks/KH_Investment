@@ -15,36 +15,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.api.kis.dto.KisStockCandleResponse;
 import com.kh.investSpring.api.kis.dto.KisStockDetailResponse;
-import com.kh.investSpring.api.kis.dto.OrderbookSubscribeResponse;
-import com.kh.investSpring.api.kis.dto.StockOrderbookViewResponse;
-import com.kh.investSpring.api.kis.dto.StockPriceViewResponse;
 import com.kh.investSpring.api.kis.dto.KisStockSummaryResponse;
+import com.kh.investSpring.api.kis.dto.OrderbookSubscribeResponse;
 import com.kh.investSpring.api.kis.dto.StockBatchPriceRequest;
 import com.kh.investSpring.api.kis.dto.StockInvestorTrendResponse;
+import com.kh.investSpring.api.kis.dto.StockOrderbookViewResponse;
+import com.kh.investSpring.api.kis.dto.StockPriceViewResponse;
 import com.kh.investSpring.api.kis.service.KisInvestorTradeService;
 import com.kh.investSpring.api.kis.service.KisStockService;
 import com.kh.investSpring.api.kis.service.StockHistoryReadService;
 import com.kh.investSpring.api.kis.service.StockMinuteReadService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class KisStockController {
 
     private final KisStockService kisStockService;
     private final KisInvestorTradeService kisInvestorTradeService;
     private final StockHistoryReadService stockHistoryReadService;
     private final StockMinuteReadService stockMinuteReadService;
-
-    public KisStockController(
-            KisStockService kisStockService,
-            KisInvestorTradeService kisInvestorTradeService,
-            StockHistoryReadService stockHistoryReadService,
-            StockMinuteReadService stockMinuteReadService
-    ) {
-        this.kisStockService = kisStockService;
-        this.kisInvestorTradeService = kisInvestorTradeService;
-        this.stockHistoryReadService = stockHistoryReadService;
-        this.stockMinuteReadService = stockMinuteReadService;
-    }
 
     @GetMapping("/api/stocks/{stockCode}/price")
     public StockPriceViewResponse getStockPrice(@PathVariable String stockCode) {

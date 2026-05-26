@@ -19,7 +19,7 @@ public class KisProperties {
     private String websocketUrl;
 
     /** 실시간 체결가 WebSocket 연결 여부. 기본 false (다중 로컬 기동 시 KIS 세션 중첩 방지). 켤 때만 true */
-    @Value("${kis.websocket.enabled:false}")
+    @Value("${kis.websocket.enabled:true}")
     private boolean websocketEnabled;
 
     @Value("${kis.api.base-url}")
@@ -33,7 +33,7 @@ public class KisProperties {
     @Value("${kis.price.redis-cache-ttl-seconds:3}")
     private long priceRedisCacheTtlSeconds;
 
-    @Value("${kis.price.redis-cache-enabled:false}")
+    @Value("${kis.price.redis-cache-enabled:true}")
     private boolean priceRedisCacheEnabled;
 
     /** JVM 로컬 1차 캐시 TTL(ms) */
