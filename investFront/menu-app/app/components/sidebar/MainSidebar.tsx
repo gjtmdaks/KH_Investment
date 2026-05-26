@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation"; // 💡 URL 쿼리 스트링 감지를 위해 추가
 import { useAuth } from "@/app/context/AuthContext";
 import styles from "./MainSidebar.module.css";
 import { SidebarMenu } from "./types";
@@ -52,8 +53,21 @@ export default function MainSidebar({
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
   const { user, isAuthenticated } = useAuth();
+  
+  const searchParams = useSearchParams(); // 💡 주소창의 파라미터를 읽어옵니다.
+  
   const isAdmin = isAuthenticated && user?.auth === 1;
   const visibleMenus = isAdmin ? [...baseMenus, adminMenu] : baseMenus;
+
+  // 💡 URL에 ?sidebar=ranking이 들어오면 자동으로 사이드바 메뉴를 랭킹으로 바꾸고 열어주는 로직
+  useEffect(() => {
+    const sidebarParam = searchParams.get("sidebar");
+    
+    if (sidebarParam === "ranking") {
+      setActiveMenu("ranking");
+      setIsOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     function handleResize() {

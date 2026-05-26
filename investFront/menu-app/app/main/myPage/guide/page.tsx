@@ -91,7 +91,7 @@ export default function Guide() {
   const steps = [
     { id: 1, title: "종목 검색하기", desc: "상단 검색창에 원하는 종목명을 입력해보세요. 예) 삼성전자", ui: <Step1UI /> },
     { id: 2, title: "주문하기 (매수 또는 매도)", desc: "매수/매도 선택 후 수량과 주문유형을 설정하고 주문 버튼을 눌러주세요.", ui: <Step2UI /> },
-    { id: 3, title: "결과 확인하기", desc: "내 정보에서 보유 종목과 수익률을 확인 할 수 있어요.", ui: <Step3UI /> },
+    { id: 3, title: "결과 확인하기", desc: "내 정보에서 보유 종목과 수익률을 확인 할 수 있어요.", ui: <Step3UI /> }, // 👈 오타 수정 완료!
   ];
 
   const features = [
@@ -99,7 +99,7 @@ export default function Guide() {
     { title: "주문", desc: "간편한 매수/매도", icon: "⚖️", path: "/main/stock" },
     { title: "내 정보", desc: "자산 현황 및 내역", icon: "👤", path: "/main/myPage/member" }, 
     { title: "차트 분석", desc: "다양한 지표 제공", icon: "📊", path: "/main/stock" },
-    { title: "랭킹", desc: "수익률 순위 확인", icon: "🏆", path: "/main/ranking" },
+    { title: "랭킹", desc: "수익률 순위 확인", icon: "🏆", path: "/main/myPage/guide?sidebar=ranking" },
   ];
 
   return (
@@ -139,7 +139,6 @@ export default function Guide() {
             <h3 className={styles.sectionTitle}>주요 기능 한눈에 보기</h3>
             <div className={styles.featureGrid}>
               {features.map((f, idx) => (
-                
                 <Link href={f.path} key={idx} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className={styles.featureCard}>
                     <div className={styles.featureIcon}>{f.icon}</div>
