@@ -1,0 +1,117 @@
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.guideTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--stock-text-main, #f8fafc);
+}
+
+.guideSummary {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--stock-text-muted, #94a3b8);
+}
+
+.scheduleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.scheduleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.scheduleLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--stock-text-sub, #cbd5e1);
+}
+
+.scheduleTimes {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--stock-text-muted, #94a3b8);
+  word-break: keep-all;
+}
+
+.todayHelpWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.helpButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--stock-text-muted, #94a3b8);
+  background: rgba(148, 163, 184, 0.2);
+  cursor: pointer;
+}
+
+.helpButton:hover {
+  color: var(--stock-text-main, #f8fafc);
+  background: rgba(148, 163, 184, 0.32);
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: max(240px, 18vw);
+  max-width: 320px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--stock-panel-bg, #1e293b);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.45);
+}
+
+.popoverText {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--stock-text-main, #f8fafc);
+}
+
+.popoverSub {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--stock-text-muted, #94a3b8);
+}
+
+.popoverSub + .popoverSub {
+  margin-top: 4px;
+}
+
+@media (max-width: 520px) {
+  .scheduleGrid {
+    grid-template-columns: 1fr;
+  }
+}

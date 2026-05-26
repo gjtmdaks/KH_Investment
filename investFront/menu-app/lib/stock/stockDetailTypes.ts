@@ -91,6 +91,7 @@ export type InvestorTrendResponse = {
   stockCode: string;
   summary: InvestorTrendSummary | null;
   rows: InvestorTrendDailyRow[];
+  notice?: string | null;
 };
 
 export type TabKey =

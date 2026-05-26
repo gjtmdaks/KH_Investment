@@ -121,23 +121,49 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       setInvestorLoading(true);
 
       try {
-        const data = await fetchJson<InvestorTrendResponse>(
-          `/api/stocks/${stockCode}/investor-trend?days=${STOCK_INVESTOR_TREND_DAYS}`
+        const response = await fetch(
+          `${API_BASE_URL}/api/stocks/${stockCode}/investor-trend?days=${STOCK_INVESTOR_TREND_DAYS}`,
+          {
+            credentials: "include",
+            cache: "no-store",
+          }
         );
+
+        const payload = (await response.json()) as InvestorTrendResponse & {
+          success?: boolean;
+          message?: string;
+        };
 
         if (session !== snapshotSessionRef.current) {
           return;
         }
 
-        setInvestorTrend(data);
-        investorDoneSessionRef.current = session;
+        if (!response.ok) {
+          setInvestorTrend({
+            stockCode,
+            summary: null,
+            rows: [],
+            notice: payload.message ?? `매매동향 조회 실패 (HTTP ${response.status})`,
+          });
+          return;
+        }
+
+        setInvestorTrend(payload);
+
+        if (payload.rows?.length) {
+          investorDoneSessionRef.current = session;
+        }
       } catch {
         if (session !== snapshotSessionRef.current) {
           return;
         }
 
-        setInvestorTrend(null);
-        investorDoneSessionRef.current = session;
+        setInvestorTrend({
+          stockCode,
+          summary: null,
+          rows: [],
+          notice: "매매동향을 불러오지 못했습니다. 백엔드 서버 연결을 확인해 주세요.",
+        });
       } finally {
         investorFetchInFlightRef.current = false;
 
@@ -146,7 +172,7 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
         }
       }
     },
-    [fetchJson, stockCode]
+    [stockCode]
   );
 
   const loadSnapshot = useCallback(async () => {
