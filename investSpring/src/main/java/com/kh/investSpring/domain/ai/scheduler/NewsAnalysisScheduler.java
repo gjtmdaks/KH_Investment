@@ -15,7 +15,7 @@ public class NewsAnalysisScheduler {
 
     private final AiAnalysisService aiAnalysisService;
 
-    @Scheduled(fixedDelay = 120000)
+    @Scheduled(fixedDelay = 60000, scheduler = "aiScheduler")
     public void analyzeNews() {
         log.info("뉴스별 AI 분석 스케줄 시작");
 
@@ -27,7 +27,7 @@ public class NewsAnalysisScheduler {
         }
     }
     
-    @Scheduled(fixedDelay = 120000)
+    @Scheduled(fixedDelay = 60000, scheduler = "aiScheduler")
     public void analyzeStocks() {
     	log.info("종목별 최신뉴스 AI 분석 스케줄 시작");
     	

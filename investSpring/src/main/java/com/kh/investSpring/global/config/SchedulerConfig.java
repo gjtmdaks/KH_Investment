@@ -22,4 +22,25 @@ public class SchedulerConfig {
 
         return scheduler;
     }
+    
+    @Bean(name = "realtimeScheduler")
+    public ThreadPoolTaskScheduler realtimeScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+
+        scheduler.setPoolSize(8);
+        scheduler.setThreadNamePrefix("realtime-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(false);
+
+        return scheduler;
+    }
+
+    @Bean(name = "aiScheduler")
+    public ThreadPoolTaskScheduler aiScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+
+        scheduler.setPoolSize(2);
+        scheduler.setThreadNamePrefix("ai-");
+
+        return scheduler;
+    }
 }
