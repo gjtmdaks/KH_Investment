@@ -6,9 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import com.kh.investSpring.domain.auth.service.AuthUserService;
-import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
-import com.kh.investSpring.global.jwt.JwtTokenProvider;
-import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
+import com.kh.investSpring.domain.auth.service.AuthTokenIssueService;
 import com.kh.investSpring.global.security.OAuth2JwtAuthenticationSuccessHandler;
 
 /**
@@ -21,15 +19,11 @@ public class OAuth2LoginSuccessHandlerConfig {
 	@Bean("oauth2LoginSuccessHandler")
 	public AuthenticationSuccessHandler oauth2LoginSuccessHandler(
 			AuthUserService authUserService,
-			JwtTokenProvider jwtTokenProvider,
-			RefreshTokenCookieWriter refreshTokenCookieWriter,
-			AccessTokenCookieWriter accessTokenCookieWriter,
+			AuthTokenIssueService authTokenIssueService,
 			@Value("${app.oauth2.frontend-callback-uri:http://localhost:3000/sign-in/oauth-callback}") String oauth2FrontendCallbackUri) {
 		return new OAuth2JwtAuthenticationSuccessHandler(
 				authUserService,
-				jwtTokenProvider,
-				refreshTokenCookieWriter,
-				accessTokenCookieWriter,
+				authTokenIssueService,
 				oauth2FrontendCallbackUri);
 	}
 }

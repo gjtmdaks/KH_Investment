@@ -60,6 +60,7 @@ public class SecurityFilterChainFactory {
 				.csrf(csrf -> {
 					csrf.csrfTokenRepository(csrfRepo)
 							.ignoringRequestMatchers(
+									"/auth/refresh",
 									"/oauth2/**", 
 									"/login/oauth2/**",
 									"/logout/oauth2/**",

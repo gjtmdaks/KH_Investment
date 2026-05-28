@@ -377,7 +377,7 @@ public class UserServiceImpl implements UserService {
 
         String userId = userDao.selectLocalUserIdByEmail(email);
         if (userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("입력하신 이메일로 가입된 로컬 계정을 찾을 수 없습니다.");
+            throw new IllegalArgumentException("입력하신 이메일로 가입된 계정을 찾을 수 없습니다.");
         }
 
         accountRecoveryEmailService.sendUserId(email, userId);

@@ -21,6 +21,11 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+const refreshClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
+
 function readSkipAuthRedirect(
   config: InternalAxiosRequestConfig | undefined
 ): boolean {
@@ -81,9 +86,11 @@ function redirectToLogin(payload?: Record<string, unknown>) {
 
 console.log("API_BASE_URL =", API_BASE_URL);
 
+let refreshPromise: Promise<void> | null = null;
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<AuthErrorBody>) => {
+  async (error: AxiosError<AuthErrorBody>) => {
     const response = error.response;
 
     if (isExpectedApiFailure(response)) {
@@ -100,17 +107,35 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      const reqUrl =
-        cfg != null ? `${cfg.baseURL ?? ""}${cfg.url ?? ""}` : "(unknown)";
-      redirectToLogin({
-        reason: "401_AUTH_REQUIRED",
-        requestMethod: cfg?.method?.toUpperCase(),
-        requestUrl: reqUrl,
-        responseStatus: status,
-        responseCode: code,
-        responseMessage: error.response?.data?.message,
-        responseBody: error.response?.data,
-      });
+      const url = (cfg?.url ?? "").toString();
+      if (url.includes("/auth/refresh")) {
+        redirectToLogin({ reason: "401_AUTH_REQUIRED_REFRESH_LOOP" });
+        return Promise.reject(error);
+      }
+
+      const alreadyRetried = (cfg as { _retry?: boolean } | undefined)?._retry;
+      if (alreadyRetried) {
+        redirectToLogin({ reason: "401_AUTH_REQUIRED_AFTER_REFRESH" });
+        return Promise.reject(error);
+      }
+      (cfg as { _retry?: boolean })._retry = true;
+
+      if (!refreshPromise) {
+        refreshPromise = refreshClient
+          .post("/auth/refresh", undefined, { withCredentials: true })
+          .then(() => undefined)
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+
+      try {
+        await refreshPromise;
+        return apiClient(cfg);
+      } catch {
+        redirectToLogin({ reason: "refresh_failed" });
+        return Promise.reject(error);
+      }
     } else if (authDebugEnabled && status === 401) {
       console.warn("[auth-debug] 401 without AUTH_REQUIRED (no redirect)", {
         url: `${error.config?.baseURL ?? ""}${error.config?.url ?? ""}`,

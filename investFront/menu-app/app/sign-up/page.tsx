@@ -428,7 +428,7 @@ export default function SignUpPage() {
                     sendingCode || !EMAIL_PATTERN.test(normalizedEmail)
                   }
                 >
-                  새 인증
+                  재발송
                 </button>
               </div>
             ) : null}
