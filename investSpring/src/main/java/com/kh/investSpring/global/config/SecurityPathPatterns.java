@@ -13,6 +13,7 @@ public final class SecurityPathPatterns {
 	 */
 	public static final String[] AUTH_WHITELIST = {
 			"/",
+			"/auth/refresh",
 			"/oauth2/**",
 			"/login/oauth2/**",
 			"/logout/oauth2/**",

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.investSpring.domain.auth.dto.LogoutResponse;
 import com.kh.investSpring.domain.auth.service.AuthLogoutService;
+import com.kh.investSpring.domain.auth.service.AuthTokenIssueService;
 import com.kh.investSpring.domain.user.dto.InvestmentTypeSaveRequest;
 import com.kh.investSpring.domain.user.dto.UserMeResponse;
 import com.kh.investSpring.domain.user.dto.FindPasswordRequest;
@@ -26,9 +27,8 @@ import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.service.SignupEmailVerificationService;
 import com.kh.investSpring.domain.user.service.UserService;
 import com.kh.investSpring.global.common.ApiResponse;
-import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
-import com.kh.investSpring.global.jwt.JwtTokenProvider;
-import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
+import com.kh.investSpring.domain.auth.service.RefreshTokenStore;
+import com.kh.investSpring.global.jwt.AuthCookieClearer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,9 +42,9 @@ public class UserController {
 	private final UserService us;
 	private final AuthLogoutService authLogoutService;
 	private final SignupEmailVerificationService signupEmailVerificationService;
-	private final JwtTokenProvider jwtTokenProvider;
-	private final AccessTokenCookieWriter accessTokenCookieWriter;
-	private final RefreshTokenCookieWriter refreshTokenCookieWriter;
+	private final AuthTokenIssueService authTokenIssueService;
+	private final RefreshTokenStore refreshTokenStore;
+	private final AuthCookieClearer authCookieClearer;
 
     @PostMapping("/signup/email/send-code")
     public ApiResponse<Void> sendSignupEmailCode(@RequestBody EmailSendCodeRequest request) {
@@ -74,10 +74,7 @@ public class UserController {
         UserSignInResponse response = us.signIn(request);
 
         long userNo = response.getUserNo();
-        String accessToken = jwtTokenProvider.createAccessToken(userNo);
-        String refreshToken = jwtTokenProvider.createRefreshToken(userNo);
-        accessTokenCookieWriter.addCookie(httpResponse, accessToken);
-        refreshTokenCookieWriter.addCookie(httpResponse, refreshToken);
+        authTokenIssueService.issue(userNo, httpResponse);
 
         return ApiResponse.success(response, "로그인 성공");
     }
@@ -103,10 +100,12 @@ public class UserController {
     
     // 탈퇴
     @PatchMapping("/me/withdraw")
-    public ApiResponse<?> withdraw(HttpServletRequest request) {
+    public ApiResponse<?> withdraw(HttpServletRequest request, HttpServletResponse response) {
         Long userNo = (Long) request.getAttribute("userNo");
 
         us.userDelete(userNo);
+        refreshTokenStore.revoke(userNo);
+        authCookieClearer.clearAuthCookies(response);
 
         return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다.");
     }

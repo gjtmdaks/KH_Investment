@@ -8,10 +8,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.kh.investSpring.domain.auth.service.AuthTokenIssueService;
 import com.kh.investSpring.domain.auth.service.AuthUserService;
-import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
-import com.kh.investSpring.global.jwt.JwtTokenProvider;
-import com.kh.investSpring.global.jwt.RefreshTokenCookieWriter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,21 +23,15 @@ import jakarta.servlet.http.HttpServletResponse;
 public class OAuth2JwtAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final AuthUserService authUserService;
-	private final JwtTokenProvider jwtTokenProvider;
-	private final RefreshTokenCookieWriter refreshTokenCookieWriter;
-	private final AccessTokenCookieWriter accessTokenCookieWriter;
+	private final AuthTokenIssueService authTokenIssueService;
 	private final String oauth2FrontendCallbackUri;
 
 	public OAuth2JwtAuthenticationSuccessHandler(
 			AuthUserService authUserService,
-			JwtTokenProvider jwtTokenProvider,
-			RefreshTokenCookieWriter refreshTokenCookieWriter,
-			AccessTokenCookieWriter accessTokenCookieWriter,
+			AuthTokenIssueService authTokenIssueService,
 			String oauth2FrontendCallbackUri) {
 		this.authUserService = authUserService;
-		this.jwtTokenProvider = jwtTokenProvider;
-		this.refreshTokenCookieWriter = refreshTokenCookieWriter;
-		this.accessTokenCookieWriter = accessTokenCookieWriter;
+		this.authTokenIssueService = authTokenIssueService;
 		this.oauth2FrontendCallbackUri = oauth2FrontendCallbackUri;
 		setAlwaysUseDefaultTargetUrl(true);
 	}
@@ -61,15 +53,15 @@ public class OAuth2JwtAuthenticationSuccessHandler extends SimpleUrlAuthenticati
 		}
 
 		String providerId = oauth2User.getName();
+		
+		// 카카오 회원 정보를 DB에 반영하거나, 기존 회원을 조회하여 고유 userNo 획득
 		String nickname = resolveNickname(oauth2User.getAttributes());
 
 		Long userNo = authUserService.resolveOrCreateKakaoUser(providerId, nickname);
-
-		String accessToken = jwtTokenProvider.createAccessToken(userNo);
-		String refreshToken = jwtTokenProvider.createRefreshToken(userNo);
-		accessTokenCookieWriter.addCookie(response, accessToken);
-		refreshTokenCookieWriter.addCookie(response, refreshToken);
-
+		
+		authTokenIssueService.issue(userNo, response);
+		
+		// 토큰 파라미터가 없는 리다이렉트 URL 생성
 		String redirectUrl = UriComponentsBuilder.fromUriString(oauth2FrontendCallbackUri)
 				.build()
 				.encode()

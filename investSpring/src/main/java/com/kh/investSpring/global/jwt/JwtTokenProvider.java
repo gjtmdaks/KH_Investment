@@ -2,11 +2,14 @@ package com.kh.investSpring.global.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.kh.investSpring.domain.auth.dto.RefreshTokenClaims;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -62,7 +65,14 @@ public class JwtTokenProvider {
 	}
 
 	public String createRefreshToken(Long userNo) {
-		return buildToken(userNo, TYPE_REFRESH, refreshKey, refreshExpirationMs);
+		String jti = UUID.randomUUID().toString();
+		return buildRefreshToken(userNo, jti);
+	}
+
+	public RefreshTokenIssue createRefreshTokenIssue(Long userNo) {
+		String jti = UUID.randomUUID().toString();
+		String token = buildRefreshToken(userNo, jti);
+		return new RefreshTokenIssue(token, jti);
 	}
 
 	private String buildToken(Long userNo, String tokenType, SecretKey key, long ttlMs) {
@@ -76,6 +86,18 @@ public class JwtTokenProvider {
 				.compact();
 	}
 
+	private String buildRefreshToken(Long userNo, String jti) {
+		Date now = new Date();
+		return Jwts.builder()
+				.setSubject(String.valueOf(userNo))
+				.setIssuedAt(now)
+				.setExpiration(new Date(now.getTime() + refreshExpirationMs))
+				.setId(jti)
+				.claim(CLAIM_TOKEN_TYPE, TYPE_REFRESH)
+				.signWith(refreshKey)
+				.compact();
+	}
+
 	public Long parseAccessTokenUserNo(String token) {
 		Claims claims = parseAndValidate(token, accessKey, TYPE_ACCESS);
 		return Long.parseLong(claims.getSubject());
@@ -84,6 +106,16 @@ public class JwtTokenProvider {
 	public Long parseRefreshTokenUserNo(String token) {
 		Claims claims = parseAndValidate(token, refreshKey, TYPE_REFRESH);
 		return Long.parseLong(claims.getSubject());
+	}
+
+	public RefreshTokenClaims parseRefreshToken(String token) {
+		Claims claims = parseAndValidate(token, refreshKey, TYPE_REFRESH);
+		Long userNo = Long.parseLong(claims.getSubject());
+		String jti = claims.getId();
+		if (jti == null || jti.isBlank()) {
+			throw new IllegalArgumentException("Refresh token jti 누락");
+		}
+		return new RefreshTokenClaims(userNo, jti);
 	}
 
 	private Claims parseAndValidate(String token, SecretKey key, String expectedType) {
