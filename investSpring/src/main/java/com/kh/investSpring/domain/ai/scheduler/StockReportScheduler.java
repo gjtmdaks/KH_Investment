@@ -18,7 +18,7 @@ public class StockReportScheduler {
     /**
      * GPT 기반 종목 상세 AI 리포트 생성
      */
-    @Scheduled(fixedDelay = 600000)
+    @Scheduled(fixedDelay = 120000, scheduler = "aiScheduler")
     public void generateStockReports() {
         log.info("GPT 종목 AI 리포트 스케줄 시작");
         try {

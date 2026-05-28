@@ -286,12 +286,11 @@
 	    USING (
 	        <foreach collection="list" item="item" separator="UNION ALL">
 	            SELECT
-	                #{item.stockCode} AS stock_code,
-	                #{item.currentPrice} AS current_price,
-	                #{item.changePrice} AS change_price,
-	                #{item.changeRate} AS change_rate,
-	                #{item.openPrice} AS open_price,
-	                #{item.tradeTime} AS updated_at
+	                CAST(#{item.stockCode} AS VARCHAR2(20)) AS stock_code,
+	                CAST(#{item.currentPrice} AS NUMBER) AS current_price,
+	                CAST(#{item.changePrice} AS NUMBER) AS change_price,
+	                CAST(#{item.changeRate} AS NUMBER) AS change_rate,
+	                CAST(#{item.openPrice} AS NUMBER) AS open_price
 	            FROM dual
 	        </foreach>
 	    ) s
@@ -303,7 +302,7 @@
 	        t.change_price = s.change_price,
 	        t.change_rate = s.change_rate,
 	        t.open_price = s.open_price,
-	        t.updated_at = s.updated_at
+	        t.updated_at = SYSTIMESTAMP
 	
 	    WHEN NOT MATCHED THEN
 	    INSERT (
@@ -320,7 +319,7 @@
 	        s.change_price,
 	        s.change_rate,
 	        s.open_price,
-	        s.updated_at
+	        SYSTIMESTAMP
 	    )
 	</update>
 	
