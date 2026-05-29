@@ -3,7 +3,8 @@ package com.kh.investSpring.domain.ai.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,7 +26,6 @@ public class StockReportServiceImpl implements StockReportService {
     @Value("${ai.base.url}")
     private String aiUrl;
 
-    @Async("aiExecutor")
     @Override
     public void generateReports() {
         List<StockReportRequestDto> targets = stockReportDao.getReportTargets();
@@ -40,11 +40,17 @@ public class StockReportServiceImpl implements StockReportService {
                 List<String> recentNews = stockReportDao.getRecentNews(stock.getStockCode());
 
                 stock.setRecentNews(recentNews);
+                
+                HttpHeaders headers = new HttpHeaders();
+                headers.setConnection("close");
+
+                HttpEntity<StockReportRequestDto> entity =
+                        new HttpEntity<>(stock, headers);
 
                 StockReportResponseDto response =
                         restTemplate.postForObject(
                         		aiUrl+"/analysis/stock-report",
-                                stock,
+                        		entity,
                                 StockReportResponseDto.class
                         );
 

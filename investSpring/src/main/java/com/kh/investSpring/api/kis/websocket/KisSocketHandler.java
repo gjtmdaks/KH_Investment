@@ -117,6 +117,7 @@ public class KisSocketHandler extends TextWebSocketHandler {
             long changePrice = parseLongSafe(data[start + 4]);
             double changeRate = parseDoubleSafe(data[start + 5]);
             long openPrice = parseLongSafe(data[start + 7]);
+            long volume = parseLongSafe(data[start + 12]);
             LocalDate today = LocalDate.now();
             LocalTime localTime = LocalTime.parse(
                     time,
@@ -130,6 +131,7 @@ public class KisSocketHandler extends TextWebSocketHandler {
                     .changePrice(changePrice != 0L ? changePrice : null)
                     .changeRate(changeRate)
                     .openPrice(openPrice != 0L ? openPrice : null)
+                    .volume(volume != 0L ? volume : null)
                     .tradeTime(tradeTime)
                     .build();
             queueService.add(dto);
