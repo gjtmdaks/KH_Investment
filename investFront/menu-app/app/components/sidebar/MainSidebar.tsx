@@ -46,9 +46,15 @@ const adminMenu = {
   icon: "⚙",
 };
 
+type MainSidebarProps = {
+  data: unknown;
+  onOpenChange?: (open: boolean) => void;
+};
+
 export default function MainSidebar({
   data,
-}: any) {
+  onOpenChange,
+}: MainSidebarProps) {
 
   const [activeMenu, setActiveMenu] = useState<SidebarMenu>("interest");
   const [isOpen, setIsOpen] = useState(true);
@@ -68,6 +74,10 @@ export default function MainSidebar({
       setIsOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     function handleResize() {

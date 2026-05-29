@@ -3,6 +3,7 @@
   position: relative;
 
   width: 100%;
+  min-width: 148px;
   max-width: 420px;
 }
 
@@ -313,12 +314,6 @@
 
 @media (max-width: 1200px) {
   .searchWrap {
-    max-width: 260px;
-  }
-}
-
-@media (max-width: 920px) {
-  .searchWrap {
-    display: none;
+    max-width: 320px;
   }
 }
