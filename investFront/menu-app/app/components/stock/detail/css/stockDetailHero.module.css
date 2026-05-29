@@ -61,7 +61,7 @@
   white-space: nowrap;
 
   color: var(--stock-text-main);
-  font-size: clamp(30px, 2.2vw, 55px);
+  font-size: clamp(30px, 2.2vw, 35px);
   font-weight: 950;
   line-height: 1.1;
   letter-spacing: -0.06em;

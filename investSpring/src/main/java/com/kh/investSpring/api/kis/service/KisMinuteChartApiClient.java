@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -91,8 +92,14 @@ public class KisMinuteChartApiClient {
                     new TypeReference<Map<String, Object>>() {}
             );
             String rtCd = String.valueOf(body.get("rt_cd"));
+            String msg1 = body.get("msg1") != null ? String.valueOf(body.get("msg1")) : "";
 
             if (!"0".equals(rtCd)) {
+                if (isNoDataMessage(msg1)) {
+                    log.info("{} 무데이터 응답(stockCode={}) rt_cd={} msg={}", logLabel, stockCode, rtCd, msg1);
+                    return Collections.emptyList();
+                }
+
                 retry++;
 
                 log.warn(
@@ -100,7 +107,7 @@ public class KisMinuteChartApiClient {
                         logLabel,
                         stockCode,
                         body.get("rt_cd"),
-                        body.get("msg1"),
+                        msg1,
                         retry
                 );
 
@@ -113,5 +120,29 @@ public class KisMinuteChartApiClient {
 
             return KisMinuteBarMapper.castOutputRows(out2);
         }
+    }
+
+    private static boolean isNoDataMessage(String msg) {
+        if (msg == null) {
+            return false;
+        }
+
+        String normalized = msg.trim();
+
+        if (normalized.isEmpty()) {
+            return false;
+        }
+
+        String upper = normalized.toUpperCase();
+
+        return upper.contains("NO DATA")
+                || normalized.contains("조회된 데이터가")
+                || normalized.contains("조회 결과가")
+                || normalized.contains("데이터가 없습니다")
+                || normalized.contains("데이터없음")
+                || normalized.contains("휴장")
+                || normalized.contains("영업일이")
+                || normalized.contains("장 운영")
+                || normalized.contains("장이 열리지");
     }
 }

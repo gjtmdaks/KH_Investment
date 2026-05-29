@@ -3,6 +3,7 @@ package com.kh.investSpring.api.kis.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,9 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import com.kh.investSpring.api.kis.dao.StockHistoryDao;
 import com.kh.investSpring.api.kis.dao.StockIntradayMinuteDao;
 import com.kh.investSpring.api.kis.dto.KisStockCandleItemResponse;
 import com.kh.investSpring.api.kis.dto.KisStockCandleResponse;
+import com.kh.investSpring.api.kis.dto.StockHistoryCacheDto;
 import com.kh.investSpring.api.kis.dto.StockIntradayMinuteCacheDto;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class StockMinuteReadService {
     private static final long INGEST_COOLDOWN_MS = 60_000L;
 
     private final StockIntradayMinuteDao stockIntradayMinuteDao;
+    private final StockHistoryDao stockHistoryDao;
     private final KisIntradayMinuteIngestService kisIntradayMinuteIngestService;
     private final KisHistoricalMinuteIngestService kisHistoricalMinuteIngestService;
     private final KisHistoryService kisHistoryService;
@@ -115,6 +119,21 @@ public class StockMinuteReadService {
             return;
         }
 
+        DayOfWeek dow = tradeDate.getDayOfWeek();
+        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
+            log.debug("분봉 적재 생략(주말) stockCode={} tradeDate={}", stockCode, tradeDate);
+            return;
+        }
+
+        if (!tradeDate.equals(today) && isLikelyNonTradingDay(stockCode, tradeDate)) {
+            log.debug(
+                    "분봉 적재 생략(일봉 없음=휴장 가능) stockCode={} tradeDate={}",
+                    stockCode,
+                    tradeDate
+            );
+            return;
+        }
+
         LocalDate retentionFloor = today.minusYears(1);
 
         if (tradeDate.isBefore(retentionFloor)) {
@@ -159,6 +178,26 @@ public class StockMinuteReadService {
                 log.warn("분봉 적재 실패 stockCode={} tradeDate={}", stockCode, tradeDate, e);
             }
         }
+    }
+
+    private static final int NON_TRADING_DAY_LOOKBACK_DAYS = 7;
+    private static final int NON_TRADING_DAY_LOOKAHEAD_DAYS = 3;
+
+    private boolean isLikelyNonTradingDay(String stockCode, LocalDate tradeDate) {
+        LocalDate from = tradeDate.minusDays(NON_TRADING_DAY_LOOKBACK_DAYS);
+        LocalDate to = tradeDate.plusDays(NON_TRADING_DAY_LOOKAHEAD_DAYS);
+        List<StockHistoryCacheDto> nearbyDailyBars = stockHistoryDao.selectHistoryByRange(
+                stockCode,
+                "D",
+                from,
+                to
+        );
+
+        if (nearbyDailyBars.isEmpty()) {
+            return false;
+        }
+
+        return nearbyDailyBars.stream().noneMatch(row -> tradeDate.equals(row.getBaseDate()));
     }
 
     private List<KisStockCandleItemResponse> aggregate(
