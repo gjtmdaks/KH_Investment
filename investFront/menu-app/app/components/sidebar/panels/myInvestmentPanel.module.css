@@ -243,3 +243,11 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+.pendingItem {
+  cursor: pointer;
+}
+
+.pendingItem:hover {
+  border-color: #4f7cff;
+}

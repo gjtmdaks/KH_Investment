@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   cancelOrder,
@@ -34,6 +35,8 @@ function getOrderTypeText(orderType: PendingOrderResponse["orderType"]) {
 }
 
 export function PendingOrdersSection() {
+  const router = useRouter();
+
   const [orders, setOrders] = useState<PendingOrderResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [cancelingOrderId, setCancelingOrderId] = useState<number | null>(null);
@@ -103,7 +106,18 @@ export function PendingOrdersSection() {
             const totalAmount = order.price * order.quantity;
 
             return (
-              <article key={order.orderId} className={styles.pendingItem}>
+              <article
+                key={order.orderId}
+                className={styles.pendingItem}
+                onClick={() => router.push(`/main/stock/${order.stockCode}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    router.push(`/main/stock/${order.stockCode}`);
+                  }
+                }}
+              >
                 <div className={styles.pendingItemTop}>
                   <div>
                     <strong className={styles.pendingStockName}>
@@ -151,7 +165,10 @@ export function PendingOrdersSection() {
                   <button
                     type="button"
                     className={styles.pendingCancelButton}
-                    onClick={() => handleCancelOrder(order.orderId)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleCancelOrder(order.orderId);
+                    }}
                     disabled={cancelingOrderId === order.orderId}
                   >
                     {cancelingOrderId === order.orderId ? "취소 중" : "취소"}
