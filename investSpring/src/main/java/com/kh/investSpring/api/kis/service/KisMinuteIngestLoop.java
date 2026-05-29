@@ -34,6 +34,10 @@ final class KisMinuteIngestLoop {
             List<Map<String, Object>> batch = batchFetcher.fetch(cursor);
 
             if (batch.isEmpty()) {
+                if (iterations == 1) {
+                    break;
+                }
+
                 String prev = KisMinuteBarMapper.minusOneMinute(cursor);
 
                 if (prev.compareTo("085959") <= 0) {
@@ -48,6 +52,8 @@ final class KisMinuteIngestLoop {
 
             int sizeBefore = merged.size();
 
+            boolean hasForeignTradeDate = false;
+
             for (Map<String, Object> row : batch) {
                 StockIntradayMinuteCacheDto dto = KisMinuteBarMapper.toDto(stockCode, row);
 
@@ -56,10 +62,15 @@ final class KisMinuteIngestLoop {
                 }
 
                 if (!dto.getTradeDate().equals(tradeDate)) {
+                    hasForeignTradeDate = true;
                     continue;
                 }
 
                 merged.put(dto.getBarTime(), dto);
+            }
+
+            if (merged.isEmpty() && hasForeignTradeDate) {
+                break;
             }
 
             String minTime = batch.stream()
