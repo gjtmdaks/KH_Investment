@@ -375,7 +375,7 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [activeTab, runNewsFetch, detailLoading, orderbookLoading]);
 
   useEffect(() => {
-    if (activeTab !== "investor") {
+    if (activeTab !== "investor" && activeTab !== "summary") {
       return;
     }
 

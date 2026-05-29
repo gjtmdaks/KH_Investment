@@ -146,6 +146,10 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     setRiskModalOpen(false);
   }, []);
 
+  const handleOpenInvestorTab = useCallback(() => {
+    setActiveTab("investor");
+  }, []);
+
   const marketCap = useMemo(() => {
     const currentPrice = parseNumeric(price?.currentPrice);
     const outstandingShares = parseNumeric(profile?.outstandingShares ?? null);
@@ -164,7 +168,7 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
         stockName={displayName}
         onConfirm={handleRiskAckConfirm}
       />
-    <main className={styles.page}>
+    <main className={`${styles.page} ${styles.pageViewport}`}>
       <div className={styles.layout}>
         {/* LEFT */}
         <div className={styles.mainColumn}>
@@ -226,7 +230,13 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
                 <StockDetailEmptyState title="종목 정보를 불러오는 중입니다." />
               ) : null}
               {!detailLoading && activeTab === "summary" ? (
-                <StockDetailSummaryPanel profile={profile} price={price} />
+                <StockDetailSummaryPanel
+                  profile={profile}
+                  price={price}
+                  investorTrend={investorTrend}
+                  investorLoading={investorLoading}
+                  onOpenInvestorTab={handleOpenInvestorTab}
+                />
               ) : null}
               {activeTab === "news" && newsPhase !== "done" ? (
                 <StockDetailEmptyState title="뉴스를 불러오는 중입니다." />

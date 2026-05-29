@@ -36,6 +36,7 @@ export default function MainLayoutClient({
 
   const [data, setData] = useState<unknown | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     completeLogoutFromQuery();
@@ -102,7 +103,10 @@ export default function MainLayoutClient({
   }
 
   return (
-    <div className={styles.pageLayout}>
+    <div
+      className={styles.pageLayout}
+      data-sidebar-open={sidebarOpen ? "true" : "false"}
+    >
       <div className={styles.leftArea}>
         <Header data={data} />
 
@@ -112,7 +116,7 @@ export default function MainLayoutClient({
           </div>
         </div>
       </div>
-      <MainSidebar data={data} />
+      <MainSidebar data={data} onOpenChange={setSidebarOpen} />
     </div>
   );
 }
