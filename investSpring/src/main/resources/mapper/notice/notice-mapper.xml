@@ -45,7 +45,7 @@
 	    VALUES (
 	        SEQ_NOTICE.NEXTVAL,
 	        #{title},
-	        #{content},
+	        #{content, jdbcType=CLOB},
 	        SYSDATE,
 	        SYSDATE,
 	        #{userNo},

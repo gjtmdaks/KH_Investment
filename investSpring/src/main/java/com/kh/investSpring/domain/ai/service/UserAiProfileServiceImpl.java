@@ -207,7 +207,7 @@ public class UserAiProfileServiceImpl implements UserAiProfileService {
             }
 
             /*
-             * 7. sector allocation 계산
+             * 7. sector allocation(업종 비율) 계산
              */
             List<UserProfileAnalyzeRequestDto.SectorAllocationDto>
                 sectorAllocations = new ArrayList<>();
