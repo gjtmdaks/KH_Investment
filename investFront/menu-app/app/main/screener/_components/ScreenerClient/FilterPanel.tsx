@@ -39,6 +39,7 @@ export default function FilterPanel({
         >
           <option value="">거래량</option>
           <option value="TOP">상위 거래량</option>
+          <option value="BOTTOM">하위 거래량</option>
         </select>
       </div>
     </section>

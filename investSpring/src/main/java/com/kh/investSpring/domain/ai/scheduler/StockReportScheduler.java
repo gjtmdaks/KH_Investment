@@ -21,7 +21,7 @@ public class StockReportScheduler {
     /**
      * GPT 기반 종목 상세 AI 리포트 생성
      */
-    @Scheduled(fixedDelay = 120000, scheduler = "aiScheduler")
+    //@Scheduled(fixedDelay = 120000, scheduler = "aiScheduler")
     public void generateStockReports() {
         if (!running.compareAndSet(false, true)) {
             log.warn("이미 실행 중이라 스킵");

@@ -28,7 +28,7 @@ public class KisTickScheduler {
     /**
      * 매 10시마다 실시간 시세 데이터 비우기
      */
-    @Scheduled(cron = "0 15 9 * * *", scheduler = "realtimeScheduler")
+    @Scheduled(cron = "0 0 0 * * *", scheduler = "realtimeScheduler")
     public void cleanupRealtimeTick() {
         while (true) {
         	try {
@@ -55,7 +55,7 @@ public class KisTickScheduler {
         if (!kisProperties.isWebsocketEnabled()) {
             return;
         }
-        List<StockRealtimeTickDto> batch = queueService.pollBatch(2000);
+        List<StockRealtimeTickDto> batch = queueService.pollBatch(1500);
 
         if (!batch.isEmpty()) {
             log.info("tick save batch={}", batch.size());

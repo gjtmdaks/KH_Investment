@@ -31,7 +31,6 @@ public class AccountServiceImpl implements AccountService {
     // 전일(장시작) 돈 자동저장
     @Override
 	public int updatePreviousTotalAssetForAllActiveAccounts() {
-		// TODO Auto-generated method stub
 		return accountDao.updatePreviousTotalAssetForAllActiveAccounts();
 	}
     
