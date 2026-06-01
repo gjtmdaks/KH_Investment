@@ -63,6 +63,16 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
     return posts.filter((post) => post.parentId === null);
   }, [posts]);
 
+  const badgeColors = [
+    styles.shareholderBadgeGold,
+    styles.shareholderBadgeBlue,
+    styles.shareholderBadgeGreen,
+    styles.shareholderBadgePurple,
+  ];
+  function getBadgeColorClass(userNo: number) {
+    return badgeColors[userNo % badgeColors.length];
+  }
+
   const repliesByParentId = useMemo(() => {
     const result = new Map<number, BoardPost[]>();
 
@@ -276,7 +286,11 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                     <strong className={styles.writerName}>
                       {getWriterName(comment)}
                       {comment.shareholderBadge && (
-                        <span className={styles.shareholderBadge}>주주</span>
+                        <span
+                          className={`${styles.shareholderBadge} ${getBadgeColorClass(comment.userNo)}`}
+                        >
+                          주주
+                        </span>
                       )}
                     </strong>
                     <span>{formatDate(comment.createdAt)}</span>
@@ -358,7 +372,11 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                           <strong className={styles.writerName}>
                             {getWriterName(reply)}
                             {reply.shareholderBadge && (
-                              <span className={styles.shareholderBadge}>주주</span>
+                              <span
+                                className={`${styles.shareholderBadge} ${getBadgeColorClass(comment.userNo)}`}
+                              >
+                                주주
+                              </span>
                             )}
                           </strong>
                           <span>{formatDate(reply.createdAt)}</span>
