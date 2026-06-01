@@ -26,7 +26,7 @@
         SELECT
             B.BOARD_NO,
             B.USER_NO,
-            NULL AS USER_NAME,
+            U.USER_NAME,
             B.STOCK_CODE,
             B.CONTENT,
             B.CREATED_AT,
@@ -39,6 +39,8 @@
                 ELSE 'Y'
             END AS LIKED_BY_ME
         FROM BOARD B
+        LEFT JOIN USERS U
+            ON B.USER_NO = U.USER_NO
         LEFT JOIN BOARD_LIKE BL
             ON B.BOARD_NO = BL.BOARD_NO
            AND BL.USER_NO = #{userNo}
