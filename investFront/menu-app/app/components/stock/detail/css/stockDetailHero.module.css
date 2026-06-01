@@ -138,13 +138,17 @@
 }
 
 .heroStatsClip {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
   overflow-x: auto;
   overflow-y: hidden;
 
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.heroStatsClipScrollable {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .heroStatsClip::-webkit-scrollbar {
@@ -196,7 +200,6 @@
   gap: 6px;
   width: max-content;
   min-width: max-content;
-  margin-left: auto;
 }
 
 .heroStatsCol {
