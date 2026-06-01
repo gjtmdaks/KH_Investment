@@ -11,6 +11,7 @@ export type BoardPost = {
   parentId: number | null;
   commentType: "COMMENT" | "REPLY";
   likedByMe: boolean;
+  shareholderBadge?: boolean;
 };
 
 export type BoardCreateRequest = {

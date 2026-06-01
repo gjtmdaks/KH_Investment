@@ -36,4 +36,6 @@ public class BoardDto {
      * 아니면 N
      */
     private String likedByMe;
+    
+    private String shareholderYn; // 주주 여부
 }
