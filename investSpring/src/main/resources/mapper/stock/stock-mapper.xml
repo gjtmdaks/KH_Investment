@@ -202,7 +202,7 @@
 	            ON s.stock_code = r.stock_code
 	        WHERE s.status = 'ACTIVE'
 	        ORDER BY r.change_rate DESC)
-        WHERE ROWNUM <![CDATA[ <= ]]> 20
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
     </select>
     
     <select id="getFallingStocks" resultType="StockScreenerDto">
@@ -220,7 +220,7 @@
 	            ON s.stock_code = r.stock_code
 	        WHERE s.status = 'ACTIVE'
 	        ORDER BY r.change_rate ASC)
-        WHERE ROWNUM <![CDATA[ <= ]]> 20
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
     </select>
     
     <select id="getPopularWatchlistStocks" resultType="StockScreenerDto">
@@ -248,7 +248,7 @@
 	            r.change_rate,
 	            r.volume
 	        ORDER BY extraValue DESC)
-        WHERE ROWNUM <![CDATA[ <= ]]> 20
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
     </select>
     
     <select id="getViewedStocks" resultType="StockScreenerDto">
@@ -267,7 +267,7 @@
 	            ON v.stock_code = s.stock_code
 	        LEFT JOIN stock_realtime_current r
 	            ON s.stock_code = r.stock_code
-	        WHERE v.viewed_at >= SYSDATE - 1
+	        WHERE v.viewed_at >= SYSDATE - 4
 	        GROUP BY
 	            s.stock_code,
 	            s.stock_name,
@@ -277,7 +277,7 @@
 	            r.change_rate,
 	            r.volume
 	        ORDER BY extraValue DESC)
-        WHERE ROWNUM <![CDATA[ <= ]]> 20
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
     </select>
     
     <select id="getVolumeStocks" resultType="StockScreenerDto">
@@ -294,7 +294,7 @@
 	        JOIN stock_realtime_current r
 	            ON s.stock_code = r.stock_code
 	        ORDER BY r.volume DESC)
-        WHERE ROWNUM <![CDATA[ <= ]]> 20
+        WHERE ROWNUM <![CDATA[ <= ]]> 50
     </select>
     
     <!-- 종목명/코드 키워드 검색 (자동완성·통합검색) -->
@@ -353,36 +353,38 @@
     </select>
 
 	<select id="searchStocks" parameterType="map" resultType="StockScreenerDto">
-	    SELECT *
-	    FROM (SELECT
-		        s.stock_code AS stockCode,
-		        s.stock_name AS stockName,
-		        s.market_type AS marketType,
-		        s.sector AS sector,
-		        r.current_price AS currentPrice,
-		        r.change_rate AS changeRate,
-		        r.volume AS volume
-		    FROM stocks s
-		    LEFT JOIN stock_realtime_current r
-		        ON s.stock_code = r.stock_code
+	    SELECT
+			s.stock_code AS stockCode,
+			s.stock_name AS stockName,
+			s.market_type AS marketType,
+			s.sector AS sector,
+			r.current_price AS currentPrice,
+			r.change_rate AS changeRate,
+			r.volume AS volume
+		FROM stocks s
+		LEFT JOIN stock_realtime_current r
+			ON s.stock_code = r.stock_code
+			
+		WHERE 1=1
+		<if test="market != null and market != ''">
+			AND s.market_type = #{market}
+		</if>
 		
-		    WHERE 1=1
+		<if test="changeRate == 'UP5'">
+			AND r.change_rate <![CDATA[ >= ]]> 5
+		</if>
 		
-		    <if test="market != null and market != ''">
-		        AND s.market_type = #{market}
-		    </if>
+		<if test="changeRate == 'DOWN5'">
+			AND r.change_rate <![CDATA[ <= ]]> -5
+		</if>
 		
-		    <if test="changeRate == 'UP5'">
-		        AND r.change_rate <![CDATA[ <= ]]> 5
-		    </if>
+		<if test="volume == 'TOP'">
+			ORDER BY r.volume DESC NULLS LAST
+		</if>
 		
-		    <if test="changeRate == 'DOWN5'">
-		        AND r.change_rate <![CDATA[ <= ]]> -5
-		    </if>
-		
-		    ORDER BY r.volume DESC)
-	
-	    WHERE ROWNUM <![CDATA[ <= ]]> 100
+		<if test="volume == 'BOTTOM'">
+			ORDER BY r.volume ASC
+		</if>
 	</select>
 	
 	<select id="getRealtimeSurgingStocks" resultType="StockScreenerDto">
@@ -400,7 +402,7 @@
 		        ON r.stock_code = s.stock_code
 		    WHERE s.status = 'ACTIVE'
 		    ORDER BY r.change_rate DESC)
-	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	    WHERE ROWNUM <![CDATA[ <= ]]> 30
 	</select>
 	
 	<select id="getRealtimeFallingStocks" resultType="StockScreenerDto">
@@ -418,7 +420,7 @@
 		        ON r.stock_code = s.stock_code
 		    WHERE s.status = 'ACTIVE'
 		    ORDER BY r.change_rate ASC)
-	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	    WHERE ROWNUM <![CDATA[ <= ]]> 30
 	</select>
 	
 	<select id="getRealtimeActiveStocks" resultType="StockScreenerDto">
@@ -445,7 +447,7 @@
 		        rc.current_price,
 		        rc.change_rate
 		    ORDER BY COUNT(rt.tick_id) DESC)
-	    WHERE ROWNUM <![CDATA[ <= ]]> 10
+	    WHERE ROWNUM <![CDATA[ <= ]]> 30
 	</select>
 	
 	<select id="findByStockCode" resultType="StockDto">
