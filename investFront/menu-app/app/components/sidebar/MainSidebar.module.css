@@ -475,8 +475,8 @@
 .tabButton {
   flex: 1;
   border: none;
-  background: #f3f4f6;
-  color: #111217;
+  background: black;
+  border-color: black;
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
@@ -485,8 +485,8 @@
 .activeTab {
   flex: 1;
   border: none;
-  background: #111827;
-  color: white;
+  background: white;
+  color: black;
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
