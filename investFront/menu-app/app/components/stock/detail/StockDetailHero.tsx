@@ -167,7 +167,10 @@ export function StockDetailHero({
           </button>
         ) : null}
 
-        <div ref={clipRef} className={styles.heroStatsClip}>
+        <div
+          ref={clipRef}
+          className={`${styles.heroStatsClip} ${canScroll ? styles.heroStatsClipScrollable : ""}`}
+        >
           <div ref={trackRef} className={styles.heroStats} aria-label="종목 시세 지표">
             {statColumns.map((column, columnIndex) => (
               <div key={columnIndex} className={styles.heroStatsCol}>
