@@ -273,7 +273,12 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
               <div className={styles.communityItem}>
                 <div className={styles.communityItemHeader}>
                   <div>
-                    <strong>{getWriterName(comment)}</strong>
+                    <strong className={styles.writerName}>
+                      {getWriterName(comment)}
+                      {comment.shareholderBadge && (
+                        <span className={styles.shareholderBadge}>주주</span>
+                      )}
+                    </strong>
                     <span>{formatDate(comment.createdAt)}</span>
                   </div>
 
@@ -350,7 +355,12 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                     <article key={reply.boardNo} className={styles.replyItem}>
                       <div className={styles.communityItemHeader}>
                         <div>
-                          <strong>{getWriterName(reply)}</strong>
+                          <strong className={styles.writerName}>
+                            {getWriterName(reply)}
+                            {reply.shareholderBadge && (
+                              <span className={styles.shareholderBadge}>주주</span>
+                            )}
+                          </strong>
                           <span>{formatDate(reply.createdAt)}</span>
                         </div>
 

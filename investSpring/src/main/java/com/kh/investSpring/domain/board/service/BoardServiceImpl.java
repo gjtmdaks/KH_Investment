@@ -243,6 +243,7 @@ public class BoardServiceImpl implements BoardService {
                 .parentId(boardDto.getParentId())
                 .commentType(boardDto.getParentId() == null ? "COMMENT" : "REPLY")
                 .likedByMe("Y".equals(boardDto.getLikedByMe()))
+                .shareholderBadge("Y".equals(boardDto.getShareholderYn()))
                 .build();
     }
 

@@ -35,4 +35,6 @@ public class BoardListResponse {
      * 현재 로그인 사용자가 좋아요를 눌렀는지 여부
      */
     private boolean likedByMe;
+    
+    private Boolean shareholderBadge;
 }
