@@ -19,8 +19,14 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class WatchlistServiceImpl implements WatchlistService {
 
+    private static final long PUBLIC_SIDEBAR_CACHE_TTL_MS = 5_000L;
+
     private final WatchlistDao dao;
     private final KisSidebarQuoteEnricher kisSidebarQuoteEnricher;
+    private final Object topCurrentPriceCacheLock = new Object();
+    private final Object realtimeStocksCacheLock = new Object();
+    private volatile CachedSidebarStocks topCurrentPriceCache;
+    private volatile CachedSidebarStocks realtimeStocksCache;
 
     @Override
     public void insertWatchlist(Long userNo, String stockCode) {
@@ -65,7 +71,7 @@ public class WatchlistServiceImpl implements WatchlistService {
                     .hasWatchlist(false)
                     .watchlistCodes(List.of())
                     .stockList(
-                        dao.getTopCurrentPriceStocks()
+                        getCachedTopCurrentPriceStocks()
                     )
                     .build();
         }
@@ -82,7 +88,7 @@ public class WatchlistServiceImpl implements WatchlistService {
                     .hasWatchlist(false)
                     .watchlistCodes(List.of())
                     .stockList(
-                        dao.getTopCurrentPriceStocks()
+                        getCachedTopCurrentPriceStocks()
                     )
                     .build();
         }
@@ -97,7 +103,7 @@ public class WatchlistServiceImpl implements WatchlistService {
 
 	@Override
 	public List<SidebarWatchDto> getRealtimeStocks() {
-		return dao.getRealtimeStocks();
+		return getCachedRealtimeStocks();
 	}
 
 	@Override
@@ -109,4 +115,58 @@ public class WatchlistServiceImpl implements WatchlistService {
 				.map(kisSidebarQuoteEnricher::enrich)
 				.toList();
 	}
+
+    private List<SidebarWatchDto> getCachedTopCurrentPriceStocks() {
+        long now = System.currentTimeMillis();
+        CachedSidebarStocks cached = topCurrentPriceCache;
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.stocks();
+        }
+
+        synchronized (topCurrentPriceCacheLock) {
+            now = System.currentTimeMillis();
+            cached = topCurrentPriceCache;
+
+            if (cached != null && cached.expiresAtMs() > now) {
+                return cached.stocks();
+            }
+
+            List<SidebarWatchDto> stocks = List.copyOf(dao.getTopCurrentPriceStocks());
+            topCurrentPriceCache =
+                    new CachedSidebarStocks(stocks, now + PUBLIC_SIDEBAR_CACHE_TTL_MS);
+
+            return stocks;
+        }
+    }
+
+    private List<SidebarWatchDto> getCachedRealtimeStocks() {
+        long now = System.currentTimeMillis();
+        CachedSidebarStocks cached = realtimeStocksCache;
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.stocks();
+        }
+
+        synchronized (realtimeStocksCacheLock) {
+            now = System.currentTimeMillis();
+            cached = realtimeStocksCache;
+
+            if (cached != null && cached.expiresAtMs() > now) {
+                return cached.stocks();
+            }
+
+            List<SidebarWatchDto> stocks = List.copyOf(dao.getRealtimeStocks());
+            realtimeStocksCache =
+                    new CachedSidebarStocks(stocks, now + PUBLIC_SIDEBAR_CACHE_TTL_MS);
+
+            return stocks;
+        }
+    }
+
+    private record CachedSidebarStocks(
+            List<SidebarWatchDto> stocks,
+            long expiresAtMs
+    ) {
+    }
 }

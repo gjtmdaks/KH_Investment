@@ -34,7 +34,7 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     null
   );
   const [detailLoading, setDetailLoading] = useState(true);
-  const [orderbookLoading, setOrderbookLoading] = useState(true);
+  const [orderbookLoading, setOrderbookLoading] = useState(false);
   const [newsPhase, setNewsPhase] = useState<NewsLoadPhase>("idle");
   const [investorLoading, setInvestorLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,69 +193,39 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     setOrderbook(null);
 
     setDetailLoading(true);
-    setOrderbookLoading(true);
 
     let detailOk = false;
-    let orderbookOk = false;
 
-    await Promise.all([
-      (async () => {
-        try {
-          const detail = await fetchJson<StockDetailResponse>(
-            `/api/stocks/${stockCode}/detail`
-          );
+    try {
+      const detail = await fetchJson<StockDetailResponse>(
+        `/api/stocks/${stockCode}/detail`
+      );
 
-          if (session !== snapshotSessionRef.current) {
-            return;
-          }
+      if (session !== snapshotSessionRef.current) {
+        return;
+      }
 
-          setPrice(detail.price);
-          setProfile(detail.profile);
-          detailOk = true;
-        } catch {
-          if (session !== snapshotSessionRef.current) {
-            return;
-          }
+      setPrice(detail.price);
+      setProfile(detail.profile);
+      detailOk = true;
+    } catch {
+      if (session !== snapshotSessionRef.current) {
+        return;
+      }
 
-          setPrice(null);
-          setProfile(null);
-        } finally {
-          if (session === snapshotSessionRef.current) {
-            setDetailLoading(false);
-          }
-        }
-      })(),
-      (async () => {
-        try {
-          const orderbookData = await fetchJson<OrderbookResponse>(
-            `/api/stocks/${stockCode}/orderbook`
-          );
-
-          if (session !== snapshotSessionRef.current) {
-            return;
-          }
-
-          setOrderbook(normalizeOrderbookResponse(orderbookData));
-          orderbookOk = true;
-        } catch {
-          if (session !== snapshotSessionRef.current) {
-            return;
-          }
-
-          setOrderbook(null);
-        } finally {
-          if (session === snapshotSessionRef.current) {
-            setOrderbookLoading(false);
-          }
-        }
-      })(),
-    ]);
+      setPrice(null);
+      setProfile(null);
+    } finally {
+      if (session === snapshotSessionRef.current) {
+        setDetailLoading(false);
+      }
+    }
 
     if (session !== snapshotSessionRef.current) {
       return;
     }
 
-    if (!detailOk && !orderbookOk) {
+    if (!detailOk) {
       setError("종목 정보를 불러오지 못했습니다.");
     }
   }, [fetchJson, stockCode]);
@@ -278,7 +248,11 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
         ? HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS
         : HERO_QUOTE_REFRESH_INTERVAL_MS;
 
-  const refreshOrderbook = useCallback(async () => {
+  const refreshOrderbook = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setOrderbookLoading(true);
+    }
+
     try {
       const orderbookData = await fetchJson<OrderbookResponse>(
         `/api/stocks/${stockCode}/orderbook`
@@ -286,6 +260,10 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       setOrderbook(normalizeOrderbookResponse(orderbookData));
     } catch {
       return;
+    } finally {
+      if (showLoading) {
+        setOrderbookLoading(false);
+      }
     }
   }, [fetchJson, stockCode]);
 
@@ -325,7 +303,11 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [stockCode]);
 
   useEffect(() => {
-    void loadSnapshot();
+    const timer = window.setTimeout(() => {
+      void loadSnapshot();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadSnapshot]);
 
   useEffect(() => {
@@ -333,11 +315,16 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
       return;
     }
 
-    void refreshPrice();
+    const initialTimer = window.setTimeout(() => {
+      void refreshPrice();
+    }, 0);
 
     const timer = window.setInterval(refreshPrice, heroQuoteIntervalMs);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(timer);
+    };
   }, [refreshPrice, heroQuoteIntervalMs]);
 
   useEffect(() => {
@@ -350,7 +337,7 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
     const run = async () => {
       await subscribeOrderbookWs();
       if (!cancelled) {
-        await refreshOrderbook();
+        await refreshOrderbook(true);
       }
     };
 
