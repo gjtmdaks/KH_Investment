@@ -26,5 +26,6 @@ public class StockRealtimeTickDto {
     private Long volume;
     private Long tradingValue;
     private LocalDateTime tradeTime;
+    private String quoteSource;
 
 }

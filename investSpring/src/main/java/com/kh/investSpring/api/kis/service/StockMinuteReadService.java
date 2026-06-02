@@ -33,7 +33,7 @@ public class StockMinuteReadService {
 
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final Set<Integer> ALLOWED_INTERVALS = Set.of(1, 15, 30, 60);
-    private static final int SESSION_START_MINUTES = 9 * 60;
+    private static final int SESSION_START_MINUTES = 8 * 60;
     private static final DateTimeFormatter ISO_KST = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final long INGEST_COOLDOWN_MS = 60_000L;
 

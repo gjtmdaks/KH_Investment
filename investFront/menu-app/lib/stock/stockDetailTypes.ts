@@ -1,4 +1,10 @@
 export type StockPriceSource = "LOCAL" | "REDIS" | "DB" | "KIS";
+export type QuoteSession =
+  | "NXT_PRE"
+  | "KRX_REGULAR"
+  | "NXT_AFTER"
+  | "OVERTIME"
+  | "CLOSED";
 
 export type PriceResponse = {
   stockCode: string;
@@ -16,6 +22,10 @@ export type PriceResponse = {
   wsSubscribed?: boolean;
   /** 시세 조회 경로: local / redis / db(WS tick) / kis(REST) */
   priceSource?: StockPriceSource;
+  quoteSession?: QuoteSession | null;
+  marketDivCode?: string | null;
+  asOf?: string | null;
+  stale?: boolean;
 };
 
 export type OrderbookLevel = {
@@ -37,6 +47,10 @@ export type OrderbookResponse = {
   expectedQuantity?: string | null;
   wsSubscribed?: boolean;
   orderbookSource?: OrderbookSource;
+  quoteSession?: QuoteSession | null;
+  marketDivCode?: string | null;
+  asOf?: string | null;
+  stale?: boolean;
 };
 
 export type StaticProfileResponse = {

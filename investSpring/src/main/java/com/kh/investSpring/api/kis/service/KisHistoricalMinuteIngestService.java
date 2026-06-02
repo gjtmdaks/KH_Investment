@@ -58,7 +58,7 @@ public class KisHistoricalMinuteIngestService {
         }
 
         String dateParam = tradeDate.format(BASIC_DATE);
-        String initialCursor = "153000";
+        String initialCursor = "200000";
 
         List<StockIntradayMinuteCacheDto> ordered =
                 KisMinuteIngestLoop.collectTradingDay(
@@ -88,7 +88,7 @@ public class KisHistoricalMinuteIngestService {
         String url =
                 properties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice"
-                + "?FID_COND_MRKT_DIV_CODE=J"
+                + "?FID_COND_MRKT_DIV_CODE=UN"
                 + "&FID_INPUT_ISCD=" + stockCode
                 + "&FID_INPUT_DATE_1=" + fidInputDate1
                 + "&FID_INPUT_HOUR_1=" + fidInputHour1

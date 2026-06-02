@@ -82,7 +82,7 @@ public class KisWebSocketClient {
 
             String approvalKey = approvalService.getApprovalKey();
 
-            String url = properties.getWebsocketUrl() + "/tryitout/H0STCNT0";
+            String url = properties.getWebsocketUrl() + "/tryitout/" + properties.getWebsocketTradeTrId();
 
 
 

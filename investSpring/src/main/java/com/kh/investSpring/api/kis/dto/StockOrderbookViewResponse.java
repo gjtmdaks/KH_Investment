@@ -11,7 +11,11 @@ public record StockOrderbookViewResponse(
         String expectedPrice,
         String expectedQuantity,
         boolean wsSubscribed,
-        StockOrderbookSource orderbookSource
+        StockOrderbookSource orderbookSource,
+        String quoteSession,
+        String marketDivCode,
+        String asOf,
+        boolean stale
 ) {
 
     public static StockOrderbookViewResponse from(
@@ -31,7 +35,40 @@ public record StockOrderbookViewResponse(
                 orderbook.expectedPrice(),
                 orderbook.expectedQuantity(),
                 wsSubscribed,
-                orderbookSource
+                orderbookSource,
+                null,
+                null,
+                null,
+                false
+        );
+    }
+
+    public static StockOrderbookViewResponse from(
+            KisStockOrderbookResponse orderbook,
+            boolean wsSubscribed,
+            StockOrderbookSource orderbookSource,
+            String quoteSession,
+            String marketDivCode,
+            String asOf,
+            boolean stale
+    ) {
+        if (orderbook == null) {
+            return null;
+        }
+        return new StockOrderbookViewResponse(
+                orderbook.stockCode(),
+                orderbook.asks(),
+                orderbook.bids(),
+                orderbook.totalAskQuantity(),
+                orderbook.totalBidQuantity(),
+                orderbook.expectedPrice(),
+                orderbook.expectedQuantity(),
+                wsSubscribed,
+                orderbookSource,
+                quoteSession,
+                marketDivCode,
+                asOf,
+                stale
         );
     }
 }

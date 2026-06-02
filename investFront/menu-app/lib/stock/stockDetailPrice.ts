@@ -14,5 +14,9 @@ export function mergePriceResponse(
       incoming.executionStrength ?? prev?.executionStrength ?? null,
     wsSubscribed: incoming.wsSubscribed ?? prev?.wsSubscribed,
     priceSource: incoming.priceSource ?? prev?.priceSource,
+    quoteSession: incoming.quoteSession ?? prev?.quoteSession ?? null,
+    marketDivCode: incoming.marketDivCode ?? prev?.marketDivCode ?? null,
+    asOf: incoming.asOf ?? prev?.asOf ?? null,
+    stale: incoming.stale ?? prev?.stale,
   };
 }

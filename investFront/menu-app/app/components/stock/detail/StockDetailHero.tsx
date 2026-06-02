@@ -62,6 +62,7 @@ export function StockDetailHero({
   isUp: boolean;
   marketCap: number | null;
 }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState(false);
@@ -74,22 +75,24 @@ export function StockDetailHero({
   );
 
   const syncScrollState = useCallback(() => {
+    const wrap = wrapRef.current;
     const clip = clipRef.current;
     const track = trackRef.current;
-    if (!clip || !track) {
+    if (!wrap || !clip || !track) {
       return;
     }
 
-    const overflow = track.scrollWidth - clip.clientWidth > 2;
+    const overflow = track.scrollWidth - wrap.clientWidth > 2;
     setCanScroll(overflow);
-    setAtStart(clip.scrollLeft <= 2);
-    setAtEnd(clip.scrollLeft + clip.clientWidth >= clip.scrollWidth - 2);
+    setAtStart(!overflow || clip.scrollLeft <= 2);
+    setAtEnd(!overflow || clip.scrollLeft + clip.clientWidth >= clip.scrollWidth - 2);
   }, []);
 
   useEffect(() => {
+    const wrap = wrapRef.current;
     const clip = clipRef.current;
     const track = trackRef.current;
-    if (!clip || !track) {
+    if (!wrap || !clip || !track) {
       return;
     }
 
@@ -101,6 +104,7 @@ export function StockDetailHero({
     const rafId = window.requestAnimationFrame(runSync);
 
     const observer = new ResizeObserver(runSync);
+    observer.observe(wrap);
     observer.observe(clip);
     observer.observe(track);
 
@@ -153,6 +157,7 @@ export function StockDetailHero({
       </div>
 
       <div
+        ref={wrapRef}
         className={`${styles.heroStatsWrap} ${canScroll ? styles.heroStatsWrapScrollable : ""}`}
       >
         {canScroll ? (

@@ -19,7 +19,7 @@ public class KisProperties {
     private String websocketUrl;
 
     /** 실시간 체결가 WebSocket 연결 여부. 기본 false (다중 로컬 기동 시 KIS 세션 중첩 방지). 켤 때만 true */
-    @Value("${kis.websocket.enabled:true}")
+    @Value("${kis.websocket.enabled:false}")
     private boolean websocketEnabled;
 
     @Value("${kis.api.base-url}")
@@ -79,6 +79,27 @@ public class KisProperties {
     /** H0STASP0 호가 WS 캐시 유효 TTL(ms). 디테일 호가 탭 GET /orderbook */
     @Value("${kis.orderbook.ws-fresh-ttl-ms:3000}")
     private long orderbookWsFreshTtlMs;
+
+    @Value("${kis.quote.nxt-enabled:true}")
+    private boolean nxtQuoteEnabled;
+
+    @Value("${kis.market.nxt-pre-start:08:00}")
+    private String nxtPreStartTime;
+
+    @Value("${kis.market.krx-regular-start:09:00}")
+    private String krxRegularStartTime;
+
+    @Value("${kis.market.krx-regular-end:15:30}")
+    private String krxRegularEndTime;
+
+    @Value("${kis.market.nxt-after-end:20:00}")
+    private String nxtAfterEndTime;
+
+    @Value("${kis.websocket.trade-tr-id:H0UNCNT0}")
+    private String websocketTradeTrId;
+
+    @Value("${kis.websocket.orderbook-tr-id:H0UNASP0}")
+    private String websocketOrderbookTrId;
 
     public boolean isVirtualTrading() {
         return baseUrl != null && baseUrl.contains("openapivts");

@@ -48,9 +48,9 @@ public class KisIntradayMinuteIngestService {
 
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
-    private static final LocalTime SESSION_START = LocalTime.of(9, 0);
+    private static final LocalTime SESSION_START = LocalTime.of(8, 0);
 
-    private static final LocalTime SESSION_END = LocalTime.of(15, 30);
+    private static final LocalTime SESSION_END = LocalTime.of(20, 0);
 
 
 
@@ -146,7 +146,7 @@ public class KisIntradayMinuteIngestService {
 
         if (!now.toLocalDate().equals(tradeDate)) {
 
-            return "153000";
+            return "200000";
 
         }
 
@@ -158,7 +158,7 @@ public class KisIntradayMinuteIngestService {
 
         if (t.isBefore(SESSION_START)) {
 
-            return "090000";
+            return "080000";
 
         }
 
@@ -166,7 +166,7 @@ public class KisIntradayMinuteIngestService {
 
         if (t.isAfter(SESSION_END)) {
 
-            return "153000";
+            return "200000";
 
         }
 
@@ -188,7 +188,7 @@ public class KisIntradayMinuteIngestService {
 
                 + "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice"
 
-                + "?FID_COND_MRKT_DIV_CODE=J"
+                + "?FID_COND_MRKT_DIV_CODE=UN"
 
                 + "&FID_INPUT_ISCD=" + stockCode
 
