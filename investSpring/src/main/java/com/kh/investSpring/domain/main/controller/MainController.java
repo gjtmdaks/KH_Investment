@@ -22,4 +22,9 @@ public class MainController {
         Long userNo = (Long) request.getAttribute("userNo");
         return mainService.getMain(userNo);
     }
+
+    @GetMapping("/stocks")
+    public MainResponse.Main getMainStocks() {
+        return mainService.getMainData();
+    }
 }

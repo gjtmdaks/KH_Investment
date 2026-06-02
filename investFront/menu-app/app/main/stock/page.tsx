@@ -1,19 +1,6 @@
 import StockClient from "./StockClient";
-import { getPublicApiBase } from "@/lib/api-base";
 
-async function getInitialData() {
-  const apiBase = getPublicApiBase();
-  const res = await fetch(`${apiBase}/api/main`, {
-    cache: "no-store",
-  });
-  const json = await res.json();
-
-  return json;
-}
-
-export default async function StockPage() {
-  const data = await getInitialData();
-
+export default function StockPage() {
   return (
     <div style={{ padding: "30px" }}>
       <h1
@@ -25,7 +12,7 @@ export default async function StockPage() {
       >
         주식
       </h1>
-      <StockClient initialData={data} />
+      <StockClient />
     </div>
   );
 }

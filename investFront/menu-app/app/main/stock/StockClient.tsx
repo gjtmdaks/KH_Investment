@@ -21,18 +21,16 @@ type Stock = {
 };
 
 type StockClientProps = {
-  initialData?: {
-    main?: {
-      stockList?: Stock[];
-    };
-  };
+  initialData?: unknown;
 };
 
 export default function StockClient({
   initialData,
 }: StockClientProps) {
 
-  const [stocks, setStocks] = useState<Stock[]>(initialData?.main?.stockList || []);
+  const [stocks, setStocks] = useState<Stock[]>(
+    () => sortStocks(extractStockList(initialData))
+  );
   const {watchlist, setWatchlist,} = useWatchlist();
 
   useEffect(() => {
@@ -56,7 +54,7 @@ export default function StockClient({
       );
 
       try {
-        const res = await fetch(`${getPublicApiBase()}/api/main`, {
+        const res = await fetch(`${getPublicApiBase()}/api/main/stocks`, {
           cache: "no-store",
           headers: { Accept: "application/json" },
           signal: currentController.signal,
@@ -67,17 +65,13 @@ export default function StockClient({
         }
 
         const json = await res.json();
-        const newList = json?.main?.stockList || [];
+        const newList = extractStockList(json);
 
         if (cancelled || newList.length === 0) {
           return;
         }
 
-        setStocks(
-          [...newList].sort(
-            (a, b) => (b.tradingValue ?? 0) - (a.tradingValue ?? 0)
-          )
-        );
+        setStocks(sortStocks(newList));
       } catch {
       } finally {
         clearTimeout(timeoutId);
@@ -86,7 +80,7 @@ export default function StockClient({
       }
     };
 
-    scheduleNextRefresh();
+    refreshStocks();
 
     return () => {
       cancelled = true;
@@ -111,5 +105,22 @@ export default function StockClient({
         />
       )}
     </div>
+  );
+}
+
+function extractStockList(payload: unknown): Stock[] {
+  const data = payload as {
+    stockList?: Stock[];
+    main?: {
+      stockList?: Stock[];
+    };
+  } | null;
+
+  return data?.stockList ?? data?.main?.stockList ?? [];
+}
+
+function sortStocks(stocks: Stock[]): Stock[] {
+  return [...stocks].sort(
+    (a, b) => (b.tradingValue ?? 0) - (a.tradingValue ?? 0)
   );
 }
