@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.investSpring.domain.recentview.dao.RecentViewDao;
+import com.kh.investSpring.domain.watchlist.service.WatchlistService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class RecentViewServiceImpl implements RecentViewService {
 
     private final RecentViewDao dao;
+    private final WatchlistService watchlistService;
 
     @Override
     public void saveRecentView(Long userNo, String stockCode) {
@@ -22,5 +24,6 @@ public class RecentViewServiceImpl implements RecentViewService {
 
         dao.upsertRecentView(userNo, stockCode);
         dao.deleteOverflowRecentViews(userNo);
+        watchlistService.invalidateUserSidebarCache(userNo);
     }
 }

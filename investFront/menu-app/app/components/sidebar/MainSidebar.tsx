@@ -11,8 +11,19 @@ import LiveTimePanel from "./panels/LiveTimePanel";
 import RankingPanel from "./panels/RankingPanel";
 import AdminPanel from "./panels/AdminPanel";
 import MyInvestmentPanel from "./panels/MyInvestmentPanel";
+import {
+  clearCachedRecentStocks,
+  fetchRecentStocks,
+  fetchSidebarWatchlist,
+} from "./hooks/sidebarPrefetchCache";
 
-const baseMenus = [
+type SidebarMenuItem = {
+  id: SidebarMenu;
+  label: string;
+  icon: string;
+};
+
+const baseMenus: SidebarMenuItem[] = [
   {
     id: "myInvestment",
     label: "내 투자",
@@ -40,7 +51,7 @@ const baseMenus = [
   },
 ];
 
-const adminMenu = {
+const adminMenu: SidebarMenuItem = {
   id: "admin",
   label: "관리자",
   icon: "⚙",
@@ -70,14 +81,62 @@ export default function MainSidebar({
     const sidebarParam = searchParams.get("sidebar");
     
     if (sidebarParam === "ranking") {
-      setActiveMenu("ranking");
-      setIsOpen(true);
+      const timerId = window.setTimeout(() => {
+        setActiveMenu("ranking");
+        setIsOpen(true);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timerId);
+      };
     }
   }, [searchParams]);
 
   useEffect(() => {
     onOpenChange?.(isOpen);
   }, [isOpen, onOpenChange]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let cancelled = false;
+    const userNo = user?.userNo ?? null;
+
+    const prefetchSidebarPanels = () => {
+      if (cancelled) {
+        return;
+      }
+
+      void fetchSidebarWatchlist(userNo);
+
+      if (isAuthenticated) {
+        void fetchRecentStocks(userNo);
+      } else {
+        clearCachedRecentStocks();
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(
+        prefetchSidebarPanels,
+        { timeout: 1_500 }
+      );
+
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timerId = window.setTimeout(prefetchSidebarPanels, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timerId);
+    };
+  }, [isAuthenticated, user?.userNo]);
 
   useEffect(() => {
     function handleResize() {
@@ -156,7 +215,7 @@ export default function MainSidebar({
 
       <nav className={styles.iconNav}>
 
-        {visibleMenus.map((menu: any) => (
+        {visibleMenus.map((menu) => (
           <button
             key={menu.id}
             type="button"

@@ -1,6 +1,8 @@
 package com.kh.investSpring.domain.watchlist.service;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -20,11 +22,16 @@ import lombok.RequiredArgsConstructor;
 public class WatchlistServiceImpl implements WatchlistService {
 
     private static final long PUBLIC_SIDEBAR_CACHE_TTL_MS = 5_000L;
+    private static final long USER_SIDEBAR_CACHE_TTL_MS = 3_000L;
 
     private final WatchlistDao dao;
     private final KisSidebarQuoteEnricher kisSidebarQuoteEnricher;
     private final Object topCurrentPriceCacheLock = new Object();
     private final Object realtimeStocksCacheLock = new Object();
+    private final ConcurrentMap<Long, CachedSidebarWatch> sidebarWatchCache =
+            new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, CachedSidebarStocks> recentViewsCache =
+            new ConcurrentHashMap<>();
     private volatile CachedSidebarStocks topCurrentPriceCache;
     private volatile CachedSidebarStocks realtimeStocksCache;
 
@@ -44,6 +51,7 @@ public class WatchlistServiceImpl implements WatchlistService {
 
         try {
             dao.insertWatchlist(userNo, stockCode);
+            invalidateUserSidebarCache(userNo);
 
         } catch (DuplicateKeyException e) {
             return;
@@ -56,6 +64,7 @@ public class WatchlistServiceImpl implements WatchlistService {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
         dao.deleteWatchlist(userNo, stockCode);
+        invalidateUserSidebarCache(userNo);
     }
 
     @Override
@@ -76,14 +85,23 @@ public class WatchlistServiceImpl implements WatchlistService {
                     .build();
         }
 
+        long now = System.currentTimeMillis();
+        CachedSidebarWatch cached = sidebarWatchCache.get(userNo);
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.response();
+        }
+
         List<String> watchlistCodes = dao.getWatchlist(userNo).getWatchlist();
 
         List<SidebarWatchDto> watchlist = dao.getSidebarWatchStocks(userNo).stream()
                 .map(kisSidebarQuoteEnricher::enrich)
                 .toList();
 
+        SidebarWatchResponse response;
+
         if (watchlistCodes.isEmpty()) {
-            return SidebarWatchResponse.builder()
+            response = SidebarWatchResponse.builder()
                     .loggedIn(true)
                     .hasWatchlist(false)
                     .watchlistCodes(List.of())
@@ -91,14 +109,24 @@ public class WatchlistServiceImpl implements WatchlistService {
                         getCachedTopCurrentPriceStocks()
                     )
                     .build();
-        }
-
-        return SidebarWatchResponse.builder()
+        } else {
+            response = SidebarWatchResponse.builder()
                 .loggedIn(true)
                 .hasWatchlist(true)
                 .watchlistCodes(watchlistCodes)
                 .stockList(watchlist)
                 .build();
+        }
+
+        sidebarWatchCache.put(
+                userNo,
+                new CachedSidebarWatch(
+                        response,
+                        now + USER_SIDEBAR_CACHE_TTL_MS
+                )
+        );
+
+        return response;
     }
 
 	@Override
@@ -111,10 +139,38 @@ public class WatchlistServiceImpl implements WatchlistService {
 	    if (userNo == null) {
 	        return List.of();
 	    }
-		return dao.getRecentViews(userNo).stream()
+
+	    long now = System.currentTimeMillis();
+	    CachedSidebarStocks cached = recentViewsCache.get(userNo);
+
+	    if (cached != null && cached.expiresAtMs() > now) {
+	        return cached.stocks();
+	    }
+
+		List<SidebarWatchDto> stocks = dao.getRecentViews(userNo).stream()
 				.map(kisSidebarQuoteEnricher::enrich)
 				.toList();
+
+		recentViewsCache.put(
+		        userNo,
+		        new CachedSidebarStocks(
+		                stocks,
+		                now + USER_SIDEBAR_CACHE_TTL_MS
+		        )
+		);
+
+		return stocks;
 	}
+
+    @Override
+    public void invalidateUserSidebarCache(Long userNo) {
+        if (userNo == null) {
+            return;
+        }
+
+        sidebarWatchCache.remove(userNo);
+        recentViewsCache.remove(userNo);
+    }
 
     private List<SidebarWatchDto> getCachedTopCurrentPriceStocks() {
         long now = System.currentTimeMillis();
@@ -166,6 +222,12 @@ public class WatchlistServiceImpl implements WatchlistService {
 
     private record CachedSidebarStocks(
             List<SidebarWatchDto> stocks,
+            long expiresAtMs
+    ) {
+    }
+
+    private record CachedSidebarWatch(
+            SidebarWatchResponse response,
             long expiresAtMs
     ) {
     }
