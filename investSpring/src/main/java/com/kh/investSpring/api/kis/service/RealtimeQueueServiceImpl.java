@@ -19,8 +19,17 @@ public class RealtimeQueueServiceImpl implements RealtimeQueueService {
 
     private final Queue<StockRealtimeTickDto> queue = new ConcurrentLinkedQueue<>();
     private final Map<String, StockRealtimeTickDto> currentMap = new ConcurrentHashMap<>();
+    private final KisMarketQuoteSupport marketQuoteSupport;
+
+    public RealtimeQueueServiceImpl(KisMarketQuoteSupport marketQuoteSupport) {
+        this.marketQuoteSupport = marketQuoteSupport;
+    }
 
     public void add(StockRealtimeTickDto dto) {
+        if (dto == null || !marketQuoteSupport.acceptsRealtimeSource(dto.getQuoteSource())) {
+            return;
+        }
+
     	// tick 저장용
         queue.offer(dto);
         

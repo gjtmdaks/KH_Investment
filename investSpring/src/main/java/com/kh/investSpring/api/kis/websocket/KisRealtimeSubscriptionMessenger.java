@@ -5,6 +5,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kh.investSpring.api.kis.config.KisProperties;
 import com.kh.investSpring.api.kis.dto.KisRealtimeRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class KisRealtimeSubscriptionMessenger {
 
-    private static final String TR_ID = "H0STCNT0";
-
     private final ObjectMapper objectMapper;
+    private final KisProperties kisProperties;
 
     public void subscribe(WebSocketSession session, String approvalKey, String stockCode) throws Exception {
         send(session, approvalKey, stockCode, "1");
@@ -47,7 +47,7 @@ public class KisRealtimeSubscriptionMessenger {
                         "utf-8"
                 ),
                 new KisRealtimeRequest.Body(
-                        new KisRealtimeRequest.Input(TR_ID, stockCode)
+                        new KisRealtimeRequest.Input(kisProperties.getWebsocketTradeTrId(), stockCode)
                 )
         );
 

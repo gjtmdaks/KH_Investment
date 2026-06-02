@@ -21,6 +21,10 @@ export function normalizeOrderbookResponse(data: unknown): OrderbookResponse | n
     expectedQuantity: raw.expectedQuantity ?? null,
     wsSubscribed: raw.wsSubscribed,
     orderbookSource: raw.orderbookSource,
+    quoteSession: raw.quoteSession ?? null,
+    marketDivCode: raw.marketDivCode ?? null,
+    asOf: raw.asOf ?? null,
+    stale: raw.stale,
   };
 }
 

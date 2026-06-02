@@ -38,6 +38,8 @@ import com.kh.investSpring.api.kis.http.KisInquireCcnlHttpResponse;
 import com.kh.investSpring.api.kis.http.KisInquirePriceHttpResponse;
 import com.kh.investSpring.api.kis.http.KisOrderbookHttpResponse;
 import com.kh.investSpring.api.kis.http.KisSearchStockInfoHttpResponse;
+import com.kh.investSpring.api.kis.market.KisMarketDivCode;
+import com.kh.investSpring.api.kis.market.QuoteSession;
 import com.kh.investSpring.domain.stock.dao.StockDao;
 import com.kh.investSpring.domain.stock.dto.StockInfoDto;
 
@@ -59,10 +61,22 @@ public class KisStockService {
     private final KisSubscriptionPoolService subscriptionPoolService;
     private final KisOrderbookRealtimeCache orderbookRealtimeCache;
     private final KisOrderbookDemandSubscriptionService orderbookDemandSubscriptionService;
+    private final KisMarketQuoteSupport marketQuoteSupport;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
-    private record ResolvedStockPrice(KisStockPriceResponse body, StockPriceSource source) {
+    private record ResolvedStockPrice(
+            KisStockPriceResponse body,
+            StockPriceSource source,
+            QuoteSession quoteSession,
+            KisMarketDivCode marketDivCode,
+            boolean stale) {
+    }
+
+    private record FetchedStockPrice(KisStockPriceResponse body, KisMarketDivCode marketDivCode) {
+    }
+
+    private record FetchedOrderbook(KisStockOrderbookResponse body, KisMarketDivCode marketDivCode) {
     }
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> priceCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedValue<KisStockPriceResponse>> referencePriceCache =
@@ -82,6 +96,7 @@ public class KisStockService {
             KisSubscriptionPoolService subscriptionPoolService,
             KisOrderbookRealtimeCache orderbookRealtimeCache,
             KisOrderbookDemandSubscriptionService orderbookDemandSubscriptionService,
+            KisMarketQuoteSupport marketQuoteSupport,
             StringRedisTemplate stringRedisTemplate,
             ObjectMapper objectMapper) {
         this.restClient = restClient;
@@ -95,6 +110,7 @@ public class KisStockService {
         this.subscriptionPoolService = subscriptionPoolService;
         this.orderbookRealtimeCache = orderbookRealtimeCache;
         this.orderbookDemandSubscriptionService = orderbookDemandSubscriptionService;
+        this.marketQuoteSupport = marketQuoteSupport;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
     }
@@ -123,8 +139,11 @@ public class KisStockService {
         }
 
         try {
-            KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
-            storeReferencePriceCache(code, fromKis);
+            QuoteSession session = marketQuoteSupport.currentSession();
+            FetchedStockPrice fetched = fetchStockPriceFromKis(code, session);
+            KisStockPriceResponse fromKis = fetched.body();
+            String scopedKey = scopedCacheKey(code, session, fetched.marketDivCode());
+            storeReferencePriceCache(scopedKey, fromKis);
 
             Long volume = parseLongFromString(fromKis.volume());
             Long tradingValue = parseLongFromString(fromKis.tradingValue());
@@ -159,7 +178,11 @@ public class KisStockService {
         return StockPriceViewResponse.from(
                 resolved.body(),
                 isWsSubscribed(code),
-                resolved.source());
+                resolved.source(),
+                resolved.quoteSession().name(),
+                resolved.marketDivCode().code(),
+                marketQuoteSupport.asOfNow(),
+                resolved.stale());
     }
 
     private ResolvedStockPrice resolveStockPrice(String stockCode) {
@@ -168,47 +191,53 @@ public class KisStockService {
             throw new IllegalArgumentException("종목코드가 비어 있습니다.");
         }
 
+        QuoteSession session = marketQuoteSupport.currentSession();
+        KisMarketDivCode marketDivCode = marketQuoteSupport.marketDivCode(session);
+        String scopedKey = scopedCacheKey(code, session, marketDivCode);
+
         KisStockPriceResponse local = getCached(
                 priceCache,
-                code,
+                scopedKey,
                 kisProperties.getPriceLocalCacheTtlMs());
         if (local != null) {
-            return new ResolvedStockPrice(local, StockPriceSource.LOCAL);
+            return new ResolvedStockPrice(local, StockPriceSource.LOCAL, session, marketDivCode, marketQuoteSupport.isStale(session));
         }
 
-        Optional<KisStockPriceResponse> redis = priceSharedCache.get(code);
+        Optional<KisStockPriceResponse> redis = priceSharedCache.get(scopedKey);
         if (redis.isPresent()) {
-            return new ResolvedStockPrice(redis.get(), StockPriceSource.REDIS);
+            return new ResolvedStockPrice(redis.get(), StockPriceSource.REDIS, session, marketDivCode, marketQuoteSupport.isStale(session));
         }
 
-        Object lock = priceInflightLocks.computeIfAbsent(code, ignored -> new Object());
+        Object lock = priceInflightLocks.computeIfAbsent(scopedKey, ignored -> new Object());
         synchronized (lock) {
             try {
                 local = getCached(
                         priceCache,
-                        code,
+                        scopedKey,
                         kisProperties.getPriceLocalCacheTtlMs());
                 if (local != null) {
-                    return new ResolvedStockPrice(local, StockPriceSource.LOCAL);
+                    return new ResolvedStockPrice(local, StockPriceSource.LOCAL, session, marketDivCode, marketQuoteSupport.isStale(session));
                 }
 
-                Optional<KisStockPriceResponse> redisAfterLock = priceSharedCache.get(code);
+                Optional<KisStockPriceResponse> redisAfterLock = priceSharedCache.get(scopedKey);
                 if (redisAfterLock.isPresent()) {
-                    return new ResolvedStockPrice(redisAfterLock.get(), StockPriceSource.REDIS);
+                    return new ResolvedStockPrice(redisAfterLock.get(), StockPriceSource.REDIS, session, marketDivCode, marketQuoteSupport.isStale(session));
                 }
 
-                KisStockPriceResponse fromDb = resolvePriceFromDbIfFresh(code);
+                KisStockPriceResponse fromDb = resolvePriceFromDbIfFresh(code, scopedKey);
                 if (fromDb != null) {
-                    storePriceCaches(code, fromDb);
-                    return new ResolvedStockPrice(fromDb, StockPriceSource.DB);
+                    storePriceCaches(scopedKey, fromDb);
+                    return new ResolvedStockPrice(fromDb, StockPriceSource.DB, session, marketDivCode, marketQuoteSupport.isStale(session));
                 }
 
-                KisStockPriceResponse fromKis = fetchStockPriceFromKis(code);
-                storeReferencePriceCache(code, fromKis);
-                storePriceCaches(code, fromKis);
-                return new ResolvedStockPrice(fromKis, StockPriceSource.KIS);
+                FetchedStockPrice fetched = fetchStockPriceFromKis(code, session);
+                KisStockPriceResponse fromKis = fetched.body();
+                String fetchedKey = scopedCacheKey(code, session, fetched.marketDivCode());
+                storeReferencePriceCache(fetchedKey, fromKis);
+                storePriceCaches(fetchedKey, fromKis);
+                return new ResolvedStockPrice(fromKis, StockPriceSource.KIS, session, fetched.marketDivCode(), marketQuoteSupport.isStale(session));
             } finally {
-                priceInflightLocks.remove(code, lock);
+                priceInflightLocks.remove(scopedKey, lock);
             }
         }
     }
@@ -225,7 +254,7 @@ public class KisStockService {
         priceSharedCache.put(stockCode, response);
     }
 
-    private KisStockPriceResponse resolvePriceFromDbIfFresh(String stockCode) {
+    private KisStockPriceResponse resolvePriceFromDbIfFresh(String stockCode, String scopedKey) {
         StockRealtimeCurrentDto row = stockRealtimeDao.findRealtimeCurrentByStockCode(stockCode);
         if (row == null || row.getCurrentPrice() == null || row.getUpdatedAt() == null) {
             return null;
@@ -240,7 +269,7 @@ public class KisStockService {
         }
 
         KisStockPriceResponse realtime = buildPriceFromRealtimeCurrent(row);
-        KisStockPriceResponse reference = resolveReferencePrice(stockCode);
+        KisStockPriceResponse reference = resolveReferencePrice(stockCode, scopedKey);
         return mergeRealtimeWithReference(realtime, reference);
     }
 
@@ -268,10 +297,10 @@ public class KisStockService {
                 null);
     }
 
-    private KisStockPriceResponse resolveReferencePrice(String stockCode) {
+    private KisStockPriceResponse resolveReferencePrice(String stockCode, String scopedKey) {
         KisStockPriceResponse cached = getCached(
                 referencePriceCache,
-                stockCode,
+                scopedKey,
                 kisProperties.getPriceReferenceCacheTtlMs());
         if (cached != null) {
             return cached;
@@ -279,15 +308,16 @@ public class KisStockService {
 
         KisStockPriceResponse fallback = getCached(
                 priceCache,
-                stockCode,
+                scopedKey,
                 REFERENCE_CACHE_FALLBACK_TTL_MS);
         if (fallback != null && hasReferenceFields(fallback)) {
             return fallback;
         }
 
         try {
-            KisStockPriceResponse fromKis = fetchStockPriceFromKis(stockCode);
-            storeReferencePriceCache(stockCode, fromKis);
+            FetchedStockPrice fetched = fetchStockPriceFromKis(stockCode, marketQuoteSupport.currentSession());
+            KisStockPriceResponse fromKis = fetched.body();
+            storeReferencePriceCache(scopedKey, fromKis);
             return fromKis;
         } catch (Exception ignored) {
             return fallback;
@@ -333,12 +363,29 @@ public class KisStockService {
         return fallback;
     }
 
+    private FetchedStockPrice fetchStockPriceFromKis(String stockCode, QuoteSession session) {
+        KisMarketDivCode primary = marketQuoteSupport.marketDivCode(session);
+        try {
+            return new FetchedStockPrice(fetchStockPriceFromKis(stockCode, primary), primary);
+        } catch (Exception e) {
+            if (primary == KisMarketDivCode.KRX) {
+                throw e;
+            }
+
+            return new FetchedStockPrice(fetchStockPriceFromKis(stockCode, KisMarketDivCode.KRX), KisMarketDivCode.KRX);
+        }
+    }
+
     private KisStockPriceResponse fetchStockPriceFromKis(String stockCode) {
+        return fetchStockPriceFromKis(stockCode, marketQuoteSupport.currentSession()).body();
+    }
+
+    private KisStockPriceResponse fetchStockPriceFromKis(String stockCode, KisMarketDivCode marketDivCode) {
         String accessToken = kisTokenService.getAccessToken();
 
         String url = kisProperties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-price"
-                + "?FID_COND_MRKT_DIV_CODE=J"
+                + "?FID_COND_MRKT_DIV_CODE=" + marketDivCode.code()
                 + "&FID_INPUT_ISCD=" + stockCode;
 
         KisInquirePriceHttpResponse response = kisApiRequestCoordinator.execute(
@@ -361,7 +408,7 @@ public class KisStockService {
         }
 
         Map<String, Object> output = safeMap(response.output());
-        String executionStrength = fetchExecutionStrength(stockCode, accessToken);
+        String executionStrength = fetchExecutionStrength(stockCode, accessToken, marketDivCode);
 
         return new KisStockPriceResponse(
                 stockCode,
@@ -402,11 +449,11 @@ public class KisStockService {
     /**
      * 당일 체결강도(tday_rltv)는 inquire-price가 아닌 inquire-ccnl(FHKST01010300) 응답에 포함된다.
      */
-    private String fetchExecutionStrength(String stockCode, String accessToken) {
+    private String fetchExecutionStrength(String stockCode, String accessToken, KisMarketDivCode marketDivCode) {
         try {
             String url = kisProperties.getBaseUrl()
                     + "/uapi/domestic-stock/v1/quotations/inquire-ccnl"
-                    + "?FID_COND_MRKT_DIV_CODE=J"
+                    + "?FID_COND_MRKT_DIV_CODE=" + marketDivCode.code()
                     + "&FID_INPUT_ISCD=" + stockCode;
 
             KisInquireCcnlHttpResponse ccnlResponse = kisApiRequestCoordinator.execute(
@@ -464,7 +511,13 @@ public class KisStockService {
         }
         List<String> sorted = new ArrayList<>(unique);
         Collections.sort(sorted);
-        String cacheKey = BATCH_CHG_CACHE_PREFIX + fingerprintSortedCodes(sorted);
+        QuoteSession session = marketQuoteSupport.currentSession();
+        KisMarketDivCode marketDivCode = marketQuoteSupport.marketDivCode(session);
+        String cacheKey =
+                BATCH_CHG_CACHE_PREFIX
+                        + marketQuoteSupport.cacheSuffix(session, marketDivCode)
+                        + ":"
+                        + fingerprintSortedCodes(sorted);
         try {
             String cached = stringRedisTemplate.opsForValue().get(cacheKey);
             if (cached != null && !cached.isBlank()) {
@@ -526,30 +579,74 @@ public class KisStockService {
             throw new IllegalArgumentException("종목코드가 비어 있습니다.");
         }
 
+        QuoteSession session = marketQuoteSupport.currentSession();
+        KisMarketDivCode marketDivCode = marketQuoteSupport.marketDivCode(session);
         boolean wsSubscribed = orderbookDemandSubscriptionService.isDemandSubscribed(code);
 
         Optional<KisStockOrderbookResponse> fromWs = orderbookRealtimeCache.getFresh(
                 code,
                 kisProperties.getOrderbookWsFreshTtlMs());
         if (fromWs.isPresent()) {
-            return StockOrderbookViewResponse.from(fromWs.get(), wsSubscribed, StockOrderbookSource.WS);
+            return StockOrderbookViewResponse.from(
+                    fromWs.get(),
+                    wsSubscribed,
+                    StockOrderbookSource.WS,
+                    session.name(),
+                    marketDivCode.code(),
+                    marketQuoteSupport.asOfNow(),
+                    marketQuoteSupport.isStale(session));
         }
 
-        KisStockOrderbookResponse fromRest = fetchStockOrderbookFromRest(stockCode);
-        return StockOrderbookViewResponse.from(fromRest, wsSubscribed, StockOrderbookSource.REST);
+        FetchedOrderbook fromRest = fetchStockOrderbookFromRest(stockCode, session, marketDivCode);
+        return StockOrderbookViewResponse.from(
+                fromRest.body(),
+                wsSubscribed,
+                StockOrderbookSource.REST,
+                session.name(),
+                fromRest.marketDivCode().code(),
+                marketQuoteSupport.asOfNow(),
+                marketQuoteSupport.isStale(session));
     }
 
-    private KisStockOrderbookResponse fetchStockOrderbookFromRest(String stockCode) {
-        KisStockOrderbookResponse cached = getCached(orderbookCache, stockCode, ORDERBOOK_CACHE_TTL_MS);
+    private FetchedOrderbook fetchStockOrderbookFromRest(
+            String stockCode,
+            QuoteSession session,
+            KisMarketDivCode marketDivCode) {
+        String scopedKey = scopedCacheKey(stockCode, session, marketDivCode);
+        KisStockOrderbookResponse cached = getCached(orderbookCache, scopedKey, ORDERBOOK_CACHE_TTL_MS);
         if (cached != null) {
-            return cached;
+            return new FetchedOrderbook(cached, marketDivCode);
         }
 
+        try {
+            KisStockOrderbookResponse result = fetchStockOrderbookFromRest(stockCode, marketDivCode);
+            putCached(orderbookCache, scopedKey, result);
+            return new FetchedOrderbook(result, marketDivCode);
+        } catch (Exception e) {
+            if (marketDivCode == KisMarketDivCode.KRX) {
+                throw e;
+            }
+
+            String fallbackKey = scopedCacheKey(stockCode, session, KisMarketDivCode.KRX);
+            KisStockOrderbookResponse fallbackCached = getCached(orderbookCache, fallbackKey, ORDERBOOK_CACHE_TTL_MS);
+            if (fallbackCached != null) {
+                return new FetchedOrderbook(fallbackCached, KisMarketDivCode.KRX);
+            }
+
+            KisStockOrderbookResponse fallback = fetchStockOrderbookFromRest(stockCode, KisMarketDivCode.KRX);
+            putCached(orderbookCache, fallbackKey, fallback);
+            return new FetchedOrderbook(fallback, KisMarketDivCode.KRX);
+        }
+    }
+
+    private KisStockOrderbookResponse fetchStockOrderbookFromRest(
+            String stockCode,
+            KisMarketDivCode marketDivCode) {
         String bearer = kisTokenService.getAccessToken();
 
         String url = kisProperties.getBaseUrl()
                 + "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn"
-                + "?FID_COND_MRKT_DIV_CODE=J"
+                + "?FID_COND_MRKT_DIV_CODE=" + marketDivCode.code()
                 + "&FID_INPUT_ISCD=" + stockCode;
 
         KisOrderbookHttpResponse response = kisApiRequestCoordinator.execute(
@@ -578,7 +675,6 @@ public class KisStockService {
                 valueToString(output1.get("total_bidp_rsqn")),
                 valueToString(output2.get("stck_prpr")),
                 valueToString(output2.get("cntg_vol")));
-        putCached(orderbookCache, stockCode, result);
         return result;
     }
 
@@ -754,6 +850,18 @@ public class KisStockService {
 
     private String cacheKey(String stockCode) {
         return stockCode == null ? "" : stockCode.trim();
+    }
+
+    private String scopedCacheKey(
+            String stockCode,
+            QuoteSession session,
+            KisMarketDivCode marketDivCode) {
+        String code = cacheKey(stockCode);
+        if (code.isBlank()) {
+            return "";
+        }
+
+        return code + ":" + marketQuoteSupport.cacheSuffix(session, marketDivCode);
     }
 
     private record CachedValue<T>(T value, long createdAtMillis) {

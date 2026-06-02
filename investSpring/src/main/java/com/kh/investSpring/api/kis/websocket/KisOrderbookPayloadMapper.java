@@ -9,14 +9,13 @@ import com.kh.investSpring.api.kis.dto.KisStockOrderbookResponse.OrderbookLevel;
 
 final class KisOrderbookPayloadMapper {
 
-    private static final String TR_PREFIX = "0|H0STASP0";
     private static final int MIN_FIELD_COUNT = 59;
 
     private KisOrderbookPayloadMapper() {
     }
 
     static Optional<KisStockOrderbookResponse> parse(String payload) {
-        if (payload == null || !payload.startsWith(TR_PREFIX)) {
+        if (!isOrderbookPayload(payload)) {
             return Optional.empty();
         }
 
@@ -75,6 +74,20 @@ final class KisOrderbookPayloadMapper {
         }
 
         return Optional.empty();
+    }
+
+    private static boolean isOrderbookPayload(String payload) {
+        if (payload == null || !payload.startsWith("0|")) {
+            return false;
+        }
+
+        String[] split = payload.split("\\|", -1);
+        if (split.length < 2) {
+            return false;
+        }
+
+        String trId = split[1];
+        return "H0STASP0".equals(trId) || "H0NXASP0".equals(trId) || "H0UNASP0".equals(trId);
     }
 
     private static String trimToNull(String value) {

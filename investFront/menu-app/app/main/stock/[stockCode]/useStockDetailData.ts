@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { API_BASE_URL } from "@/lib/api-base";
+import { isQuotePollingStopped } from "@/lib/stock/quoteSessionLabel";
 import {
   HERO_QUOTE_REFRESH_INTERVAL_MS,
   HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS,
@@ -271,9 +272,11 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [fetchJson, stockCode]);
 
   const heroQuoteIntervalMs =
-    price?.wsSubscribed === true
-      ? HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS
-      : HERO_QUOTE_REFRESH_INTERVAL_MS;
+    isQuotePollingStopped(price?.quoteSession)
+      ? null
+      : price?.wsSubscribed === true
+        ? HERO_QUOTE_WS_SUBSCRIBED_INTERVAL_MS
+        : HERO_QUOTE_REFRESH_INTERVAL_MS;
 
   const refreshOrderbook = useCallback(async () => {
     try {
@@ -287,9 +290,11 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [fetchJson, stockCode]);
 
   const orderbookPollIntervalMs =
-    orderbook?.wsSubscribed === true
-      ? ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS
-      : ORDERBOOK_REFRESH_INTERVAL_MS;
+    isQuotePollingStopped(orderbook?.quoteSession)
+      ? null
+      : orderbook?.wsSubscribed === true
+        ? ORDERBOOK_WS_SUBSCRIBED_INTERVAL_MS
+        : ORDERBOOK_REFRESH_INTERVAL_MS;
 
   const unsubscribeOrderbookWs = useCallback(async () => {
     try {
@@ -324,6 +329,10 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   }, [loadSnapshot]);
 
   useEffect(() => {
+    if (heroQuoteIntervalMs === null) {
+      return;
+    }
+
     void refreshPrice();
 
     const timer = window.setInterval(refreshPrice, heroQuoteIntervalMs);
@@ -347,11 +356,16 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
 
     void run();
 
-    const timer = window.setInterval(refreshOrderbook, orderbookPollIntervalMs);
+    const timer =
+      orderbookPollIntervalMs === null
+        ? null
+        : window.setInterval(refreshOrderbook, orderbookPollIntervalMs);
 
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      if (timer !== null) {
+        window.clearInterval(timer);
+      }
       void unsubscribeOrderbookWs();
     };
   }, [

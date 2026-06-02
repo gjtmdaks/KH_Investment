@@ -41,7 +41,7 @@ public class KisOrderbookWebSocketClient {
 
         try {
             String approvalKey = approvalService.getApprovalKey();
-            String url = properties.getWebsocketUrl() + "/tryitout/H0STASP0";
+            String url = properties.getWebsocketUrl() + "/tryitout/" + properties.getWebsocketOrderbookTrId();
 
             standardWebSocketClient.doHandshake(
                     new KisOrderbookSocketHandler(

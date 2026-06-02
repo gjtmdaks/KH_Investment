@@ -89,7 +89,8 @@ public class KisSocketHandler extends TextWebSocketHandler {
     }
 
     private void parseRealtime(String payload) {
-        if (!payload.startsWith("0|H0STCNT0")) {
+        String trId = resolveTradeTrId(payload);
+        if (trId == null) {
             return;
         }
 
@@ -133,9 +134,28 @@ public class KisSocketHandler extends TextWebSocketHandler {
                     .openPrice(openPrice != 0L ? openPrice : null)
                     .volume(volume != 0L ? volume : null)
                     .tradeTime(tradeTime)
+                    .quoteSource(trId)
                     .build();
             queueService.add(dto);
         }
+    }
+
+    private String resolveTradeTrId(String payload) {
+        if (payload == null || !payload.startsWith("0|")) {
+            return null;
+        }
+
+        String[] split = payload.split("\\|", -1);
+        if (split.length < 2) {
+            return null;
+        }
+
+        String trId = split[1];
+        if ("H0STCNT0".equals(trId) || "H0NXCNT0".equals(trId) || "H0UNCNT0".equals(trId)) {
+            return trId;
+        }
+
+        return null;
     }
 
     private long parseLongSafe(String value) {

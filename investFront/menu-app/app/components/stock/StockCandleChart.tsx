@@ -113,6 +113,11 @@ type CrosshairTooltipState = {
 };
 
 const SEOUL_TIME_ZONE = "Asia/Seoul";
+const INTRADAY_SESSION_START_MINUTES = 8 * 60;
+const INTRADAY_SESSION_END_MINUTES = 20 * 60;
+const INTRADAY_SESSION_MINUTES =
+  INTRADAY_SESSION_END_MINUTES - INTRADAY_SESSION_START_MINUTES;
+const COMPRESSED_TIME_BASE_SECONDS = 1_700_000_000;
 
 const seoulIntradayLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: SEOUL_TIME_ZONE,
@@ -145,6 +150,89 @@ function candleTimeToChartTime(candle: ChartCandle): Time {
   }
 
   return trimmed as Time;
+}
+
+type IntradayTimeMapping = {
+  compressedTimeByDate: Map<string, Time>;
+  originalTimeByCompressed: Map<number, string>;
+};
+
+function extractIntradayParts(date: string) {
+  const matched =
+    /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(date.trim());
+
+  if (!matched) {
+    return null;
+  }
+
+  const hour = Number(matched[2]);
+  const minute = Number(matched[3]);
+  const second = Number(matched[4] ?? "0");
+
+  if (
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    !Number.isFinite(second)
+  ) {
+    return null;
+  }
+
+  return {
+    tradeDate: matched[1],
+    minuteOfDay: hour * 60 + minute,
+    second,
+  };
+}
+
+function createIntradayTimeMapping(candles: ChartCandle[]): IntradayTimeMapping {
+  const tradeDates = Array.from(
+    new Set(
+      candles
+        .map((candle) => extractIntradayParts(candle.date)?.tradeDate)
+        .filter((date): date is string => Boolean(date))
+    )
+  ).sort();
+  const tradeDateIndex = new Map(
+    tradeDates.map((tradeDate, index) => [tradeDate, index])
+  );
+  const compressedTimeByDate = new Map<string, Time>();
+  const originalTimeByCompressed = new Map<number, string>();
+
+  for (const candle of candles) {
+    const parts = extractIntradayParts(candle.date);
+    const dayIndex =
+      parts != null ? tradeDateIndex.get(parts.tradeDate) : undefined;
+
+    if (parts == null || dayIndex === undefined) {
+      const fallback = candleTimeToChartTime(candle);
+      compressedTimeByDate.set(candle.date, fallback);
+      if (typeof fallback === "number") {
+        originalTimeByCompressed.set(fallback, candle.date);
+      }
+      continue;
+    }
+
+    const sessionMinute = Math.max(
+      0,
+      Math.min(
+        INTRADAY_SESSION_MINUTES,
+        parts.minuteOfDay - INTRADAY_SESSION_START_MINUTES
+      )
+    );
+    const compressed =
+      COMPRESSED_TIME_BASE_SECONDS +
+      dayIndex * INTRADAY_SESSION_MINUTES * 60 +
+      sessionMinute * 60 +
+      parts.second;
+
+    compressedTimeByDate.set(candle.date, compressed as Time);
+    originalTimeByCompressed.set(compressed, candle.date);
+  }
+
+  return {
+    compressedTimeByDate,
+    originalTimeByCompressed,
+  };
 }
 
 function formatCrosshairLabel(time: Time, intradayMode: boolean): string {
@@ -195,7 +283,18 @@ function formatCrosshairLabel(time: Time, intradayMode: boolean): string {
   return String(time);
 }
 
-function formatAxisTime(time: Time, intradayMode: boolean): string {
+function formatCrosshairLabelWithMapping(
+  time: Time,
+  intradayMode: boolean,
+  originalTimeByCompressed: Map<number, string>
+): string {
+  if (intradayMode && typeof time === "number") {
+    const original = originalTimeByCompressed.get(time);
+    if (original) {
+      return formatCrosshairLabel(original, true);
+    }
+  }
+
   return formatCrosshairLabel(time, intradayMode);
 }
 
@@ -207,6 +306,36 @@ function formatIntradayAxisTickMark(time: Time): string | null {
   const label = seoulIntradayAxisTickFormatter.format(new Date(time * 1000));
 
   return label.length <= 8 ? label : label.slice(0, 8);
+}
+
+function formatCompressedIntradayAxisTickMark(
+  time: Time,
+  originalTimeByCompressed: Map<number, string>
+): string | null {
+  if (typeof time !== "number" || !Number.isFinite(time)) {
+    return null;
+  }
+
+  const original = originalTimeByCompressed.get(time);
+  if (original) {
+    return formatIntradayAxisTickMark(candleTimeToChartTime({ date: original } as ChartCandle));
+  }
+
+  const offsetSeconds = time - COMPRESSED_TIME_BASE_SECONDS;
+  if (!Number.isFinite(offsetSeconds) || offsetSeconds < 0) {
+    return formatIntradayAxisTickMark(time);
+  }
+
+  const secondsInCompressedDay = INTRADAY_SESSION_MINUTES * 60;
+  const secondsInSession =
+    ((offsetSeconds % secondsInCompressedDay) + secondsInCompressedDay) %
+    secondsInCompressedDay;
+  const totalMinutes =
+    INTRADAY_SESSION_START_MINUTES + Math.floor(secondsInSession / 60);
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function formatDailyAxisTickMark(
@@ -255,7 +384,8 @@ function formatDailyAxisTickMark(
 }
 
 function createChartTickMarkFormatter(
-  getIntradayMode: () => boolean
+  getIntradayMode: () => boolean,
+  getOriginalTimeByCompressed: () => Map<number, string>
 ): TickMarkFormatter {
   return (time, tickMarkType) => {
     if (getIntradayMode()) {
@@ -266,14 +396,20 @@ function createChartTickMarkFormatter(
         return null;
       }
 
-      return formatIntradayAxisTickMark(time);
+      return formatCompressedIntradayAxisTickMark(
+        time,
+        getOriginalTimeByCompressed()
+      );
     }
 
     return formatDailyAxisTickMark(time, tickMarkType);
   };
 }
 
-function getTimeScaleOptions(getIntradayMode: () => boolean) {
+function getTimeScaleOptions(
+  getIntradayMode: () => boolean,
+  getOriginalTimeByCompressed: () => Map<number, string>
+) {
   const intraday = getIntradayMode();
   const clampToData = !intraday;
 
@@ -284,7 +420,10 @@ function getTimeScaleOptions(getIntradayMode: () => boolean) {
     rightOffset: 0,
     timeVisible: intraday,
     secondsVisible: false,
-    tickMarkFormatter: createChartTickMarkFormatter(getIntradayMode),
+    tickMarkFormatter: createChartTickMarkFormatter(
+      getIntradayMode,
+      getOriginalTimeByCompressed
+    ),
   } as const;
 }
 
@@ -348,12 +487,15 @@ export default function StockCandleChart({
   const intradayModeRef = useRef(intradayMode);
   const zoomProfileRef = useRef(zoomProfile);
   const prevCandlesLengthRef = useRef(0);
-
-  intradayModeRef.current = intradayMode;
-  zoomProfileRef.current = zoomProfile;
+  const originalTimeByCompressedRef = useRef<Map<number, string>>(new Map());
 
   const [crosshairTooltip, setCrosshairTooltip] =
     useState<CrosshairTooltipState | null>(null);
+
+  useLayoutEffect(() => {
+    intradayModeRef.current = intradayMode;
+    zoomProfileRef.current = zoomProfile;
+  }, [intradayMode, zoomProfile]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -373,7 +515,11 @@ export default function StockCandleChart({
         localization: {
           locale: "ko-KR",
           timeFormatter: (t: Time) =>
-            formatAxisTime(t, intradayModeRef.current),
+            formatCrosshairLabelWithMapping(
+              t,
+              intradayModeRef.current,
+              originalTimeByCompressedRef.current
+            ),
         },
         grid: {
           vertLines: { color: "rgba(148, 163, 184, 0.08)" },
@@ -384,7 +530,10 @@ export default function StockCandleChart({
         },
         timeScale: {
           borderColor: "rgba(148, 163, 184, 0.12)",
-          ...getTimeScaleOptions(() => intradayModeRef.current),
+          ...getTimeScaleOptions(
+            () => intradayModeRef.current,
+            () => originalTimeByCompressedRef.current
+          ),
         },
         crosshair: {
           mode: intradayModeRef.current
@@ -475,9 +624,10 @@ export default function StockCandleChart({
         setCrosshairTooltip({
           left,
           top,
-          dateLabel: formatCrosshairLabel(
+          dateLabel: formatCrosshairLabelWithMapping(
             param.time,
-            intradayModeRef.current
+            intradayModeRef.current,
+            originalTimeByCompressedRef.current
           ),
           open: ohlc.open,
           high: ohlc.high,
@@ -513,11 +663,19 @@ export default function StockCandleChart({
     const isPrepend = candles.length > previousLength && previousLength > 0;
     const prependOffset = isPrepend ? candles.length - previousLength : 0;
 
+    const timeMapping = intradayMode
+      ? createIntradayTimeMapping(candles)
+      : null;
+    originalTimeByCompressedRef.current =
+      timeMapping?.originalTimeByCompressed ?? new Map();
+
     const candleData: CandlestickData[] = candles.map((candle) => {
       const { color } = getCandleColors(candle);
 
       return {
-        time: candleTimeToChartTime(candle),
+        time:
+          timeMapping?.compressedTimeByDate.get(candle.date) ??
+          candleTimeToChartTime(candle),
         open: candle.open,
         high: candle.high,
         low: candle.low,
@@ -532,7 +690,9 @@ export default function StockCandleChart({
       const { volumeColor } = getCandleColors(candle);
 
       return {
-        time: candleTimeToChartTime(candle),
+        time:
+          timeMapping?.compressedTimeByDate.get(candle.date) ??
+          candleTimeToChartTime(candle),
         value: candle.volume,
         color: volumeColor,
       };
@@ -562,14 +722,21 @@ export default function StockCandleChart({
       localization: {
         locale: "ko-KR",
         timeFormatter: (t: Time) =>
-          formatAxisTime(t, intradayModeRef.current),
+          formatCrosshairLabelWithMapping(
+            t,
+            intradayModeRef.current,
+            originalTimeByCompressedRef.current
+          ),
       },
       crosshair: {
         mode: intradayModeRef.current
           ? CrosshairMode.MagnetOHLC
           : CrosshairMode.Normal,
       },
-      timeScale: getTimeScaleOptions(() => intradayModeRef.current),
+      timeScale: getTimeScaleOptions(
+        () => intradayModeRef.current,
+        () => originalTimeByCompressedRef.current
+      ),
       ...CHART_INTERACTION_OPTIONS,
     });
   }, [candles, error, intradayMode, loading]);
@@ -582,7 +749,10 @@ export default function StockCandleChart({
     }
 
     chart.applyOptions({
-      timeScale: getTimeScaleOptions(() => intradayModeRef.current),
+      timeScale: getTimeScaleOptions(
+        () => intradayModeRef.current,
+        () => originalTimeByCompressedRef.current
+      ),
     });
   }, [intradayMode]);
 

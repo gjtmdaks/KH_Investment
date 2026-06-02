@@ -8,6 +8,7 @@ import {
   formatWon,
   parseNumeric,
 } from "@/lib/stock/stockDetailFormat";
+import { getQuoteSessionLabel } from "@/lib/stock/quoteSessionLabel";
 import { normalizeOrderbookLevels } from "@/lib/stock/stockDetailOrderbook";
 import {
   calcDepthPercent,
@@ -347,7 +348,9 @@ function StockDetailOrderbookPanelView({
           <span className={styles.askLabel}>
             판매대기 {formatNumber(orderbook.totalAskQuantity)}
           </span>
-          <span className={styles.marketLabel}>정규장</span>
+          <span className={styles.marketLabel}>
+            {getQuoteSessionLabel(orderbook.quoteSession)}
+          </span>
           <span className={styles.bidLabel}>
             구매대기 {formatNumber(orderbook.totalBidQuantity)}
           </span>

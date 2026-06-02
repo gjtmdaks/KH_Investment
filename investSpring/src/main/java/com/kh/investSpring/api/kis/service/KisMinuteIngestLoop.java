@@ -40,7 +40,7 @@ final class KisMinuteIngestLoop {
 
                 String prev = KisMinuteBarMapper.minusOneMinute(cursor);
 
-                if (prev.compareTo("085959") <= 0) {
+                if (prev.compareTo("075959") <= 0) {
                     break;
                 }
 
@@ -95,7 +95,7 @@ final class KisMinuteIngestLoop {
                 cursor = KisMinuteBarMapper.minusOneMinute(minTime);
             }
 
-            if (minTime.compareTo("090000") <= 0) {
+            if (minTime.compareTo("080000") <= 0) {
                 break;
             }
 
