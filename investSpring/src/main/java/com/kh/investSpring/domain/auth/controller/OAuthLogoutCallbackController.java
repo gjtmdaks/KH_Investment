@@ -1,5 +1,7 @@
 package com.kh.investSpring.domain.auth.controller;
 
+import com.kh.investSpring.global.config.TeamDevHost;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +13,7 @@ public class OAuthLogoutCallbackController {
 	private final String frontendMainUri;
 
 	public OAuthLogoutCallbackController(
-			@Value("${app.oauth2.frontend-main-uri:http://localhost:3000/main}") String frontendMainUri) {
+			@Value("${app.oauth2.frontend-main-uri:" + TeamDevHost.FRONTEND_ORIGIN + "/main}") String frontendMainUri) {
 		this.frontendMainUri = frontendMainUri;
 	}
 

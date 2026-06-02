@@ -40,7 +40,7 @@ public class KisProperties {
     @Value("${kis.price.local-cache-ttl-ms:800}")
     private long priceLocalCacheTtlMs;
 
-    /** H0STCNT0 최대 구독 종목 수 (KIS 세션당 41 이하 권장) */
+    /** H0STCNT0 최대 구독 종목 수 (KIS 세션당 41 이하로) */
     @Value("${kis.websocket.max-subscriptions:40}")
     private int websocketMaxSubscriptions;
 

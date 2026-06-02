@@ -1,24 +1,4 @@
-// function resolveApiBase(): string {
-//   const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "").trim();
-
-//   if (!raw) {
-//     return "http://localhost:8081/final";
-//   }
-
-//   if (raw.endsWith("/final")) {
-//     return raw;
-//   }
-
-//   if (/^https?:\/\/[^/]+$/i.test(raw)) {
-//     return `${raw}/final`;
-//   }
-
-//   return raw;
-// }
-
-// export const API_BASE_URL = resolveApiBase();
-
-// 위
+import { TEAM_API_BASE } from "@/lib/team-dev";
 
 function normalizeFinalUrl(raw: string): string {
   let cleaned = raw.replace(/\/$/, "").trim();
@@ -42,28 +22,17 @@ export function getPublicApiBase(): string {
   const raw = process.env.NEXT_PUBLIC_API_URL;
 
   if (!raw) {
-    return "http://localhost:8081/final";
+    return TEAM_API_BASE;
   }
 
   return normalizeFinalUrl(raw);
 }
 
 function resolveApiBase(): string {
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8081/final";
-    }
-
-    return `${protocol}//${hostname}:8081/final`;
-  }
-
   const raw = process.env.NEXT_PUBLIC_API_URL;
 
   if (!raw) {
-    return "http://localhost:8081/final";
+    return TEAM_API_BASE;
   }
 
   return normalizeFinalUrl(raw);
