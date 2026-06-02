@@ -6,6 +6,7 @@ import { useWatchlist } from "@/app/context/WatchlistContext";
 import { getPublicApiBase } from "@/lib/api-base";
 
 const MAIN_STOCK_REFRESH_INTERVAL_MS = 3_000;
+const MAIN_STOCK_REQUEST_TIMEOUT_MS = 5_000;
 
 type Stock = {
   stockCode: string;
@@ -35,19 +36,40 @@ export default function StockClient({
   const {watchlist, setWatchlist,} = useWatchlist();
 
   useEffect(() => {
-    // 3초마다 실시간 값 갱신
-    const realtimeInterval = setInterval(() => {
-      fetch(`${getPublicApiBase()}/api/main`)
-      .then((res) => {
+    let cancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let currentController: AbortController | null = null;
+
+    const scheduleNextRefresh = () => {
+      if (cancelled) {
+        return;
+      }
+
+      timerId = setTimeout(refreshStocks, MAIN_STOCK_REFRESH_INTERVAL_MS);
+    };
+
+    const refreshStocks = async () => {
+      currentController = new AbortController();
+      const timeoutId = setTimeout(
+        () => currentController?.abort(),
+        MAIN_STOCK_REQUEST_TIMEOUT_MS
+      );
+
+      try {
+        const res = await fetch(`${getPublicApiBase()}/api/main`, {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+          signal: currentController.signal,
+        });
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        return res.json();
-      })
-      .then((json) => {
+
+        const json = await res.json();
         const newList = json?.main?.stockList || [];
 
-        if (newList.length === 0) {
+        if (cancelled || newList.length === 0) {
           return;
         }
 
@@ -56,12 +78,24 @@ export default function StockClient({
             (a, b) => (b.tradingValue ?? 0) - (a.tradingValue ?? 0)
           )
         );
-      })
-      .catch(() => { });
-    }, MAIN_STOCK_REFRESH_INTERVAL_MS);
+      } catch {
+      } finally {
+        clearTimeout(timeoutId);
+        currentController = null;
+        scheduleNextRefresh();
+      }
+    };
+
+    scheduleNextRefresh();
 
     return () => {
-      clearInterval(realtimeInterval);
+      cancelled = true;
+
+      if (timerId !== null) {
+        clearTimeout(timerId);
+      }
+
+      currentController?.abort();
     };
   }, []);
 
