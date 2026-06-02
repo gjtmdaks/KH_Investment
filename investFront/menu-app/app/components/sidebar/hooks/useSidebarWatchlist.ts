@@ -1,24 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiClient } from "@/lib/api-client";
 import { useWatchlist } from "@/app/context/WatchlistContext";
+import { useAuth } from "@/app/context/AuthContext";
 import {
   SidebarWatchResponse,
 } from "../types";
+import {
+  fetchSidebarWatchlist,
+  getCachedSidebarWatchlist,
+} from "./sidebarPrefetchCache";
 
 const SIDEBAR_WATCHLIST_REFRESH_INTERVAL_MS = 5_000;
-const SIDEBAR_WATCHLIST_REQUEST_TIMEOUT_MS = 5_000;
 
 export default function useSidebarWatchlist() {
 
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const userNo = user?.userNo ?? null;
+  const cachedSidebarData = getCachedSidebarWatchlist(userNo);
+  const [loading, setLoading] = useState(!cachedSidebarData);
   const {watchlist, setWatchlist,} = useWatchlist();
   const requestInFlightRef = useRef(false);
-  const requestControllerRef = useRef<AbortController | null>(null);
   const unmountedRef = useRef(false);
   const [sidebarData, setSidebarData] =
-    useState<SidebarWatchResponse>({
+    useState<SidebarWatchResponse>(cachedSidebarData ?? {
       loggedIn: false,
       hasWatchlist: false,
       watchlistCodes: [],
@@ -30,22 +35,10 @@ export default function useSidebarWatchlist() {
       return;
     }
 
-    const controller = new AbortController();
-    requestControllerRef.current = controller;
     requestInFlightRef.current = true;
 
-    const timeoutId = window.setTimeout(() => {
-      controller.abort();
-    }, SIDEBAR_WATCHLIST_REQUEST_TIMEOUT_MS);
-
     try {
-      const response = await apiClient.get("/watchlist/sidebar/stocks", {
-        skipAuthRedirect: true,
-        signal: controller.signal,
-        timeout: SIDEBAR_WATCHLIST_REQUEST_TIMEOUT_MS,
-      });
-
-      const data = response.data.data;
+      const data = await fetchSidebarWatchlist(userNo);
 
       if (unmountedRef.current) {
         return;
@@ -58,22 +51,15 @@ export default function useSidebarWatchlist() {
         data.watchlistCodes ?? []
       );
     } catch (e) {
-      if (!controller.signal.aborted) {
-        console.error(e);
-      }
+      console.error(e);
     } finally {
-      window.clearTimeout(timeoutId);
       requestInFlightRef.current = false;
-
-      if (requestControllerRef.current === controller) {
-        requestControllerRef.current = null;
-      }
 
       if (!unmountedRef.current) {
         setLoading(false);
       }
     }
-  }, [setWatchlist]);
+  }, [setWatchlist, userNo]);
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -88,7 +74,6 @@ export default function useSidebarWatchlist() {
 
     return () => {
       unmountedRef.current = true;
-      requestControllerRef.current?.abort();
       window.clearTimeout(initialTimer);
       clearInterval(interval);
     };

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { useWatchlist } from "@/app/context/WatchlistContext";
+import { clearCachedSidebarWatchlist } from "@/app/components/sidebar/hooks/sidebarPrefetchCache";
 
 interface Params {
   stockCode: string;
@@ -73,6 +74,7 @@ export default function useToggleWatchlist() {
           assertApiSuccess(response);
         }
 
+        clearCachedSidebarWatchlist();
         await refreshWatchlist();
       } catch (error) {
         console.error(error);

@@ -20,4 +20,6 @@ public interface WatchlistService {
 	
 	List<SidebarWatchDto> getRecentViews(Long userNo);
 
+	void invalidateUserSidebarCache(Long userNo);
+
 }

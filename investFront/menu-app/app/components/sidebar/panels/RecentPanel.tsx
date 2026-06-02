@@ -11,8 +11,11 @@ import { useWatchlist } from "@/app/context/WatchlistContext";
 const LOGIN_REQUIRED_TEXT = "로그인하면 이용할 수 있어요";
 
 export default function RecentPanel() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { loading, stocks } = useRecentStocks(isAuthenticated);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { loading, stocks } = useRecentStocks(
+    isAuthenticated,
+    user?.userNo ?? null
+  );
   const { watchlist, setWatchlist } = useWatchlist();
 
   if (authLoading) {

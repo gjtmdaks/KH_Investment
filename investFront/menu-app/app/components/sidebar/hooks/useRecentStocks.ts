@@ -1,24 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiClient } from "@/lib/api-client";
 import { SidebarStock } from "../types";
+import {
+  fetchRecentStocks,
+  getCachedRecentStocks,
+} from "./sidebarPrefetchCache";
 
 const RECENT_STOCK_REFRESH_INTERVAL_MS = 5_000;
-const RECENT_STOCK_REQUEST_TIMEOUT_MS = 5_000;
 
-export default function useRecentStocks(enabled: boolean) {
-  const [loading, setLoading] = useState(enabled);
-  const [stocks, setStocks] = useState<SidebarStock[]>([]);
+export default function useRecentStocks(
+  enabled: boolean,
+  userNo: number | null
+) {
+  const cachedStocks = getCachedRecentStocks(userNo);
+  const [loading, setLoading] = useState(enabled && !cachedStocks);
+  const [stocks, setStocks] = useState<SidebarStock[]>(
+    cachedStocks ?? []
+  );
   const requestInFlightRef = useRef(false);
-  const requestControllerRef = useRef<AbortController | null>(null);
   const unmountedRef = useRef(false);
 
   useEffect(() => {
     unmountedRef.current = false;
 
     if (!enabled) {
-      requestControllerRef.current?.abort();
       requestInFlightRef.current = false;
 
       const resetTimer = window.setTimeout(() => {
@@ -28,46 +34,31 @@ export default function useRecentStocks(enabled: boolean) {
       return () => window.clearTimeout(resetTimer);
     }
 
-    async function fetchRecentStocks() {
+    async function refreshRecentStocks() {
       if (requestInFlightRef.current) {
         return;
       }
 
-      const controller = new AbortController();
-      requestControllerRef.current = controller;
       requestInFlightRef.current = true;
 
-      const timeoutId = window.setTimeout(() => {
-        controller.abort();
-      }, RECENT_STOCK_REQUEST_TIMEOUT_MS);
-
-      setLoading(true);
+      if (!getCachedRecentStocks(userNo)) {
+        setLoading(true);
+      }
 
       try {
-        const response = await apiClient.get("/watchlist/recent", {
-          skipAuthRedirect: true,
-          signal: controller.signal,
-          timeout: RECENT_STOCK_REQUEST_TIMEOUT_MS,
-        });
+        const data = await fetchRecentStocks(userNo);
 
         if (!unmountedRef.current) {
-          setStocks(response.data.data || []);
+          setStocks(data);
         }
       } catch (e) {
-        if (!controller.signal.aborted) {
-          console.error(e);
+        console.error(e);
 
-          if (!unmountedRef.current) {
-            setStocks([]);
-          }
+        if (!unmountedRef.current && !getCachedRecentStocks(userNo)) {
+          setStocks([]);
         }
       } finally {
-        window.clearTimeout(timeoutId);
         requestInFlightRef.current = false;
-
-        if (requestControllerRef.current === controller) {
-          requestControllerRef.current = null;
-        }
 
         if (!unmountedRef.current) {
           setLoading(false);
@@ -75,18 +66,17 @@ export default function useRecentStocks(enabled: boolean) {
       }
     }
 
-    fetchRecentStocks();
+    refreshRecentStocks();
 
     const interval = setInterval(() => {
-      fetchRecentStocks();
+      refreshRecentStocks();
     }, RECENT_STOCK_REFRESH_INTERVAL_MS);
 
     return () => {
       unmountedRef.current = true;
-      requestControllerRef.current?.abort();
       clearInterval(interval);
     };
-  }, [enabled]);
+  }, [enabled, userNo]);
 
   return {
     loading,
