@@ -377,16 +377,32 @@ export function useStockDetailData(stockCode: string, activeTab: TabKey) {
   ]);
 
   useEffect(() => {
-    if (activeTab !== "news") {
+    if (detailLoading) {
       return;
     }
 
-    if (detailLoading || orderbookLoading) {
-      return;
+    const session = snapshotSessionRef.current;
+    let cancelled = false;
+
+    const startPrefetch = () => {
+      if (!cancelled) {
+        void runNewsFetch(session);
+      }
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      const idleId = requestIdleCallback(startPrefetch, { timeout: 2000 });
+      return () => {
+        cancelled = true;
+        cancelIdleCallback(idleId);
+      };
     }
 
-    void runNewsFetch(snapshotSessionRef.current);
-  }, [activeTab, runNewsFetch, detailLoading, orderbookLoading]);
+    startPrefetch();
+    return () => {
+      cancelled = true;
+    };
+  }, [detailLoading, runNewsFetch]);
 
   useEffect(() => {
     if (activeTab !== "investor" && activeTab !== "summary") {
