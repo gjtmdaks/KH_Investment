@@ -85,8 +85,7 @@ public class SecurityFilterChainFactory {
                                     "/api/board/**",
                                     "/search/**",
                         			"/api/ai/**",
-                        			"/account/ranking",
-						            "/admin/**");
+                        			"/account/ranking");
 					if (extraPermitAllPathPatterns.length > 0) {
 						csrf.ignoringRequestMatchers(extraPermitAllPathPatterns);
 					}
@@ -100,6 +99,7 @@ public class SecurityFilterChainFactory {
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthenticationEntryPoint))
 				.authorizeHttpRequests(auth -> {
 					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+					auth.requestMatchers("/admin/**").hasRole("ADMIN");
 					auth.requestMatchers(HttpMethod.GET, "/api/board/stocks/**").permitAll();
 					auth.requestMatchers(SecurityPathPatterns.AUTH_WHITELIST).permitAll();
 					auth.requestMatchers(SecurityPathPatterns.PUBLIC_WHITELIST).permitAll();

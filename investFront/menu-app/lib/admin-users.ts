@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/lib/api-base";
+import { apiClient } from "@/lib/api-client";
 
 export type AdminUser = {
   userNo: number;
@@ -47,19 +47,11 @@ export async function getAdminUsers(
 
   const queryString = searchParams.toString();
 
-  const response = await fetch(
-    `${API_BASE_URL}/admin/api/users${queryString ? `?${queryString}` : ""}`,
-    {
-      method: "GET",
-      cache: "no-store",
-    }
+  const { data } = await apiClient.get<AdminUserListResponse>(
+    `/admin/api/users${queryString ? `?${queryString}` : ""}`
   );
 
-  if (!response.ok) {
-    throw new Error(`회원 목록 조회 실패 (${response.status})`);
-  }
-
-  return response.json();
+  return data;
 }
 
 export async function updateAdminUserAccountStatus(
@@ -67,45 +59,15 @@ export async function updateAdminUserAccountStatus(
   status: "ACTIVE" | "STOP" | "CLOSE",
   stopEndAt?: string
 ): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/admin/api/users/${userNo}/account-status`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status, stopEndAt }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    console.error("회원 계좌 상태 변경 실패", {
-      status: response.status,
-      body: errorText,
-    });
-
-    throw new Error(`회원 계좌 상태 변경 실패 (${response.status})`);
-  }
+  await apiClient.patch(`/admin/api/users/${userNo}/account-status`, {
+    status,
+    stopEndAt,
+  });
 }
 
 export async function updateAdminUserStatus(
   userNo: number,
   status: "ACTIVE" | "DELETE"
 ): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/admin/api/users/${userNo}/status`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`회원 상태 변경 실패 (${response.status})`);
-  }
+  await apiClient.patch(`/admin/api/users/${userNo}/status`, { status });
 }

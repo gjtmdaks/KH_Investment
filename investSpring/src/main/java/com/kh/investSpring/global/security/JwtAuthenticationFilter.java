@@ -9,6 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.kh.investSpring.domain.user.dao.UserDao;
+import com.kh.investSpring.domain.user.vo.User;
 import com.kh.investSpring.global.jwt.AccessTokenCookieWriter;
 import com.kh.investSpring.global.jwt.JwtTokenProvider;
 
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
+	private final UserDao userDao;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -41,12 +44,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		if (tokenForAuth != null && !tokenForAuth.isBlank()) {
 			try {
 				Long userNo = jwtTokenProvider.parseAccessTokenUserNo(tokenForAuth);
-				request.setAttribute("userNo", userNo);
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-						userNo,
-						null,
-						List.of(new SimpleGrantedAuthority("ROLE_USER")));
-				SecurityContextHolder.getContext().setAuthentication(authentication);
+				User user = userDao.selectUserByUserNo(userNo);
+				if (user != null) {
+					request.setAttribute("userNo", userNo);
+					String role = user.getAuth() == 1 ? "ROLE_ADMIN" : "ROLE_USER";
+					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+							userNo,
+							null,
+							List.of(new SimpleGrantedAuthority(role)));
+					SecurityContextHolder.getContext().setAuthentication(authentication);
+				}
 			} catch (Exception e) {
 				SecurityContextHolder.clearContext();
 			}

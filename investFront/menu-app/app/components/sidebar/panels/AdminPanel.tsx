@@ -2,12 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TEAM_API_BASE } from "@/lib/team-dev";
+import { apiClient } from "@/lib/api-client";
 import styles from "../MainSidebar.module.css";
-
-const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-
-const apiBase = rawBase.trim() || TEAM_API_BASE;
 
 export default function AdminPanel() {
   const router = useRouter();
@@ -20,18 +16,7 @@ export default function AdminPanel() {
     try {
       setCompanyLoading(true);
 
-      const response = await fetch(
-        `${apiBase}/admin/api/dart/init`,
-        {
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "회사 정보 동기화 실패"
-        );
-      }
+      await apiClient.post("/admin/api/dart/init");
 
       alert(
         "회사 정보 동기화 시작"
@@ -50,18 +35,7 @@ export default function AdminPanel() {
     try {
       setHistoryLoading(true);
 
-      const response = await fetch(
-        `${apiBase}/admin/api/kis/historysync`,
-        {
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "과거 시세 동기화 실패"
-        );
-      }
+      await apiClient.post("/admin/api/kis/historysync");
 
       alert(
         "과거 시세 동기화 시작"
@@ -80,18 +54,7 @@ export default function AdminPanel() {
     try {
       setHistoryStop(true);
 
-      const response = await fetch(
-        `${apiBase}/admin/api/kis/historysyncstop`,
-        {
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "과거 시세 동기화 중지 실패"
-        );
-      }
+      await apiClient.post("/admin/api/kis/historysyncstop");
 
       alert(
         "과거 시세 동기화 중지 시작"

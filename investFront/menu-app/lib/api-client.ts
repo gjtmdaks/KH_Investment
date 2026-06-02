@@ -1,6 +1,7 @@
 "use client";
 
 import axios, {
+  AxiosHeaders,
   type AxiosError,
   type AxiosRequestConfig,
   type AxiosResponse,
@@ -44,6 +45,11 @@ type ApiFailureBody = {
   data?: unknown;
 };
 
+type CsrfResponse = {
+  headerName?: string;
+  token?: string;
+};
+
 /** 백엔드 ApiResponse.fail + 400 — 예상 가능한 검증 오류(로그인 실패 등) */
 function isExpectedApiFailure(
   response: AxiosResponse<unknown> | undefined
@@ -62,6 +68,44 @@ function isExpectedApiFailure(
 }
 
 const authDebugEnabled = process.env.NODE_ENV === "development";
+
+let csrfPromise: Promise<CsrfResponse | null> | null = null;
+
+function isUnsafeMethod(method: string | undefined): boolean {
+  return ["post", "put", "patch", "delete"].includes(
+    method?.toLowerCase() ?? ""
+  );
+}
+
+async function getCsrfToken(): Promise<CsrfResponse | null> {
+  if (!csrfPromise) {
+    csrfPromise = refreshClient
+      .get<CsrfResponse>("/auth/csrf", { withCredentials: true })
+      .then((response) => response.data)
+      .catch(() => null)
+      .finally(() => {
+        csrfPromise = null;
+      });
+  }
+
+  return csrfPromise;
+}
+
+apiClient.interceptors.request.use(async (config) => {
+  if (!isUnsafeMethod(config.method)) {
+    return config;
+  }
+
+  const csrf = await getCsrfToken();
+
+  if (csrf?.headerName && csrf.token) {
+    const headers = AxiosHeaders.from(config.headers);
+    headers.set(csrf.headerName, csrf.token);
+    config.headers = headers;
+  }
+
+  return config;
+});
 
 function redirectToLogin(payload?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
@@ -102,6 +146,10 @@ apiClient.interceptors.response.use(
 
     if (status === 401 && code === "AUTH_REQUIRED") {
       const cfg = error.config;
+
+      if (!cfg) {
+        return Promise.reject(error);
+      }
 
       if (readSkipAuthRedirect(cfg)) {
         return Promise.reject(error);
