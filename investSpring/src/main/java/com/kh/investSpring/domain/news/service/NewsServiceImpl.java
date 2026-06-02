@@ -51,7 +51,6 @@ public class NewsServiceImpl implements NewsService {
 	/** 뉴스 1건당 관련 종목 칩 최대 노출 개수 */
 	private static final int RELATED_STOCKS_MAX = 5;
 	private static final int STOCK_NEWS_FETCH_MULTIPLIER = 2;
-	private static final int STOCK_NEWS_MIN_FETCH_SIZE = 12;
 	/** 공개 시장 뉴스 목록·Redis 캐시 최대 건수 */
 	private static final int MARKET_NEWS_MAX_DISPLAY = 100;
 	private static final DateTimeFormatter NAVER_PUB = DateTimeFormatter.ofPattern(
@@ -140,7 +139,7 @@ public class NewsServiceImpl implements NewsService {
 			return cached;
 		}
 
-		List<NewsResponse> fallback = mapEntitiesWithKis(newsDao.selectNewsInfoByStockCode(code, n));
+		List<NewsResponse> fallback = mapMarketEntities(newsDao.selectNewsInfoByStockCode(code, n));
 		if (!fallback.isEmpty()) {
 			cacheList(cacheKey, fallback, Duration.ofMinutes(3));
 			return fallback;
@@ -148,7 +147,7 @@ public class NewsServiceImpl implements NewsService {
 
 
 		String queryKeyword = resolveStockSearchKeyword(code);
-		int fetchSize = Math.min(100, Math.max(n * STOCK_NEWS_FETCH_MULTIPLIER, STOCK_NEWS_MIN_FETCH_SIZE));
+		int fetchSize = Math.min(100, Math.max(n * STOCK_NEWS_FETCH_MULTIPLIER, n));
 		List<NaverNewsItemDto> items = naverNewsApiClient.searchNews(queryKeyword.trim(), fetchSize)
 				.stream()
 				.filter(FinanceNewsTopicFilter::passesNaverItem)
@@ -188,7 +187,7 @@ public class NewsServiceImpl implements NewsService {
 				break;
 			}
 		}
-		return overlayKisRatesForExistingStocks(enrichRelatedStockRates(out));
+		return enrichRelatedStockRates(out);
 	}
 
 	private NewsResponse persistOne(NaverNewsItemDto item, String stockCodeOrNull) {
