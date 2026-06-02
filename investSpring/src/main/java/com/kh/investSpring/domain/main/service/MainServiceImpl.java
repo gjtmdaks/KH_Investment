@@ -19,9 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MainServiceImpl implements MainService {
 
+    private static final long MAIN_DATA_CACHE_TTL_MILLIS = 3_000L;
+
     private final UserService userService;
     private final AccountService accountService;
     private final StockService stockService;
+
+    private volatile CachedMainData cachedMainData;
 
     @Override
     public MainResponse getMain(Long userNo) {
@@ -31,7 +35,7 @@ public class MainServiceImpl implements MainService {
             return MainResponse.builder()
                     .header(null)
                     .sidebar(null)
-                    .main(buildMain())
+                    .main(getMainData())
                     .build();
         }
 
@@ -39,8 +43,35 @@ public class MainServiceImpl implements MainService {
         return MainResponse.builder()
                 .header(userService.getHeader(userNo))
                 .sidebar(buildSidebar(userNo))
-                .main(buildMain())
+                .main(getMainData())
                 .build();
+    }
+
+    @Override
+    public MainResponse.Main getMainData() {
+        long now = System.currentTimeMillis();
+        CachedMainData snapshot = cachedMainData;
+
+        if (snapshot != null && snapshot.expiresAt() > now) {
+            return snapshot.main();
+        }
+
+        synchronized (this) {
+            now = System.currentTimeMillis();
+            snapshot = cachedMainData;
+
+            if (snapshot != null && snapshot.expiresAt() > now) {
+                return snapshot.main();
+            }
+
+            MainResponse.Main main = buildMain();
+            cachedMainData = new CachedMainData(
+                    main,
+                    now + MAIN_DATA_CACHE_TTL_MILLIS
+            );
+
+            return main;
+        }
     }
 
     // ✅ Sidebar
@@ -140,5 +171,11 @@ public class MainServiceImpl implements MainService {
                 .stockList(stockList)
                 .topVolumeStock(topStock)
                 .build();
+    }
+
+    private record CachedMainData(
+            MainResponse.Main main,
+            long expiresAt
+    ) {
     }
 }

@@ -46,6 +46,7 @@ public final class SecurityPathPatterns {
 			"/",
 			"/api/public/**",
 			"/api/main",
+			"/api/main/stocks",
 			"/error"
 	};
 }

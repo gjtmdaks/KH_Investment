@@ -64,13 +64,22 @@ public class StockServiceImpl implements StockService {
     @Override
     public TopStockDto getTopVolumeStock() {
 
-        // 1️⃣ 거래대금 1위
-        String stockCode = stockDao.getTopVolumeStockCode();
+        List<String> topCodes = stockDao.selectTopTradingValueStockCodes(
+                1,
+                kisProperties.getMainRealtimeFreshMinutes());
 
-        // 2️⃣ 기본 정보
+        if (topCodes == null || topCodes.isEmpty()) {
+            return null;
+        }
+
+        String stockCode = topCodes.get(0);
+
         var info = stockDao.getStockInfo(stockCode);
 
-        // 3️⃣ 차트 데이터
+        if (info == null) {
+            return null;
+        }
+
         List<Long> chart = stockDao.getMiniChart(stockCode);
 
         return TopStockDto.builder()
