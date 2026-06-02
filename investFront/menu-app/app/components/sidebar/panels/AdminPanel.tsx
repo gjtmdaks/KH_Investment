@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TEAM_API_BASE } from "@/lib/team-dev";
 import styles from "../MainSidebar.module.css";
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-const apiBase = rawBase.trim() || "http://localhost:8081/final";
+
+const apiBase = rawBase.trim() || TEAM_API_BASE;
 
 export default function AdminPanel() {
   const router = useRouter();

@@ -20,7 +20,7 @@ public class OAuth2LoginSuccessHandlerConfig {
 	public AuthenticationSuccessHandler oauth2LoginSuccessHandler(
 			AuthUserService authUserService,
 			AuthTokenIssueService authTokenIssueService,
-			@Value("${app.oauth2.frontend-callback-uri:http://localhost:3000/sign-in/oauth-callback}") String oauth2FrontendCallbackUri) {
+			@Value("${app.oauth2.frontend-callback-uri:" + TeamDevHost.FRONTEND_ORIGIN + "/sign-in/oauth-callback}") String oauth2FrontendCallbackUri) {
 		return new OAuth2JwtAuthenticationSuccessHandler(
 				authUserService,
 				authTokenIssueService,
