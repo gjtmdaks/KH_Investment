@@ -5,6 +5,8 @@ import StockList from "./StockList";
 import { useWatchlist } from "@/app/context/WatchlistContext";
 import { getPublicApiBase } from "@/lib/api-base";
 
+const MAIN_STOCK_REFRESH_INTERVAL_MS = 3_000;
+
 type Stock = {
   stockCode: string;
   stockName: string;
@@ -17,15 +19,23 @@ type Stock = {
   aiScore: number;
 };
 
+type StockClientProps = {
+  initialData?: {
+    main?: {
+      stockList?: Stock[];
+    };
+  };
+};
+
 export default function StockClient({
   initialData,
-}: any) {
+}: StockClientProps) {
 
   const [stocks, setStocks] = useState<Stock[]>(initialData?.main?.stockList || []);
   const {watchlist, setWatchlist,} = useWatchlist();
 
   useEffect(() => {
-    // 1초마다 실시간 값 갱신
+    // 3초마다 실시간 값 갱신
     const realtimeInterval = setInterval(() => {
       fetch(`${getPublicApiBase()}/api/main`)
       .then((res) => {
@@ -48,7 +58,7 @@ export default function StockClient({
         );
       })
       .catch(() => { });
-    }, 1000);
+    }, MAIN_STOCK_REFRESH_INTERVAL_MS);
 
     return () => {
       clearInterval(realtimeInterval);

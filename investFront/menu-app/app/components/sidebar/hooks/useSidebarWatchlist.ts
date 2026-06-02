@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { useWatchlist } from "@/app/context/WatchlistContext";
 import {
-  SidebarStock,
   SidebarWatchResponse,
 } from "../types";
+
+const SIDEBAR_WATCHLIST_REFRESH_INTERVAL_MS = 5_000;
 
 export default function useSidebarWatchlist() {
 
@@ -20,7 +21,7 @@ export default function useSidebarWatchlist() {
       stockList: [],
     });
 
-  async function fetchSidebarStocks() {
+  const fetchSidebarStocks = useCallback(async () => {
     try {
       const response = await apiClient.get("/watchlist/sidebar/stocks", {
         skipAuthRedirect: true,
@@ -39,19 +40,22 @@ export default function useSidebarWatchlist() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [setWatchlist]);
 
   useEffect(() => {
-    fetchSidebarStocks();
+    const initialTimer = window.setTimeout(fetchSidebarStocks, 0);
 
-    // 3초마다 갱신
+    // 5초마다 갱신
     const interval = setInterval(
       fetchSidebarStocks,
-      3000
+      SIDEBAR_WATCHLIST_REFRESH_INTERVAL_MS
     );
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      window.clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, [fetchSidebarStocks]);
 
   return {
     loading,
