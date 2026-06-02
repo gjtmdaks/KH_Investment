@@ -27,6 +27,7 @@ public final class SecurityPathPatterns {
 			"/users/logout/**",
 			"/users/find_id",
 			"/users/find_password",
+			"/auth/csrf",
 			"/_next/**",
 			"/watchlist",
 			"/watchlist/**",
@@ -35,8 +36,7 @@ public final class SecurityPathPatterns {
 			"/notice/{noticeId}",
 			"/search/**",
 			"/api/ai/**",
-			"/account/ranking",
-			"/admin/**" // 개발단계에서만
+			"/account/ranking"
 	};
 
 	/**
