@@ -38,4 +38,6 @@ public class BoardDto {
     private String likedByMe;
     
     private String shareholderYn; // 주주 여부
+    
+    private String assetBadge;
 }

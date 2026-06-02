@@ -37,4 +37,6 @@ public class BoardListResponse {
     private boolean likedByMe;
     
     private Boolean shareholderBadge;
+    
+    private String assetBadge;
 }
