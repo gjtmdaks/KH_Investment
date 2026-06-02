@@ -5,19 +5,49 @@ import { useEffect, useState } from "react";
 import styles from "../ScreenerPage.module.css";
 
 import RealtimeCard from "./RealtimeCard";
+import { getPublicApiBase } from "@/lib/api-base";
+import { StockItem } from "./types";
+
+type RealtimeData = {
+  surging: StockItem[];
+  falling: StockItem[];
+  active: StockItem[];
+};
+
+const EMPTY_REALTIME_DATA: RealtimeData = {
+  surging: [],
+  falling: [],
+  active: [],
+};
 
 export default function RealtimeSection() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] =
+    useState<RealtimeData | null>(null);
 
   useEffect(() => {
     async function fetchRealtime() {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/stock/screener/realtime`
-      );
+      try {
+        const res = await fetch(
+          `${getPublicApiBase()}/stock/screener/realtime`
+        );
 
-      const json = await res.json();
+        const contentType = res.headers.get("content-type") ?? "";
 
-      setData(json);
+        if (!res.ok || !contentType.includes("application/json")) {
+          setData(EMPTY_REALTIME_DATA);
+          return;
+        }
+
+        const json = await res.json();
+
+        setData({
+          surging: Array.isArray(json?.surging) ? json.surging : [],
+          falling: Array.isArray(json?.falling) ? json.falling : [],
+          active: Array.isArray(json?.active) ? json.active : [],
+        });
+      } catch {
+        setData(EMPTY_REALTIME_DATA);
+      }
     }
 
     fetchRealtime();

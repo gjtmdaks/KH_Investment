@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import FilterPanel from "./ScreenerClient/FilterPanel";
 import StockTable from "./ScreenerClient/StockTable";
 import { StockItem } from "./types";
+import { getPublicApiBase } from "@/lib/api-base";
 
 export default function ScreenerClient() {
   const [stocks, setStocks] = useState<StockItem[]>([]);
@@ -11,7 +12,7 @@ export default function ScreenerClient() {
   const [changeRate, setChangeRate] = useState("");
   const [volume, setVolume] = useState("");
 
-  async function fetchStocks() {
+  const fetchStocks = useCallback(async () => {
     const params = new URLSearchParams();
 
     if (market) {
@@ -26,18 +27,35 @@ export default function ScreenerClient() {
       params.append("volume", volume);
     }
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/stock/screener/search?${params.toString()}`
-    );
+    try {
+      const res = await fetch(
+        `${getPublicApiBase()}/stock/screener/search?${params.toString()}`
+      );
 
-    const data = await res.json();
+      const contentType = res.headers.get("content-type") ?? "";
 
-    setStocks(data);
-  }
+      if (!res.ok || !contentType.includes("application/json")) {
+        setStocks([]);
+        return;
+      }
+
+      const data = await res.json();
+
+      setStocks(Array.isArray(data) ? data : []);
+    } catch {
+      setStocks([]);
+    }
+  }, [market, changeRate, volume]);
 
   useEffect(() => {
-    fetchStocks();
-  }, [market, changeRate, volume]);
+    const timeoutId = window.setTimeout(() => {
+      fetchStocks();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [fetchStocks]);
 
   return (
     <>
