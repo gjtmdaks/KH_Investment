@@ -30,6 +30,7 @@ import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordRequest;
 import com.kh.investSpring.domain.user.dto.VerifyCurrentPasswordResponse;
 import com.kh.investSpring.domain.user.vo.LocalUser;
 import com.kh.investSpring.domain.user.vo.User;
+import com.kh.investSpring.global.security.UserAuthSnapshotCache;
 import com.kh.investSpring.global.validation.PasswordPolicyValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class UserServiceImpl implements UserService {
     private final AccountRecoveryEmailService accountRecoveryEmailService;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final MemberEditVerificationService memberEditVerificationService;
+    private final UserAuthSnapshotCache userAuthSnapshotCache;
     
     
     @Override
@@ -214,6 +216,7 @@ public class UserServiceImpl implements UserService {
 	    }
 	    
 	    accountDao.updateAccountStatusDeleteByUserNo(userNo);
+	    userAuthSnapshotCache.evict(userNo);
 		
 	}
 
