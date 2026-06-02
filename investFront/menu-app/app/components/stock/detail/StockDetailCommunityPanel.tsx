@@ -292,6 +292,9 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                           주주
                         </span>
                       )}
+                      {comment.assetBadge && (
+                        <span className={styles.assetBadge}>{comment.assetBadge}</span>
+                      )}
                     </strong>
                     <span>{formatDate(comment.createdAt)}</span>
                   </div>
@@ -377,6 +380,9 @@ export function StockDetailCommunityPanel({ stockCode }: Props) {
                               >
                                 주주
                               </span>
+                            )}
+                            {reply.assetBadge && (
+                              <span className={styles.assetBadge}>{reply.assetBadge}</span>
                             )}
                           </strong>
                           <span>{formatDate(reply.createdAt)}</span>

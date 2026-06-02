@@ -12,6 +12,7 @@ export type BoardPost = {
   commentType: "COMMENT" | "REPLY";
   likedByMe: boolean;
   shareholderBadge?: boolean;
+  assetBadge?: string | null;
 };
 
 export type BoardCreateRequest = {
