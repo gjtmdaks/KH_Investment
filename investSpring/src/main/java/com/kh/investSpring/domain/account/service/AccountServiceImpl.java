@@ -18,14 +18,21 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
+    private static final long RANKING_CACHE_TTL_MS = 10_000L;
+    private static final long ACCOUNT_ASSETS_CACHE_TTL_MS = 2_000L;
+
     private final AccountDao accountDao;
     private final KisSidebarQuoteEnricher kisSidebarQuoteEnricher;
+    private final Map<RankingType, CachedRanking> rankingCache = new ConcurrentHashMap<>();
+    private final Map<Long, CachedAccountAssets> accountAssetsCache = new ConcurrentHashMap<>();
     private static final BigDecimal BASE_CAPITAL = BigDecimal.valueOf(10000000); // 기본자산은 고정
     
     // 전일(장시작) 돈 자동저장
@@ -85,6 +92,23 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
 
+        long now = System.currentTimeMillis();
+        CachedAccountAssets cached = accountAssetsCache.get(userNo);
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.assets();
+        }
+
+        AccountAssetResponse response = loadAccountAssets(userNo);
+        accountAssetsCache.put(
+                userNo,
+                new CachedAccountAssets(response, now + ACCOUNT_ASSETS_CACHE_TTL_MS)
+        );
+
+        return response;
+    }
+
+    private AccountAssetResponse loadAccountAssets(Long userNo) {
         AccountAssetSummaryDto asset =
                 accountDao.selectAccountAssetByUserNo(userNo);
 
@@ -152,7 +176,35 @@ public class AccountServiceImpl implements AccountService {
 
 	@Override
 	public List<RankingResponse> getRanking(RankingType type) {
-		return accountDao.getRanking(type);
+        long now = System.currentTimeMillis();
+        CachedRanking cached = rankingCache.get(type);
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.rankings();
+        }
+
+        List<RankingResponse> rankings = accountDao.getRanking(type);
+        List<RankingResponse> safeRankings =
+                rankings != null ? List.copyOf(rankings) : List.of();
+
+        rankingCache.put(
+                type,
+                new CachedRanking(safeRankings, now + RANKING_CACHE_TTL_MS)
+        );
+
+		return safeRankings;
 	}
+
+    private record CachedRanking(
+            List<RankingResponse> rankings,
+            long expiresAtMs
+    ) {
+    }
+
+    private record CachedAccountAssets(
+            AccountAssetResponse assets,
+            long expiresAtMs
+    ) {
+    }
     
 }

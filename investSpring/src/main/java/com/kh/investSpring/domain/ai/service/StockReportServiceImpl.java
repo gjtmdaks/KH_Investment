@@ -1,6 +1,7 @@
 package com.kh.investSpring.domain.ai.service;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -21,8 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class StockReportServiceImpl implements StockReportService {
 
+    private static final long STOCK_REPORT_CACHE_TTL_MS = 60_000L;
+
     private final StockReportDao stockReportDao;
     private final RestTemplate restTemplate;
+    private final ConcurrentHashMap<String, CachedStockReport> stockReportCache =
+            new ConcurrentHashMap<>();
+
     @Value("${ai.base.url}")
     private String aiUrl;
 
@@ -81,6 +87,26 @@ public class StockReportServiceImpl implements StockReportService {
     
     @Override
     public StockAiReportDto getStockReport(String stockCode) {
-        return stockReportDao.selectStockReport(stockCode);
+        String code = stockCode == null ? "" : stockCode.trim();
+        long now = System.currentTimeMillis();
+        CachedStockReport cached = stockReportCache.get(code);
+
+        if (cached != null && cached.expiresAtMs() > now) {
+            return cached.report();
+        }
+
+        StockAiReportDto report = stockReportDao.selectStockReport(stockCode);
+        stockReportCache.put(
+                code,
+                new CachedStockReport(report, now + STOCK_REPORT_CACHE_TTL_MS)
+        );
+
+        return report;
+    }
+
+    private record CachedStockReport(
+            StockAiReportDto report,
+            long expiresAtMs
+    ) {
     }
 }

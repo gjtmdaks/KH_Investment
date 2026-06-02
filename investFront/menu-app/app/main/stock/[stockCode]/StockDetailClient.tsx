@@ -82,27 +82,63 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
   const [riskModalOpen, setRiskModalOpen] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+
     async function fetchAiReport() {
 
       try {
         setAiLoading(true);
+        setAiReport(null);
 
         const response =
           await apiClient.get(
-            `/api/ai/stock-report/${stockCode}`
+            `/api/ai/stock-report/${stockCode}`,
+            {
+              signal: controller.signal,
+              timeout: 5_000,
+            }
           );
 
-        setAiReport(response.data);
+        if (!cancelled) {
+          setAiReport(response.data);
+        }
 
       } catch (e) {
-        console.error(e);
+        if (!controller.signal.aborted) {
+          console.error(e);
+        }
 
       } finally {
-        setAiLoading(false);
+        if (!cancelled) {
+          setAiLoading(false);
+        }
       }
     }
 
-    fetchAiReport();
+    const startFetch = () => {
+      if (!cancelled) {
+        void fetchAiReport();
+      }
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      const idleId = requestIdleCallback(startFetch, { timeout: 1500 });
+
+      return () => {
+        cancelled = true;
+        controller.abort();
+        cancelIdleCallback(idleId);
+      };
+    }
+
+    const timerId = window.setTimeout(startFetch, 0);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      window.clearTimeout(timerId);
+    };
   }, [stockCode]);
 
   const handleOrderbookPriceSelect = useCallback(
@@ -132,13 +168,12 @@ export default function StockDetailClient({ stockCode }: { stockCode: string }) 
     }
 
     const name = price?.stockName || profile?.stockName || displayName;
+    const shouldOpen = isHighRiskStock(name) && !hasHighRiskAckInSession();
+    const riskTimer = window.setTimeout(() => {
+      setRiskModalOpen(shouldOpen);
+    }, 0);
 
-    if (!isHighRiskStock(name) || hasHighRiskAckInSession()) {
-      setRiskModalOpen(false);
-      return;
-    }
-
-    setRiskModalOpen(true);
+    return () => window.clearTimeout(riskTimer);
   }, [detailLoading, displayName, price?.stockName, profile?.stockName]);
 
   const handleRiskAckConfirm = useCallback(() => {

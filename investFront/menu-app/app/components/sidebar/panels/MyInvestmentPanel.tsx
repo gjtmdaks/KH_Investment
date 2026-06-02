@@ -37,6 +37,8 @@ const SORT_OPTIONS: { key: HoldingSortKey; label: string }[] = [
 ];
 
 const LOGIN_REQUIRED_TEXT = "로그인하면 이용할 수 있어요";
+const MY_INVESTMENT_REFRESH_INTERVAL_MS = 5_000;
+const MY_INVESTMENT_REQUEST_TIMEOUT_MS = 5_000;
 
 function formatWon(value?: number | null) {
   return `${Math.round(value ?? 0).toLocaleString()}원`;
@@ -105,6 +107,8 @@ export default function MyInvestmentPanel({ data }: Props) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  const requestInFlightRef = useRef(false);
+  const requestControllerRef = useRef<AbortController | null>(null);
 
   const [investment, setInvestment] = useState<MyInvestmentSidebarData>({
     account: data.sidebar?.account ?? null,
@@ -115,10 +119,14 @@ export default function MyInvestmentPanel({ data }: Props) {
   const [sortOpen, setSortOpen] = useState(false);
 
   useEffect(() => {
-    setInvestment({
-      account: data.sidebar?.account ?? null,
-      holdings: data.sidebar?.holdings ?? [],
-    });
+    const syncTimer = window.setTimeout(() => {
+      setInvestment({
+        account: data.sidebar?.account ?? null,
+        holdings: data.sidebar?.holdings ?? [],
+      });
+    }, 0);
+
+    return () => window.clearTimeout(syncTimer);
   }, [data.sidebar?.account, data.sidebar?.holdings]);
 
   useEffect(() => {
@@ -143,8 +151,23 @@ export default function MyInvestmentPanel({ data }: Props) {
     let isMounted = true;
 
     async function fetchInvestment() {
+      if (requestInFlightRef.current) {
+        return;
+      }
+
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
+      requestInFlightRef.current = true;
+
+      const timeoutId = window.setTimeout(() => {
+        controller.abort();
+      }, MY_INVESTMENT_REQUEST_TIMEOUT_MS);
+
       try {
-        const asset = await getAccountAssets();
+        const asset = await getAccountAssets({
+          signal: controller.signal,
+          timeout: MY_INVESTMENT_REQUEST_TIMEOUT_MS,
+        });
 
         if (!isMounted) return;
 
@@ -182,7 +205,16 @@ export default function MyInvestmentPanel({ data }: Props) {
           holdings,
         });
       } catch (error) {
-        console.error("내 투자 사이드바 조회 실패", error);
+        if (!controller.signal.aborted) {
+          console.error("내 투자 사이드바 조회 실패", error);
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+        requestInFlightRef.current = false;
+
+        if (requestControllerRef.current === controller) {
+          requestControllerRef.current = null;
+        }
       }
     }
 
@@ -190,10 +222,11 @@ export default function MyInvestmentPanel({ data }: Props) {
 
     const intervalId = window.setInterval(() => {
       fetchInvestment();
-    }, 2000);
+    }, MY_INVESTMENT_REFRESH_INTERVAL_MS);
 
     return () => {
       isMounted = false;
+      requestControllerRef.current?.abort();
       window.clearInterval(intervalId);
     };
   }, [isAuthenticated]);

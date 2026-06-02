@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client";
 
 export type AccountSummary = {
   currentTotalAsset: number;
@@ -44,7 +44,11 @@ export async function getAccountSummary(userNo: number) {
   return response.data;
 }
 
-export async function getAccountAssets() {
-  const response = await apiClient.get<AccountAssetResponse>("/account/assets");
+export async function getAccountAssets(config?: ApiRequestConfig) {
+  const response = await apiClient.get<AccountAssetResponse>(
+    "/account/assets",
+    config
+  );
+
   return response.data;
 }
